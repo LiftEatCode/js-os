@@ -2,7 +2,7 @@
 
 **Status:** Draft operating definition
 
-Until Goal rows exist, treat these as examples of the *kind* of goals JS OS should hold — not as approved numeric targets:
+Until Goal rows exist, treat these as examples of the *kind* of goals JS OS should hold — not as approved numeric targets.
 
 - Grow durable recurring service and product revenue
 - Convert prospecting and audits (JS Growth) into signed work
@@ -10,4 +10,4 @@ Until Goal rows exist, treat these as examples of the *kind* of goals JS OS shou
 - Ship JS Growth product capability without letting JS OS duplicate it
 - Increase autonomy only on proven, low-risk workflows
 
-Real goals belong in the Goal model in a later Phase 1 step. The Organization row already exists in development (`js-solutions`).
+Real goals belong in the Goal model. The Command Center (`/app/goals`) can persist them when local writes are explicitly enabled. The Organization row already exists in development (`js-solutions`).

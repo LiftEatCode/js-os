@@ -48,6 +48,10 @@ Fields: `id`, `organizationId`, `title`, `description?`, `status`, `priority`, `
 - Time horizon: `SHORT_TERM` | `QUARTERLY` | `ANNUAL` | `LONG_TERM`
 - Metrics use PostgreSQL `numeric` (`Decimal`). Optional so qualitative goals work.
 - No parent/child Goal hierarchy in v0.1.
+- The model does not record metric direction (higher-is-better vs lower-is-better). Displays must show Current/Target as stored values, not a universal completion percentage.
+- `completedAt` is owned by the Goal service: set when status becomes `ACHIEVED` (if empty), cleared when leaving `ACHIEVED`. The UI must not write it.
+- Goals are not deleted. Terminal strategic state uses `CANCELLED` (and `ACHIEVED`).
+- Command Center Goal management (Milestone 2.3) is owner-operated. Company Goal *rows* are still operating-state population; none are bootstrapped.
 
 ## WorkItem
 
@@ -140,7 +144,7 @@ Application access: [business-state services](business-state-services.md).
 
 ## Remaining work after Phase 1
 
-- Deliberate Goal rows (operating-state population, not schema)
+- Deliberate Goal rows (operating-state population, not schema). The Command Center can create them when writes are explicitly enabled in local development.
 
 ## Related
 

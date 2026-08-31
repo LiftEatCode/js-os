@@ -23,3 +23,22 @@ export function formatBusinessInstant(
     return value.toString();
   }
 }
+
+export function formatBusinessDate(
+  value: Temporal.Instant | null | undefined,
+  timeZone: string,
+): string | null {
+  if (!value) {
+    return null;
+  }
+
+  const zone = timeZone.trim() || 'America/Chicago';
+
+  try {
+    return value.toZonedDateTimeISO(zone).toPlainDate().toLocaleString('en-US', {
+      dateStyle: 'medium',
+    });
+  } catch {
+    return value.toString();
+  }
+}

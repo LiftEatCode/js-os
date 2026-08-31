@@ -1,5 +1,7 @@
+/// <reference types="temporal-polyfill/types/global" />
 import { db } from '../prisma/db.ts';
 import { BusinessStateNotFoundError } from './errors.ts';
+import { nextGoalCompletedAt } from './goal-lifecycle.ts';
 import type { CreateGoalInput, Goal, GoalListFilter, UpdateGoalInput } from './types.ts';
 import { requireNonEmptyString, omitUndefined } from './validation.ts';
 
@@ -36,12 +38,13 @@ export async function listActiveGoals(organizationId: string): Promise<Goal[]> {
 
 export async function createGoal(input: CreateGoalInput): Promise<Goal> {
   const title = requireNonEmptyString(input.title, 'title');
+  const status = input.status ?? 'DRAFT';
 
   return db.orm.public.Goal.create({
     organizationId: input.organizationId,
     title,
     description: input.description ?? null,
-    status: input.status ?? 'DRAFT',
+    status,
     priority: input.priority,
     timeHorizon: input.timeHorizon,
     targetDate: input.targetDate ?? null,
@@ -49,6 +52,7 @@ export async function createGoal(input: CreateGoalInput): Promise<Goal> {
     metricUnit: input.metricUnit ?? null,
     targetValue: input.targetValue ?? null,
     currentValue: input.currentValue ?? null,
+    completedAt: status === 'ACHIEVED' ? Temporal.Now.instant() : null,
   });
 }
 
@@ -61,6 +65,18 @@ export async function updateGoal(id: string, input: UpdateGoalInput): Promise<Go
   const patch: UpdateGoalInput = { ...input };
   if (input.title !== undefined) {
     patch.title = requireNonEmptyString(input.title, 'title');
+  }
+
+  if (input.status !== undefined) {
+    const completedAt = nextGoalCompletedAt(
+      existing.status,
+      input.status,
+      existing.completedAt,
+      Temporal.Now.instant(),
+    );
+    if (completedAt !== undefined) {
+      patch.completedAt = completedAt;
+    }
   }
 
   await db.orm.public.Goal.where({ id }).update(omitUndefined(patch as Record<string, unknown>));

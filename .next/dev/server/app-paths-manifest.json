@@ -1,3 +1,8 @@
 {
+  "/_not-found/page": "app/_not-found/page.js",
+  "/app/goals/[goalId]/page": "app/app/goals/[goalId]/page.js",
+  "/app/goals/new/page": "app/app/goals/new/page.js",
+  "/app/goals/page": "app/app/goals/page.js",
+  "/app/page": "app/app/page.js",
   "/page": "app/page.js"
 }

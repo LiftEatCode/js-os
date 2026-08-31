@@ -13,7 +13,7 @@ Give humans a central view of running JS Solutions: what is happening, what need
 ```text
 2.1 Command Center shell + navigation     Implemented
 2.2 Business overview                     Implemented
-2.3 Goals                                 Planned
+2.3 Goals                                 Implemented
 2.4 Work                                  Planned
 2.5 Activity                              Planned
 2.6 Approvals                             Planned
@@ -22,7 +22,7 @@ Give humans a central view of running JS Solutions: what is happening, what need
 2.9 Integration + polish                  Planned
 ```
 
-Routes for 2.3–2.8 exist as placeholders. That is not feature completion.
+Routes for 2.4–2.8 exist as placeholders. That is not feature completion.
 
 ## Milestone 2.1 — Shell + navigation
 
@@ -45,21 +45,37 @@ Routes for 2.3–2.8 exist as placeholders. That is not feature completion.
 - Owner Attention is a deterministic derived projection, not AI
 - Real empty/zero states are shown; no fabricated data
 
+## Milestone 2.3 — Goals
+
+**Status:** Implemented
+
+- Server-rendered `/app/goals`, `/app/goals/new`, `/app/goals/[goalId]`
+- Reads through `@/business-state` with `getJsSolutionsOrganization()` scoping
+- Mutations via Server Actions → Goal services; no Goal API routes
+- Owner can view, create, inspect, edit, update progress, and change status
+- No Goal deletion (`CANCELLED` is the terminal cancel path)
+- No universal progress percentage (metric direction is not modeled)
+- `completedAt` owned by the Goal service, not the UI
+- Temporary unauthenticated write safeguard: `NODE_ENV === "development"` and `JS_OS_COMMAND_CENTER_WRITES === "true"`
+- Goal mutations do not write BusinessEvents (no atomic mutation+event pattern yet)
+
 ## Remaining work
 
-- 2.3–2.7 feature screens for Goals, Work, Activity, Approvals, Agents
+- 2.4–2.7 feature screens for Work, Activity, Approvals, Agents
 - 2.8 Knowledge browser over canonical `docs/` markdown
 - 2.9 polish, empty-state quality, and cross-page consistency
+- Authentication (replaces the Command Center write safeguard)
+- Unified mutation-to-BusinessEvent auditing
 
-Not in Phase 2: tools, agent reasoning, integrations, auth, schema changes.
+Not in Phase 2: tools, agent reasoning, integrations, schema changes.
 
 ## Key safety boundary
 
-Read and coordinate. The Command Center does not execute external tools. UI must use `@/business-state`, not raw Prisma.
+Read and coordinate. The Command Center does not execute external tools. UI must use `@/business-state`, not raw Prisma. Until auth exists, Command Center writes require explicit local opt-in and remain disabled by default.
 
 ## Exit criteria
 
-Owner can see goals, work, approvals, and recent events from live business state. Partially met: Overview reads live state; dedicated management screens are still planned.
+Owner can see goals, work, approvals, and recent events from live business state. Partially met: Overview reads live state; Goals can be managed when writes are enabled; dedicated Work/Activity/Approvals/Agents screens are still planned.
 
 ## Related
 

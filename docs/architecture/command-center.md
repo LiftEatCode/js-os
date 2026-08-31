@@ -1,6 +1,6 @@
 # Command Center
 
-**Status:** In progress. Milestone 2.1 (shell + navigation) and Milestone 2.2 (business overview) are implemented. Later Command Center milestones are planned.
+**Status:** In progress. Milestones 2.1 (shell + navigation), 2.2 (business overview), and 2.3 (Goals) are implemented. Later Command Center milestones are planned.
 
 The Command Center is the internal JS OS operating interface for JS Solutions.
 
@@ -31,14 +31,14 @@ Command Center
 | Area | Purpose | Milestone |
 |---|---|---|
 | Overview | Current company state and owner attention | 2.2 Implemented |
-| Goals | Strategic objectives and measurable progress | 2.3 Planned |
+| Goals | Strategic objectives and measurable progress | 2.3 Implemented |
 | Work | WorkItems across JS Solutions | 2.4 Planned |
 | Activity | BusinessEvent operational history | 2.5 Planned |
 | Approvals | Human decision / authorization queue | 2.6 Planned |
 | Agents | Organizational AgentDefinitions and later activity | 2.7 Planned |
 | Knowledge | Internal documentation browser | 2.8 Planned |
 
-Routes and navigation exist for all seven areas. Route placeholders are **not** feature completion.
+Routes and navigation exist for all seven areas. Work, Activity, Approvals, Agents, and Knowledge remain placeholders until their milestones. Goals is implemented.
 
 ## Route structure
 
@@ -47,9 +47,11 @@ URL namespace: `/app`.
 The Next.js App Router lives in `src/app/`. The Command Center URL `/app` is the nested segment `src/app/app/`. Those names do not conflict.
 
 ```text
-/                 Landing / development entry (not an auto-redirect)
-/app              Overview
-/app/goals
+/                      Landing / development entry (not an auto-redirect)
+/app                   Overview
+/app/goals             Goal list (optional `?status=` filter)
+/app/goals/new         Create Goal
+/app/goals/[goalId]    Goal detail, edit, progress, status
 /app/work
 /app/activity
 /app/approvals
@@ -77,7 +79,7 @@ Prisma (`src/prisma/db.ts`)
 Neon
 ```
 
-Pages and layouts must not query Prisma directly. Milestone 2.2 Overview is a server-rendered, read-only page that loads live state through `@/business-state`.
+Pages and layouts must not query Prisma directly. Reads go through `@/business-state`. Goal mutations go through Command Center Server Actions, which call business-state services after a server-side write-access check. Organization identity comes from `getJsSolutionsOrganization()` — never from a hardcoded UUID or browser form field.
 
 ## Overview (Milestone 2.2)
 
@@ -132,7 +134,101 @@ The Overview lists configured organizational roles. An AgentDefinition row is no
 
 ### Timestamps
 
-Instants are formatted in the Organization timezone (`America/Chicago` for JS Solutions) using Temporal, not a separate date library.
+Instants are formatted in the Organization timezone (`America/Chicago` for JS Solutions) using Temporal, not a separate date library. Date-only Goal target dates use `formatBusinessDate` in the same timezone.
+
+Active Goal preview rows link to `/app/goals/[goalId]`. The section heading still links to `/app/goals`. After Goal mutations, Overview counts and the Active Goals list refresh via `revalidatePath('/app')`.
+
+## Goals (Milestone 2.3)
+
+**Status:** Implemented
+
+Goals are strategic business state: what JS Solutions is intentionally trying to accomplish. Milestone 2.3 is owner-managed. It does not plan work, create WorkItems, recommend goals, or interpret metrics with AI.
+
+### Reads and mutations
+
+```text
+Browser form
+    ↓
+Server Action (`src/command-center/goals/actions.ts`)
+    ↓
+validate input
+    ↓
+assert write access (development + explicit opt-in)
+    ↓
+getJsSolutionsOrganization()
+    ↓
+business-state Goal service
+    ↓
+revalidate /app, /app/goals, /app/goals/[goalId]
+    ↓
+redirect (create) or remain on detail (edit / progress / status)
+```
+
+The Server Action is the Command Center application boundary. The business-state service remains the persistence boundary.
+
+List and detail pages are server-rendered (`dynamic = 'force-dynamic'`). Small Client Components (`GoalForm`, `GoalProgressForm`) exist only for pending state and action errors.
+
+### List behavior
+
+`/app/goals` loads Goals for the JS Solutions Organization. Optional `?status=` filters to one persisted status. `All` is the default (no status param). Filtering is server-side.
+
+Ordering is applied in Command Center code after `listGoals()` (the service orders by `createdAt` desc only):
+
+```text
+status:    ACTIVE, DRAFT, PAUSED, ACHIEVED, CANCELLED
+priority:  CRITICAL, HIGH, MEDIUM, LOW
+then:      earliest targetDate (nulls last)
+then:      newest createdAt
+```
+
+ACHIEVED and CANCELLED remain visible and filterable; they are slightly de-emphasized in the list. There is no Goal deletion. Cancel by setting status to `CANCELLED`.
+
+Empty copy: “No goals have been defined yet.” When writes are disabled, creation is not offered.
+
+### Creation and editing
+
+Create form defaults (UI only): status `DRAFT`, priority `MEDIUM`, time horizon `QUARTERLY`. Required fields: title, status, priority, time horizon. Optional: description, target date, metric name/unit, target/current values.
+
+Editable on detail: title, description, status, priority, time horizon, target date, metric fields. Not editable: `id`, `organizationId`, `createdAt`, `updatedAt`, `completedAt`.
+
+Progress uses `updateGoalProgress()` and updates `currentValue` only.
+
+### Metric display
+
+The Goal model has no metric direction (higher-is-better vs lower-is-better). Command Center therefore **does not** compute a universal completion percentage from `current / target`. It displays stored Current, Target, Metric, and Unit values. Goals without a metric show “No metric defined.”
+
+Numeric fields are validated and passed as decimal **strings**. Empty optional numerics become `null` (cleared). `parseFloat` is not used.
+
+### `completedAt`
+
+The UI never writes `completedAt`. `createGoal` / `updateGoal` own the lifecycle:
+
+- Entering `ACHIEVED` sets `completedAt` if it is empty.
+- Leaving `ACHIEVED` clears `completedAt`.
+- Other status changes leave it unchanged.
+
+### Write-access safeguard
+
+The Command Center is unauthenticated. Goal mutations are **not** generally enabled.
+
+Writes are allowed only when **both** are true:
+
+```text
+NODE_ENV === "development"
+JS_OS_COMMAND_CENTER_WRITES === "true"
+```
+
+Default is disabled (`.env.example` sets `JS_OS_COMMAND_CENTER_WRITES=false`). Enforcement is server-side in `src/command-center/write-access.ts`. Hidden buttons are not the protection. When disabled, the UI shows a restrained read-only notice and mutations return “Command Center writes are disabled.”
+
+This is a temporary development safeguard. Authentication will replace it. It is not an ADR.
+
+### BusinessEvent auditing
+
+Goal management mutates Goal business state only. There is no atomic mutation-plus-BusinessEvent command pattern today. Unified mutation-to-BusinessEvent auditing remains a future cross-cutting concern. Goal Server Actions do not write demonstration events.
+
+### Not in 2.3
+
+Agent planning, automatic Goal or WorkItem creation, Goal hierarchy, recommendations, scoring, AI interpretation, tools, integrations, auth, deletion, progress history/charts, or a generic workflow engine.
 
 ## Knowledge / documentation
 
@@ -148,16 +244,17 @@ The Command Center is currently unauthenticated development functionality. Do no
 
 ## Environment indicator
 
-The sidebar System area shows `Development` or `Production` from `NODE_ENV`. It does not expose hosts, connection strings, or credentials.
+The sidebar System area shows `Development` or `Production` from `NODE_ENV`. It does not expose hosts, connection strings, or credentials. `next start` therefore labels Production even on a developer machine. That is a known Milestone 2.1 limitation; it is not inferred from the Neon hostname. Do not treat the label as write-access state — writes use the separate `JS_OS_COMMAND_CENTER_WRITES` check above.
 
-## What 2.1–2.2 do not include
+## What 2.1–2.3 do not include
 
-- Goal, work, activity, approval, or agent *management* UIs
+- Work, activity, approval, or agent *management* UIs
 - Approval or AgentRun actions from Overview
 - Documentation renderer / MDX
 - Auth
 - Tools, agents, orchestration, APIs created for their own sake
-- Schema or business-state mutations from the Command Center
+- Goal deletion
+- Automatic BusinessEvent writes from Goal mutations
 
 ## Related
 

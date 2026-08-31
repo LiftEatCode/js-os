@@ -39,7 +39,25 @@ Persistence operations for Organization, Goal, WorkItem, BusinessEvent, Approval
 - Agent reasoning or model calls
 - Queues, workers, REST APIs, or UI
 - Command Center Owner Attention projection (derived in `src/command-center/overview/`)
+- Command Center Goal list ordering, form parsing, and write-access gating (`src/command-center/`)
 - Auth / organization membership
+
+## Goal services
+
+```text
+getGoalById
+listGoals            optional status / priority / timeHorizon; createdAt desc
+listActiveGoals      status ACTIVE
+createGoal
+updateGoal
+updateGoalProgress   currentValue only; delegates to updateGoal
+```
+
+`createGoal` defaults status to `DRAFT` when omitted. If the created status is `ACHIEVED`, it sets `completedAt` to now; otherwise `completedAt` is null.
+
+`updateGoal` applies `nextGoalCompletedAt` when `status` is present. Callers must not treat `completedAt` as a UI field.
+
+Numeric `targetValue` / `currentValue` are Prisma `numeric` values. Application code should pass decimal strings and avoid `parseFloat`. Empty optional numerics are stored as `null`.
 
 ## Centralized database access
 
@@ -60,6 +78,8 @@ UUIDs are never hardcoded.
 Append-only. `recordBusinessEvent()` creates rows. There is no update or delete API.
 
 `eventType` must be `lowercase.dot.notation` (for example `lead.created`).
+
+There is no transactional “mutate Goal + record BusinessEvent” helper. Command Center Goal Server Actions therefore persist Goal rows only. Unified mutation-to-BusinessEvent auditing is a future cross-cutting concern.
 
 ## Approval
 
@@ -101,7 +121,7 @@ Prisma integrity errors are not swallowed.
 
 ## Tests and verification
 
-Unit tests cover validation and lifecycle helpers (`npm test`). There is no isolated mutating test database yet, so services are not integration-tested against Neon in CI.
+Unit tests cover validation, Goal `completedAt` lifecycle, Command Center write-access, Goal list ordering, and Goal form parsing (`npm test`). There is no isolated mutating test database yet, so services are not integration-tested against Neon in CI.
 
 Read-only development check:
 

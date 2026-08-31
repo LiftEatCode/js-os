@@ -14,9 +14,13 @@ npm test
 `npm test` runs Node's built-in test runner against:
 
 - `src/business-state/validation.test.ts` (event-type format, approval/AgentRun lifecycle rules)
+- `src/business-state/goal-lifecycle.test.ts` (`completedAt` when entering/leaving `ACHIEVED`)
 - `src/command-center/overview/attention.test.ts` (Owner Attention projection)
+- `src/command-center/write-access.test.ts` (writes disabled by default; development + explicit opt-in)
+- `src/command-center/goals/ordering.test.ts` (Goal list ordering)
+- `src/command-center/goals/parse.test.ts` (form parsing, enums, decimal strings)
 
-These tests do not connect to a database.
+These tests do not connect to a database. Do not mutate Neon from automated tests.
 
 ## Development verification
 

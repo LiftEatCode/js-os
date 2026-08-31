@@ -29,7 +29,7 @@ Prisma 8 is contract-first. It is not Prisma 7 `schema.prisma` + `@prisma/client
 contract source:  src/prisma/contract.prisma
 emitted:          src/prisma/contract.json
                   src/prisma/contract.d.ts
-runtime client:   src/prisma/db.ts  (business-state services; Command Center Overview)
+runtime client:   src/prisma/db.ts  (business-state services; Command Center reads/mutations go through `@/business-state`)
 CLI config:       prisma.config.ts
 ```
 

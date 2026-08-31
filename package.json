@@ -12,7 +12,7 @@
     "contract:emit": "prisma contract emit",
     "db:bootstrap": "JS_OS_BOOTSTRAP_TARGET=development node --env-file=.env.local src/scripts/bootstrap-business-state.ts",
     "business-state:verify": "node --env-file=.env.local src/scripts/verify-business-state.ts",
-    "test": "node --test src/business-state/validation.test.ts src/command-center/overview/attention.test.ts"
+    "test": "node --test src/business-state/validation.test.ts src/business-state/goal-lifecycle.test.ts src/command-center/overview/attention.test.ts src/command-center/write-access.test.ts src/command-center/goals/ordering.test.ts src/command-center/goals/parse.test.ts"
   },
   "dependencies": {
     "@prisma/orm-postgres": "^8.0.0-rc.8",

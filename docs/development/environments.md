@@ -26,6 +26,21 @@ JS OS will store goals, work, approvals, events, and agent-run history. Accident
 
 Local development uses the Neon development branch via `.env.local`. `npm run db:bootstrap` is development-only (`JS_OS_BOOTSTRAP_TARGET=development`). Production bootstrap is not supported.
 
+## Command Center writes
+
+The Command Center is unauthenticated. Goal mutations are disabled by default.
+
+Writes require **both**:
+
+```text
+NODE_ENV=development
+JS_OS_COMMAND_CENTER_WRITES=true
+```
+
+`.env.example` documents `JS_OS_COMMAND_CENTER_WRITES=false`. For local Goal management with `next dev`, a developer may set `JS_OS_COMMAND_CENTER_WRITES=true` in `.env.local`. Do not enable this in production. Authentication will replace this safeguard.
+
+The sidebar environment label uses `NODE_ENV` only (`next start` shows Production). That label is not a Neon-branch detector and is not the write-access check.
+
 ## Not implemented
 
 - Preview/staging Neon branch or per-PR databases

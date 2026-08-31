@@ -70,6 +70,7 @@ export function OverviewView({ data }: { data: OverviewData }) {
             rows={data.goals.map((goal) => ({
               title: goal.title,
               meta: `${goal.status} · ${goal.priority} · ${goal.timeHorizon}`,
+              href: `/app/goals/${goal.id}`,
             }))}
           />
         )}
@@ -151,21 +152,37 @@ export function OverviewView({ data }: { data: OverviewData }) {
 function RowList({
   rows,
 }: {
-  rows: Array<{ title: string; meta: string; detail?: string | null }>;
+  rows: Array<{ title: string; meta: string; detail?: string | null; href?: string }>;
 }) {
   return (
     <ul className="divide-y divide-zinc-200 rounded-lg border border-zinc-200 bg-white dark:divide-zinc-800 dark:border-zinc-800 dark:bg-zinc-950">
-      {rows.map((row) => (
-        <li key={`${row.title}-${row.meta}`} className="px-4 py-3">
-          <p className="text-sm font-medium text-zinc-950 dark:text-zinc-50">{row.title}</p>
-          <p className="mt-0.5 text-xs uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-            {row.meta}
-          </p>
-          {row.detail ? (
-            <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">{row.detail}</p>
-          ) : null}
-        </li>
-      ))}
+      {rows.map((row) => {
+        const body = (
+          <>
+            <p className="text-sm font-medium text-zinc-950 dark:text-zinc-50">{row.title}</p>
+            <p className="mt-0.5 text-xs uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+              {row.meta}
+            </p>
+            {row.detail ? (
+              <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">{row.detail}</p>
+            ) : null}
+          </>
+        );
+        return (
+          <li key={`${row.href ?? ""}-${row.title}-${row.meta}`}>
+            {row.href ? (
+              <Link
+                href={row.href}
+                className="block px-4 py-3 hover:bg-zinc-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-900 dark:hover:bg-zinc-900 dark:focus-visible:outline-zinc-100"
+              >
+                {body}
+              </Link>
+            ) : (
+              <div className="px-4 py-3">{body}</div>
+            )}
+          </li>
+        );
+      })}
     </ul>
   );
 }

@@ -29,6 +29,7 @@ export type OverviewMetric = {
 };
 
 export type OverviewGoalRow = {
+  id: string;
   title: string;
   status: Goal['status'];
   priority: Goal['priority'];
@@ -130,6 +131,7 @@ export async function loadOverview(): Promise<OverviewData> {
     ],
     attention,
     goals: goals.map((goal) => ({
+      id: goal.id,
       title: goal.title,
       status: goal.status,
       priority: goal.priority,

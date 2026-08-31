@@ -1,5 +1,49 @@
 {
-  "node": {},
+  "node": {
+    "60cc209e70ae7cdf3115b707f78be1fdeec5826fbf": {
+      "workers": {
+        "app/app/goals/[goalId]/page": {
+          "moduleId": "[project]/.next-internal/server/app/app/goals/[goalId]/page/actions.js { ACTIONS_MODULE0 => \"[project]/src/command-center/goals/actions.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
+          "async": true,
+          "codeHash": null
+        },
+        "app/app/goals/new/page": {
+          "moduleId": "[project]/.next-internal/server/app/app/goals/new/page/actions.js { ACTIONS_MODULE0 => \"[project]/src/command-center/goals/actions.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
+          "async": true,
+          "codeHash": null
+        }
+      },
+      "filename": "src/command-center/goals/actions.ts",
+      "exportedName": "updateGoalAction"
+    },
+    "604a12c6933ecd4a30cadcc3dad83ba10c514a8fd8": {
+      "workers": {
+        "app/app/goals/[goalId]/page": {
+          "moduleId": "[project]/.next-internal/server/app/app/goals/[goalId]/page/actions.js { ACTIONS_MODULE0 => \"[project]/src/command-center/goals/actions.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
+          "async": true,
+          "codeHash": null
+        },
+        "app/app/goals/new/page": {
+          "moduleId": "[project]/.next-internal/server/app/app/goals/new/page/actions.js { ACTIONS_MODULE0 => \"[project]/src/command-center/goals/actions.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
+          "async": true,
+          "codeHash": null
+        }
+      },
+      "filename": "src/command-center/goals/actions.ts",
+      "exportedName": "createGoalAction"
+    },
+    "6010189e377791e99dd239b8a297f74302fd442ed6": {
+      "workers": {
+        "app/app/goals/[goalId]/page": {
+          "moduleId": "[project]/.next-internal/server/app/app/goals/[goalId]/page/actions.js { ACTIONS_MODULE0 => \"[project]/src/command-center/goals/actions.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
+          "async": true,
+          "codeHash": null
+        }
+      },
+      "filename": "src/command-center/goals/actions.ts",
+      "exportedName": "updateGoalProgressAction"
+    }
+  },
   "edge": {},
   "encryptionKey": "YT6smLxhawwb9CJDTwSw3Lja5bfuc1/OUiopm9RnTLk="
 }
