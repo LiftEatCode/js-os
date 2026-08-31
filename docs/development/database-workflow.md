@@ -73,9 +73,15 @@ Safety:
 - Neon endpoint names do not always include the branch word “development”, so the host printout must be confirmed as the development branch.
 - Production bootstrap is not supported.
 
-Uses `DATABASE_URL` (pooled runtime). Node 24 CLI scripts that write `timestamptz` defaults need `--harmony-temporal` (included in the npm script) because Prisma 8 `instantNow` requires Temporal.
+Uses `DATABASE_URL` (pooled runtime). Temporal is initialized in `src/prisma/db.ts` via `temporal-polyfill`; bootstrap does not need `--harmony-temporal`.
 
 Details of the rows: [business state](../architecture/business-state.md), [agent architecture](../architecture/agent-architecture.md).
+
+Application access after bootstrap: [business-state services](../architecture/business-state-services.md). Read-only development check:
+
+```bash
+npm run business-state:verify
+```
 
 ## Source of truth
 

@@ -1,6 +1,6 @@
 # Agent architecture
 
-**Status:** Implemented (models). Runtime execution, tools, and chat are future.
+**Status:** Implemented (models + persistence services). Runtime execution, tools, and chat are future.
 
 ## AgentDefinition
 
@@ -84,3 +84,4 @@ Department operating definitions: [departments](../departments/ceo.md).
 
 - [Tool architecture](tool-architecture.md)
 - [Autonomy policy](../policies/autonomy.md)
+- [Business-state services](business-state-services.md)

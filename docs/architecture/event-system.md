@@ -1,6 +1,6 @@
 # Event system
 
-**Status:** Implemented (model). Emission from app/integrations is future.
+**Status:** Implemented (model + append-only service). Emission from integrations is future.
 
 BusinessEvent is the auditable timeline JS OS and future agents inspect.
 
@@ -38,10 +38,13 @@ An AgentRun may conceptually produce BusinessEvents. v0.1 does **not** include `
 ## Rules
 
 - Treat as append-only. Do not rewrite history.
+- The service layer exposes `recordBusinessEvent` / list / get. It does not expose update or delete.
 - Organization delete is Restrict — events are not cascade-deleted.
 - Do not use JSON as a substitute for core typed fields.
+- `eventType` at the service boundary must be `lowercase.dot.notation`.
 
 ## Related
 
+- [Business-state services](business-state-services.md)
 - [Business state](business-state.md)
 - [Agent architecture](agent-architecture.md)

@@ -1,13 +1,24 @@
 # Testing
 
-**Status:** Planned. No JS OS application test suite exists yet.
+**Status:** In progress (unit tests for service helpers). Isolated database tests are not implemented.
 
-Current validation is:
+Current validation:
 
 ```bash
 npm run typecheck
 npm run lint
 npm run build
+npm test
+```
+
+`npm test` runs Node's built-in test runner against `src/business-state/validation.test.ts` (event-type format, approval/AgentRun lifecycle rules). It does not connect to a database.
+
+## Development verification
+
+Read-only check of bootstrapped development state through the service layer:
+
+```bash
+npm run business-state:verify
 ```
 
 ## Isolation
@@ -20,4 +31,4 @@ Future options (not chosen):
 - temporary Neon branch
 - isolated schema generated for tests
 
-Do not invent a test runner or CI matrix here. Isolation is required before any mutating automated test is introduced.
+Do not invent a risky integration-test architecture until isolation exists. Do not wipe or truncate the development database from tests.

@@ -1,3 +1,5 @@
+/// <reference types="temporal-polyfill/types/global" />
+import 'temporal-polyfill/full/global';
 import { resolve } from 'node:path';
 import dotenv from 'dotenv';
 import postgres from '@prisma/orm-postgres/runtime';

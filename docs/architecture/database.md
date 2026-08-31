@@ -29,7 +29,7 @@ Prisma 8 is contract-first. It is not Prisma 7 `schema.prisma` + `@prisma/client
 contract source:  src/prisma/contract.prisma
 emitted:          src/prisma/contract.json
                   src/prisma/contract.d.ts
-runtime client:   src/prisma/db.ts  (not used by app routes yet)
+runtime client:   src/prisma/db.ts  (business-state services; unused by app routes yet)
 CLI config:       prisma.config.ts
 ```
 
@@ -60,13 +60,15 @@ Authoritative domain decisions: [business state](business-state.md).
 - CLI loads `.env.local` and uses `DIRECT_URL`
 - Runtime client uses `DATABASE_URL` and loads `.env.local`
 - Development bootstrap of Organization `js-solutions` and six AgentDefinitions
+- Business-state service layer
+- Temporal polyfill (`temporal-polyfill/full/global` in `src/prisma/db.ts`)
 
 **Not implemented:**
 
 - Production migration of later schema changes (follow the same plan-then-migrate rule)
 - Preview/staging database
-- Application query layer
-- Goal bootstrap (deliberate later step)
+- Isolated mutating test database
+- Goal row population (deliberate later operating-state step)
 
 ## Connection split
 
@@ -97,6 +99,7 @@ See [environments](../development/environments.md) and [database workflow](../de
 - No numeric auto-increment IDs.
 - Timestamps are PostgreSQL `timestamptz` (UTC). UI may display Organization timezone.
 - Mutable `updatedAt` uses Prisma 8 `temporal.updatedAt()` (not Prisma 7 `@updatedAt`).
+- Runtime requires a global `Temporal` implementation. JS OS loads `temporal-polyfill/full/global` in `src/prisma/db.ts`.
 
 ## JSON
 
@@ -134,3 +137,4 @@ AgentRun.output
 
 - [ADR-003](../decisions/ADR-003-prisma-8-contract-architecture.md)
 - [ADR-004](../decisions/ADR-004-neon-environment-isolation.md)
+- [Business-state services](business-state-services.md)

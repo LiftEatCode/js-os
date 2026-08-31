@@ -20,7 +20,7 @@ DIRECT_URL=      direct Prisma CLI/admin connection
 
 Do not commit `.env.local`. Do not paste real credentials into documentation or `NEXT_PUBLIC_*` variables.
 
-Prisma CLI (`prisma.config.ts`) loads `.env.local` and uses `DIRECT_URL`. The unused-by-app runtime client (`src/prisma/db.ts`) uses `DATABASE_URL`.
+Prisma CLI (`prisma.config.ts`) loads `.env.local` and uses `DIRECT_URL`. Application runtime (`src/prisma/db.ts`) uses `DATABASE_URL` and loads the Temporal polyfill. Business-state services import that client.
 
 ## Install and run
 
@@ -35,6 +35,13 @@ npm run dev
 npm run typecheck
 npm run lint
 npm run build
+npm test
+```
+
+Development read-only service check (uses Neon development; does not write):
+
+```bash
+npm run business-state:verify
 ```
 
 After editing `src/prisma/contract.prisma`:

@@ -1,6 +1,6 @@
 # Business state
 
-**Status:** Implemented (Prisma 8 contract + development bootstrap of Organization and AgentDefinitions). Application access/service layer is remaining Phase 1 work.
+**Status:** Implemented (Prisma 8 contract, development bootstrap, service layer). Company Goal *rows* are not populated yet; that is operating-state configuration, not unfinished infrastructure.
 
 JS OS reasons from durable business state, not from chat history. The Phase 1 model is intentionally small.
 
@@ -136,12 +136,14 @@ If an AgentRun is referenced as creator/source of a WorkItem or Approval, it can
 
 See [database](database.md). Naming: PascalCase models, camelCase fields, SCREAMING_SNAKE_CASE enums, `*At` timestamps, lowercase-dot `eventType` values at runtime.
 
-## Remaining Phase 1 work
+Application access: [business-state services](business-state-services.md).
 
-- Business-state access/service layer
-- Deliberate Goal rows (not part of the initial bootstrap)
+## Remaining work after Phase 1
+
+- Deliberate Goal rows (operating-state population, not schema)
 
 ## Related
 
 - [ADR-005](../decisions/ADR-005-agent-run-audit-provenance.md)
+- [Business-state services](business-state-services.md)
 - [Phase 1](../phases/phase-01-business-state.md)

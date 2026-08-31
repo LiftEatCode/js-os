@@ -1,6 +1,6 @@
 # Approval system
 
-**Status:** Implemented (model). Evaluation, queues, and execution consumption are future.
+**Status:** Implemented (model + persistence services). Evaluation, queues, and execution consumption are future.
 
 An Approval is authorization for a proposed action. It is not the action itself. Later execution tooling will consume approved records.
 
@@ -43,6 +43,6 @@ No ProposedAction entity in v0.1. `payload` holds the proposed action.
 - `agentRunId`: Restrict (optional field; if set, the run cannot be deleted)
 - `workItemId`: SetNull
 
-Approvals remain durable. Execution does not happen in this layer.
+Approvals remain durable. Execution does not happen in this layer. `approveApproval` / `rejectApproval` / `cancelApproval` only update authorization state.
 
-See [approval policy](../policies/approvals.md) and [risk policy](../policies/risk.md).
+See [approval policy](../policies/approvals.md), [risk policy](../policies/risk.md), and [business-state services](business-state-services.md).

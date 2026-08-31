@@ -26,6 +26,7 @@ Do not treat Planned/Future text as shipped capability.
 | [System boundaries](architecture/system-boundaries.md) | JS Solutions vs JS Growth vs JS OS; what each owns. |
 | [Database](architecture/database.md) | PostgreSQL, Neon, Prisma 8, connections, isolation. |
 | [Business state](architecture/business-state.md) | Phase 1 entities, locked decisions, referential integrity. |
+| [Business-state services](architecture/business-state-services.md) | Typed access layer over the seven Phase 1 models. |
 | [Event system](architecture/event-system.md) | BusinessEvent as append-oriented timeline. |
 | [Agent architecture](architecture/agent-architecture.md) | AgentDefinition vs AgentRun; permission ceiling. |
 | [Tool architecture](architecture/tool-architecture.md) | Future execution boundary; not implemented. |
@@ -118,7 +119,7 @@ None are implemented. JS Growth is specified in most detail because the boundary
 | [Local setup](development/local-setup.md) | Node 24, npm, env files, install, validation. |
 | [Environments](development/environments.md) | Dev vs production Neon; preview future. |
 | [Database workflow](development/database-workflow.md) | Prisma 8 plan-then-migrate; URL split; development bootstrap. |
-| [Testing](development/testing.md) | Current scripts; future isolated DB tests. |
+| [Testing](development/testing.md) | Unit tests for service helpers; no isolated DB tests yet. |
 | [Deployment](development/deployment.md) | Intended Vercel hosting; not a live claim. |
 
 ---
@@ -144,4 +145,4 @@ How ADRs work and the accepted decisions: [decisions/README.md](decisions/README
 |---|---|
 | [Roadmap](roadmap.md) | Phases 0–15: objective, capabilities, safety, exit criteria. |
 | [Phase 0 — Foundation](phases/phase-00-foundation.md) | Repo, Next.js, architecture, Node 24, Prisma 8 foundation. |
-| [Phase 1 — Business State](phases/phase-01-business-state.md) | Contract, Neon, migration, org/agent bootstrap; service layer remaining. |
+| [Phase 1 — Business State](phases/phase-01-business-state.md) | Contract, Neon, bootstrap, service layer. Complete; Goal rows later. |

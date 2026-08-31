@@ -24,15 +24,15 @@ See [phase-00-foundation.md](phases/phase-00-foundation.md).
 
 ## Phase 1 — Business State
 
-**Status:** In progress
+**Status:** Implemented
 
 **Objective:** Persist the durable internal model JS OS will reason about.
 
-**Major capabilities:** Organization, Goal, WorkItem, BusinessEvent, Approval, AgentDefinition, AgentRun; Neon isolation; development migration.
+**Major capabilities:** Organization, Goal, WorkItem, BusinessEvent, Approval, AgentDefinition, AgentRun; Neon isolation; development migration; Organization and AgentDefinition bootstrap; typed business-state services.
 
 **Key safety boundary:** No production mutations from development. No Cascade deletes. JS Growth records are not duplicated.
 
-**Exit criteria:** Contract implemented; development schema applied and verified; initial JS Solutions Organization and AgentDefinitions bootstrapped; business-state access/service layer. Service layer (and deliberate Goal rows) are still remaining.
+**Exit criteria:** Contract implemented; development schema applied and verified; initial JS Solutions Organization and AgentDefinitions bootstrapped; business-state access/service layer. Met. Company Goal rows are deferred operating-state population, not unfinished Phase 1 infrastructure.
 
 See [phase-01-business-state.md](phases/phase-01-business-state.md).
 

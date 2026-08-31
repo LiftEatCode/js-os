@@ -1,6 +1,6 @@
 # Architecture overview
 
-**Status:** In progress
+**Status:** Implemented (Phase 1 complete). Command Center and later phases are planned.
 
 JS OS is the internal operating system for JS Solutions. It is the orchestration and command platform for business operations across sales, marketing, client operations, engineering, finance, and AI-assisted workflows.
 
@@ -27,17 +27,18 @@ What exists now:
 
 - Phase 1 business-state contract in `src/prisma/contract.prisma`
 - Emitted artifacts `src/prisma/contract.json` and `src/prisma/contract.d.ts`
-- Unused-by-app runtime client `src/prisma/db.ts`
+- Runtime client `src/prisma/db.ts` used by business-state services
 - Isolated Neon development and production branches
 - Pooled runtime URL (`DATABASE_URL`) and direct CLI URL (`DIRECT_URL`)
 - Local secrets in gitignored `.env.local`
 - Development bootstrap: JS Solutions Organization + six AgentDefinition role rows
+- Business-state service layer (`src/business-state`, import `@/business-state`)
+- Temporal polyfill in `src/prisma/db.ts` for Prisma 8 timestamptz codecs
 
 What does not exist yet:
 
 - Command Center UI
-- Goal rows (deferred; not part of initial bootstrap)
-- Business-state service/access layer
+- Goal rows (deferred operating-state population, not unfinished schema)
 - Tools, permissions enforcement, or tool execution
 - CEO review loop
 - Integrations
@@ -90,13 +91,13 @@ Updated business state
 
 | Layer | Role | Status |
 |---|---|---|
-| Business state | Durable goals, work, events, approvals, agents | Implemented (contract) |
+| Business state | Durable goals, work, events, approvals, agents | Implemented (contract + services) |
 | Reasoning | CEO/department review of state vs goals | Planned |
 | Tools | Explicit execution boundary | Future |
 | Permissions | Autonomy ceiling plus per-tool checks | Designed, not enforced |
-| Approvals | Authorization for proposed actions | Implemented (model only) |
+| Approvals | Authorization for proposed actions | Implemented (model + persistence; evaluation future) |
 | Execution | Performing an approved action | Future |
-| Events | Append-oriented timeline | Implemented (model only) |
+| Events | Append-oriented timeline | Implemented (model + append API) |
 
 ## Principles
 
@@ -117,5 +118,6 @@ All future integrations and autonomous actions must pass through explicit tools 
 
 - [System boundaries](system-boundaries.md)
 - [Business state](business-state.md)
+- [Business-state services](business-state-services.md)
 - [Database](database.md)
 - [Roadmap](../roadmap.md)
