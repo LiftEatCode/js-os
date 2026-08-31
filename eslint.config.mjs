@@ -15,6 +15,7 @@ const eslintConfig = defineConfig([
     // Prisma 8 generated contract artifacts:
     "src/prisma/contract.d.ts",
     "src/prisma/contract.json",
+    "migrations/snapshots/**",
     // Prisma-synced agent skills (not application code):
     ".cursor/skills/**",
     ".claude/skills/**",

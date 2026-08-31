@@ -1,78 +1,31 @@
 # JS OS
 
-Internal operating system for JS Solutions.
+Internal operating system for **JS Solutions**.
 
-JS OS is the orchestration and command platform responsible for coordinating business operations across sales, marketing, client operations, engineering, finance, and AI-assisted workflows.
+JS OS is a separate application from **JS Growth**. JS Solutions is the company. JS Growth is the customer-facing product platform (audits, prospecting, campaigns, and related commercial data). JS OS is the internal command layer: goals, business state, work, approvals, events, and later bounded AI coordination.
 
-## Product boundaries
+## Current status
 
-### JS Solutions
+**In progress — Phase 1 (Business State).** Foundation (Phase 0) is complete. The Prisma 8 contract and development schema exist. Seed data and a business-state service layer remain.
 
-The company.
-
-### JS Growth
-
-The customer-facing product platform located in the separate `js-growth` repository.
-
-It currently owns systems such as:
-
-- Website Growth Audit
-- GBP Audit
-- Prospecting Engine
-- Competitive Intelligence
-- lead and opportunity workflows
-
-JS OS does not duplicate those systems.
-
-Instead, JS OS will eventually consume them as tools and data sources.
-
-### JS OS
-
-The internal operating layer for JS Solutions.
-
-Its responsibilities will include:
-
-- company goals
-- business state
-- priorities
-- work coordination
-- AI agents
-- approvals
-- automation
-- business events
-- cross-system integrations
-- executive reporting
-
-## Architecture direction
-
-The initial application uses:
-
-- Next.js
-- React
-- TypeScript
-- Tailwind CSS
-
-Additional infrastructure will be introduced only when required by an implemented feature.
-
-We will avoid premature infrastructure and agent complexity.
+Stack in use: Next.js 16, React 19, TypeScript, Tailwind, Prisma 8, PostgreSQL on Neon (isolated development and production branches).
 
 ## Core principle
 
-AI may recommend and prepare actions, but JS OS controls what actions are actually permitted to execute.
+AI may recommend and prepare actions. JS OS controls what is permitted to execute. Integrations and autonomous actions must pass through explicit tools, permission rules, and approvals. Tool execution is **not implemented**.
 
-All future integrations and autonomous actions must pass through explicit tools and permission rules.
+## Documentation
+
+**Start here:** [docs/README.md](docs/README.md)
+
+That index covers architecture, company context, departments, policies, operations, integrations, development, ADRs, and the roadmap.
 
 ## Development
 
-Install dependencies:
+Requires **Node 24**. Copy `.env.example` to `.env.local` (development Neon URLs only). Do not commit secrets.
 
 ```bash
 npm install
-```
-
-Run locally:
-
-```bash
 npm run dev
 ```
 
@@ -84,6 +37,10 @@ npm run lint
 npm run build
 ```
 
-## Status
+Prisma contract (offline):
 
-JS OS is currently in foundation development.
+```bash
+npm run contract:emit
+```
+
+Never apply a database migration before reviewing its plan. Never point development at production. Details: [docs/development/local-setup.md](docs/development/local-setup.md).

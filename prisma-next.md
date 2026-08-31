@@ -1,10 +1,12 @@
 # Welcome to Prisma Next!
 
-This is the Prisma 8 scaffold for JS OS.
+This is the Prisma 8 scaffold README for JS OS.
 
-The generated User/Post sample models were removed. The contract at `src/prisma/contract.prisma` is empty until the JS OS data model is translated from `docs/data-model.md`.
+**Project status:** The JS OS Phase 1 contract lives in [`src/prisma/contract.prisma`](src/prisma/contract.prisma). Domain documentation is [`docs/architecture/business-state.md`](docs/architecture/business-state.md). CLI config loads `.env.local` and uses `DIRECT_URL` ([`prisma.config.ts`](prisma.config.ts)). Runtime uses `DATABASE_URL` ([`src/prisma/db.ts`](src/prisma/db.ts)).
 
-No database has been initialized, verified, signed, or migrated yet. Do not run `db init`, `db verify`, `db sign`, or application queries in this foundation step.
+Workflow: [`docs/development/database-workflow.md`](docs/development/database-workflow.md). Never apply a migration before reviewing its plan.
+
+The sample `User` model below is Prisma product illustration. It is **not** the JS OS contract.
 
 ---
 
@@ -54,7 +56,11 @@ If you use a framework like Next.js or Vite, the Prisma Next plugin will do this
 
 ## Configuration
 
-[`prisma.config.ts`](prisma.config.ts) tells the CLI where your contract lives and how to connect to your database. It loads environment variables from `.env` automatically:
+[`prisma.config.ts`](prisma.config.ts) tells the CLI where your contract lives and how to connect to your database.
+
+JS OS loads `.env.local` and uses `DIRECT_URL` for the CLI (not the sample `.env` / `DATABASE_URL` snippet below). `DATABASE_URL` remains the pooled runtime URL. See [`docs/development/database-workflow.md`](docs/development/database-workflow.md).
+
+Prisma’s generated example (do not copy over the project file):
 
 ```typescript
 import 'dotenv/config';
@@ -71,7 +77,7 @@ export default definePrismaConfig({
 });
 ```
 
-Notice the `DATABASE_URL` above? It's defined in your [`.env`](./.env) file:
+Notice the `DATABASE_URL` above? In the Prisma sample that would live in `.env`. JS OS uses gitignored `.env.local` instead; empty placeholders are in [`.env.example`](.env.example):
 
 ```env
 DATABASE_URL="postgresql://user:password@localhost:5432/mydb"
