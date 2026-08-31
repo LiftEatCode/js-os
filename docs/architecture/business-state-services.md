@@ -113,5 +113,6 @@ That uses the service layer to read the bootstrapped Organization and six AgentD
 ## Related
 
 - [Business state](business-state.md)
+- [Command Center](command-center.md)
 - [Database](database.md)
 - [Phase 1](../phases/phase-01-business-state.md)

@@ -40,15 +40,31 @@ See [phase-01-business-state.md](phases/phase-01-business-state.md).
 
 ## Phase 2 — Command Center
 
-**Status:** Planned
+**Status:** In progress
 
 **Objective:** Give humans a central view of running JS Solutions.
 
-**Major capabilities:** Business overview, current goals, priorities, work queue, approval queue, recent activity.
+**Major capabilities:** Command Center shell and navigation (2.1); later live overview, goals, work, activity, approvals, agents, and a Knowledge browser over `docs/`.
 
-**Key safety boundary:** Read and coordinate. The dashboard does not execute external tools.
+**Key safety boundary:** Read and coordinate. The dashboard does not execute external tools. UI uses business-state services, not raw Prisma.
 
-**Exit criteria:** Owner can see goals, work, approvals, and recent events from live business state (after Phase 1 seed/service).
+**Exit criteria:** Owner can see goals, work, approvals, and recent events from live business state. Not met; only the shell exists.
+
+**Milestones:**
+
+```text
+2.1 Command Center shell + navigation     Implemented
+2.2 Business overview                     Planned
+2.3 Goals                                 Planned
+2.4 Work                                  Planned
+2.5 Activity                              Planned
+2.6 Approvals                             Planned
+2.7 Agents                                Planned
+2.8 Knowledge / documentation browser     Planned
+2.9 Integration + polish                  Planned
+```
+
+See [phase-02-command-center.md](phases/phase-02-command-center.md).
 
 ---
 

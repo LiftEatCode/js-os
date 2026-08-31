@@ -2,7 +2,7 @@
 
 **Status:** Implemented / Complete
 
-Phase 1 schema, development database, bootstrap, and access layer are in place. Company Goal *rows* have not been defined yet; that is future operating-state population, not unfinished infrastructure. Phase 2 (Command Center) has not started.
+Phase 1 schema, development database, bootstrap, and access layer are in place. Company Goal *rows* have not been defined yet; that is future operating-state population, not unfinished infrastructure. Phase 2 Command Center work has started separately (shell only in 2.1).
 
 ## Goals
 

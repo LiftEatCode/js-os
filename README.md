@@ -6,7 +6,7 @@ JS OS is a separate application from **JS Growth**. JS Solutions is the company.
 
 ## Current status
 
-**Phase 1 (Business State) is complete.** Foundation (Phase 0) is complete. The Prisma 8 contract, development schema, JS Solutions Organization, six AgentDefinition role rows, and the business-state service layer exist. Company Goal rows have not been populated yet. Phase 2 (Command Center) has not started.
+**Phase 1 (Business State) is complete.** Foundation (Phase 0) is complete. **Phase 2 (Command Center) is in progress:** the `/app` shell and navigation exist (Milestone 2.1). Live overview and feature screens are not implemented. Company Goal rows have not been populated yet. The Command Center is currently unauthenticated development functionality.
 
 Stack in use: Next.js 16, React 19, TypeScript, Tailwind, Prisma 8, PostgreSQL on Neon (isolated development and production branches).
 

@@ -1,6 +1,6 @@
 # Architecture overview
 
-**Status:** Implemented (Phase 1 complete). Command Center and later phases are planned.
+**Status:** Implemented through Phase 1. Command Center shell (Phase 2.1) is implemented. Later Command Center milestones and later phases are planned.
 
 JS OS is the internal operating system for JS Solutions. It is the orchestration and command platform for business operations across sales, marketing, client operations, engineering, finance, and AI-assisted workflows.
 
@@ -34,10 +34,11 @@ What exists now:
 - Development bootstrap: JS Solutions Organization + six AgentDefinition role rows
 - Business-state service layer (`src/business-state`, import `@/business-state`)
 - Temporal polyfill in `src/prisma/db.ts` for Prisma 8 timestamptz codecs
+- Command Center shell and navigation at `/app` (Milestone 2.1)
 
 What does not exist yet:
 
-- Command Center UI
+- Live Command Center overview or feature screens (Milestones 2.2–2.8)
 - Goal rows (deferred operating-state population, not unfinished schema)
 - Tools, permissions enforcement, or tool execution
 - CEO review loop
@@ -91,6 +92,7 @@ Updated business state
 
 | Layer | Role | Status |
 |---|---|---|
+| Command Center | Internal operating UI | In progress (2.1 shell) |
 | Business state | Durable goals, work, events, approvals, agents | Implemented (contract + services) |
 | Reasoning | CEO/department review of state vs goals | Planned |
 | Tools | Explicit execution boundary | Future |
@@ -119,5 +121,6 @@ All future integrations and autonomous actions must pass through explicit tools 
 - [System boundaries](system-boundaries.md)
 - [Business state](business-state.md)
 - [Business-state services](business-state-services.md)
+- [Command Center](command-center.md)
 - [Database](database.md)
 - [Roadmap](../roadmap.md)

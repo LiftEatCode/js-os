@@ -29,6 +29,8 @@ npm install
 npm run dev
 ```
 
+The app landing page is `/`. The Command Center is `/app`. Auth is not implemented.
+
 ## Validation
 
 ```bash
