@@ -1,7 +1,343 @@
-// Prisma 8 starter contract for JS OS.
-//
-// This file is the Prisma 8 PSL contract, not a Prisma 7 schema.prisma.
-// JS OS business models are intentionally not defined here yet.
-// Translate docs/data-model.md in the next dedicated step.
+// JS OS Phase 1 business-state contract.
+// Prisma 8 PSL — not Prisma 7 schema.prisma.
+// Domain source of truth: docs/data-model.md
 //
 // No database has been initialized, verified, signed, or migrated yet.
+
+// ---------------------------------------------------------------------------
+// Enums (entity-specific even when member names overlap)
+// ---------------------------------------------------------------------------
+
+enum OrganizationStatus {
+  @@type("pg/text@1")
+  ACTIVE   = "ACTIVE"
+  INACTIVE = "INACTIVE"
+}
+
+enum GoalStatus {
+  @@type("pg/text@1")
+  DRAFT     = "DRAFT"
+  ACTIVE    = "ACTIVE"
+  ACHIEVED  = "ACHIEVED"
+  PAUSED    = "PAUSED"
+  CANCELLED = "CANCELLED"
+}
+
+enum GoalPriority {
+  @@type("pg/text@1")
+  LOW      = "LOW"
+  MEDIUM   = "MEDIUM"
+  HIGH     = "HIGH"
+  CRITICAL = "CRITICAL"
+}
+
+enum GoalTimeHorizon {
+  @@type("pg/text@1")
+  SHORT_TERM = "SHORT_TERM"
+  QUARTERLY  = "QUARTERLY"
+  ANNUAL     = "ANNUAL"
+  LONG_TERM  = "LONG_TERM"
+}
+
+enum WorkItemStatus {
+  @@type("pg/text@1")
+  BACKLOG           = "BACKLOG"
+  READY             = "READY"
+  IN_PROGRESS       = "IN_PROGRESS"
+  BLOCKED           = "BLOCKED"
+  WAITING_APPROVAL  = "WAITING_APPROVAL"
+  COMPLETED         = "COMPLETED"
+  CANCELLED         = "CANCELLED"
+}
+
+enum WorkItemPriority {
+  @@type("pg/text@1")
+  LOW      = "LOW"
+  MEDIUM   = "MEDIUM"
+  HIGH     = "HIGH"
+  CRITICAL = "CRITICAL"
+}
+
+enum WorkType {
+  @@type("pg/text@1")
+  TASK         = "TASK"
+  REVIEW       = "REVIEW"
+  RESEARCH     = "RESEARCH"
+  CONTENT      = "CONTENT"
+  OUTREACH     = "OUTREACH"
+  ENGINEERING  = "ENGINEERING"
+  CLIENT_WORK  = "CLIENT_WORK"
+  ADMIN        = "ADMIN"
+  DECISION     = "DECISION"
+}
+
+// External/integration origin only. Internal JS OS provenance uses FKs.
+enum WorkItemSourceType {
+  @@type("pg/text@1")
+  JS_GROWTH = "JS_GROWTH"
+  GITHUB    = "GITHUB"
+  EMAIL     = "EMAIL"
+  CALENDAR  = "CALENDAR"
+  PAYMENTS  = "PAYMENTS"
+  OTHER     = "OTHER"
+}
+
+enum BusinessEventSourceType {
+  @@type("pg/text@1")
+  SYSTEM    = "SYSTEM"
+  USER      = "USER"
+  AGENT     = "AGENT"
+  JS_GROWTH = "JS_GROWTH"
+  GITHUB    = "GITHUB"
+  EMAIL     = "EMAIL"
+  CALENDAR  = "CALENDAR"
+  PAYMENTS  = "PAYMENTS"
+  OTHER     = "OTHER"
+}
+
+enum ApprovalStatus {
+  @@type("pg/text@1")
+  PENDING   = "PENDING"
+  APPROVED  = "APPROVED"
+  REJECTED  = "REJECTED"
+  CANCELLED = "CANCELLED"
+  EXPIRED   = "EXPIRED"
+}
+
+enum ApprovalRiskLevel {
+  @@type("pg/text@1")
+  LOW      = "LOW"
+  MEDIUM   = "MEDIUM"
+  HIGH     = "HIGH"
+  CRITICAL = "CRITICAL"
+}
+
+enum ApprovalRequesterType {
+  @@type("pg/text@1")
+  USER   = "USER"
+  AGENT  = "AGENT"
+  SYSTEM = "SYSTEM"
+}
+
+enum AgentDefinitionStatus {
+  @@type("pg/text@1")
+  ACTIVE   = "ACTIVE"
+  PAUSED   = "PAUSED"
+  DISABLED = "DISABLED"
+}
+
+enum AgentRole {
+  @@type("pg/text@1")
+  CEO                = "CEO"
+  SALES              = "SALES"
+  MARKETING          = "MARKETING"
+  CLIENT_OPERATIONS  = "CLIENT_OPERATIONS"
+  ENGINEERING        = "ENGINEERING"
+  FINANCE            = "FINANCE"
+  GENERAL            = "GENERAL"
+}
+
+enum AgentPermissionLevel {
+  @@type("pg/text@1")
+  OBSERVE    = "OBSERVE"
+  RECOMMEND  = "RECOMMEND"
+  PREPARE    = "PREPARE"
+  EXECUTE    = "EXECUTE"
+}
+
+enum AgentRunTriggerType {
+  @@type("pg/text@1")
+  MANUAL          = "MANUAL"
+  SCHEDULED       = "SCHEDULED"
+  BUSINESS_EVENT  = "BUSINESS_EVENT"
+  WORK_ITEM       = "WORK_ITEM"
+  SYSTEM          = "SYSTEM"
+}
+
+enum AgentRunStatus {
+  @@type("pg/text@1")
+  QUEUED     = "QUEUED"
+  RUNNING    = "RUNNING"
+  COMPLETED  = "COMPLETED"
+  FAILED     = "FAILED"
+  CANCELLED  = "CANCELLED"
+}
+
+// ---------------------------------------------------------------------------
+// Models
+// ---------------------------------------------------------------------------
+
+model Organization {
+  id          Uuid                 @id @default(uuid())
+  name        String
+  slug        String               @unique
+  description String?
+  timezone    String
+  status      OrganizationStatus
+  createdAt   Timestamptz          @default(now())
+  updatedAt   temporal.updatedAt()
+
+  goals             Goal[]
+  workItems         WorkItem[]
+  businessEvents    BusinessEvent[]
+  approvals         Approval[]
+  agentDefinitions  AgentDefinition[]
+  agentRuns         AgentRun[]
+}
+
+model Goal {
+  id             Uuid             @id @default(uuid())
+  organizationId Uuid
+  title          String
+  description    String?
+  status         GoalStatus
+  priority       GoalPriority
+  timeHorizon    GoalTimeHorizon
+  targetDate     Timestamptz?
+  metricName     String?
+  metricUnit     String?
+  targetValue    Decimal?
+  currentValue   Decimal?
+  createdAt      Timestamptz      @default(now())
+  updatedAt      temporal.updatedAt()
+  completedAt    Timestamptz?
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  workItems    WorkItem[]
+
+  @@index([organizationId, status])
+  @@index([organizationId, priority])
+  @@index([targetDate])
+}
+
+model WorkItem {
+  id              Uuid                 @id @default(uuid())
+  organizationId  Uuid
+  goalId          Uuid?
+  parentId        Uuid?
+  agentRunId      Uuid?
+  title           String
+  description     String?
+  status          WorkItemStatus
+  priority        WorkItemPriority
+  workType        WorkType
+  sourceType      WorkItemSourceType?
+  sourceId        String?
+  assignedAgentId Uuid?
+  dueAt           Timestamptz?
+  startedAt       Timestamptz?
+  completedAt     Timestamptz?
+  createdAt       Timestamptz          @default(now())
+  updatedAt       temporal.updatedAt()
+
+  organization  Organization     @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  goal          Goal?            @relation(fields: [goalId], references: [id], onDelete: SetNull)
+  parent        WorkItem?        @relation("WorkItemHierarchy", fields: [parentId], references: [id], onDelete: SetNull)
+  children      WorkItem[]       @relation("WorkItemHierarchy")
+  creatingRun   AgentRun?        @relation("AgentRunCreatedWorkItems", fields: [agentRunId], references: [id], onDelete: Restrict)
+  assignedAgent AgentDefinition? @relation("AssignedWorkItems", fields: [assignedAgentId], references: [id], onDelete: SetNull)
+  approvals     Approval[]
+
+  @@index([organizationId, status])
+  @@index([organizationId, priority])
+  @@index([organizationId, dueAt])
+  @@index([goalId])
+  @@index([assignedAgentId])
+  @@index([agentRunId])
+  @@index([parentId])
+}
+
+model BusinessEvent {
+  id             Uuid                     @id @default(uuid())
+  organizationId Uuid
+  eventType      String
+  sourceType     BusinessEventSourceType
+  sourceId       String?
+  title          String
+  description    String?
+  occurredAt     Timestamptz
+  metadata       Jsonb?
+  createdAt      Timestamptz              @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+
+  @@index([organizationId, occurredAt])
+  @@index([organizationId, eventType])
+  @@index([sourceType, sourceId])
+}
+
+model Approval {
+  id              Uuid                   @id @default(uuid())
+  organizationId  Uuid
+  workItemId      Uuid?
+  agentRunId      Uuid?
+  actionType      String
+  title           String
+  description     String?
+  status          ApprovalStatus
+  riskLevel       ApprovalRiskLevel
+  requestedByType ApprovalRequesterType
+  requestedById   String?
+  requestedAt     Timestamptz            @default(now())
+  decidedAt       Timestamptz?
+  decisionReason  String?
+  expiresAt       Timestamptz?
+  payload         Jsonb?
+  createdAt       Timestamptz            @default(now())
+  updatedAt       temporal.updatedAt()
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  workItem     WorkItem?    @relation(fields: [workItemId], references: [id], onDelete: SetNull)
+  agentRun     AgentRun?    @relation(fields: [agentRunId], references: [id], onDelete: Restrict)
+
+  @@index([organizationId, status])
+  @@index([workItemId])
+  @@index([agentRunId])
+  @@index([expiresAt])
+}
+
+model AgentDefinition {
+  id              Uuid                   @id @default(uuid())
+  organizationId  Uuid
+  name            String
+  slug            String
+  description     String?
+  status          AgentDefinitionStatus
+  role            AgentRole
+  permissionLevel AgentPermissionLevel
+  instructions    String?
+  createdAt       Timestamptz            @default(now())
+  updatedAt       temporal.updatedAt()
+
+  organization      Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  agentRuns         AgentRun[]
+  assignedWorkItems WorkItem[]   @relation("AssignedWorkItems")
+
+  @@unique([organizationId, slug])
+  @@index([organizationId, status])
+  @@index([organizationId, role])
+}
+
+model AgentRun {
+  id                 Uuid                 @id @default(uuid())
+  organizationId     Uuid
+  agentDefinitionId  Uuid
+  triggerType        AgentRunTriggerType
+  triggerReference   String?
+  status             AgentRunStatus
+  startedAt          Timestamptz
+  completedAt        Timestamptz?
+  inputSnapshot      Jsonb?
+  output             Jsonb?
+  error              String?
+  createdAt          Timestamptz          @default(now())
+
+  organization       Organization     @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  agentDefinition    AgentDefinition  @relation(fields: [agentDefinitionId], references: [id], onDelete: Restrict)
+  createdWorkItems   WorkItem[]       @relation("AgentRunCreatedWorkItems")
+  approvals          Approval[]
+
+  @@index([organizationId, status])
+  @@index([agentDefinitionId, createdAt])
+  @@index([organizationId, createdAt])
+}

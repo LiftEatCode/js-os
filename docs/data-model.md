@@ -167,7 +167,7 @@ description?
 status
 priority
 workType
-sourceType
+sourceType?
 sourceId?
 assignedAgentId?
 dueAt?
@@ -216,15 +216,18 @@ DECISION
 
 ### Source type
 
+`sourceType` and `sourceId` are optional. They identify an external or integration-origin record only.
+
 ```text
-MANUAL
-GOAL
-AGENT
-BUSINESS_EVENT
-INTEGRATION
+JS_GROWTH
+GITHUB
+EMAIL
+CALENDAR
+PAYMENTS
+OTHER
 ```
 
-`sourceType` may still classify origin (`MANUAL`, `GOAL`, `AGENT`, and so on). When the origin is a JS OS record, the ID belongs on a dedicated foreign key, not in `sourceId`. `sourceId` is for external or integration-origin identifiers.
+A WorkItem with no external source leaves both fields empty. Internal JS OS origin uses dedicated foreign keys (`goalId`, `parentId`, `agentRunId`, `assignedAgentId`), not `sourceType`.
 
 ### Relationships
 
