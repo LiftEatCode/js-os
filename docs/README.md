@@ -147,4 +147,4 @@ How ADRs work and the accepted decisions: [decisions/README.md](decisions/README
 | [Roadmap](roadmap.md) | Phases 0–15: objective, capabilities, safety, exit criteria. |
 | [Phase 0 — Foundation](phases/phase-00-foundation.md) | Repo, Next.js, architecture, Node 24, Prisma 8 foundation. |
 | [Phase 1 — Business State](phases/phase-01-business-state.md) | Contract, Neon, bootstrap, service layer. Complete; Goal rows later. |
-| [Phase 2 — Command Center](phases/phase-02-command-center.md) | Shell in progress; live overview and feature screens planned. |
+| [Phase 2 — Command Center](phases/phase-02-command-center.md) | Shell and live Overview; feature screens planned. |

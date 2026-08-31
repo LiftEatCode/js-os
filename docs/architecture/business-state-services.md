@@ -38,11 +38,12 @@ Persistence operations for Organization, Goal, WorkItem, BusinessEvent, Approval
 - Tool execution
 - Agent reasoning or model calls
 - Queues, workers, REST APIs, or UI
+- Command Center Owner Attention projection (derived in `src/command-center/overview/`)
 - Auth / organization membership
 
 ## Centralized database access
 
-All services use the single runtime in `src/prisma/db.ts` (`DATABASE_URL`). That module loads `.env.local` and initializes Temporal via `temporal-polyfill/full/global` before queries run.
+All services use the single runtime in `src/prisma/db.ts` (`DATABASE_URL`). That module initializes Temporal via `temporal-polyfill/full/global` before queries run. CLI scripts load `.env.local` from this module when `DATABASE_URL` is not already set; Next.js injects `.env.local` itself.
 
 Callers must not create additional Prisma clients.
 

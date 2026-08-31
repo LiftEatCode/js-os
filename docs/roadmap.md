@@ -44,17 +44,17 @@ See [phase-01-business-state.md](phases/phase-01-business-state.md).
 
 **Objective:** Give humans a central view of running JS Solutions.
 
-**Major capabilities:** Command Center shell and navigation (2.1); later live overview, goals, work, activity, approvals, agents, and a Knowledge browser over `docs/`.
+**Major capabilities:** Command Center shell and navigation (2.1); live read-only business overview (2.2); later goals, work, activity, approvals, agents, and a Knowledge browser over `docs/`.
 
 **Key safety boundary:** Read and coordinate. The dashboard does not execute external tools. UI uses business-state services, not raw Prisma.
 
-**Exit criteria:** Owner can see goals, work, approvals, and recent events from live business state. Not met; only the shell exists.
+**Exit criteria:** Owner can see goals, work, approvals, and recent events from live business state. Partially met via the Overview; dedicated screens remain.
 
 **Milestones:**
 
 ```text
 2.1 Command Center shell + navigation     Implemented
-2.2 Business overview                     Planned
+2.2 Business overview                     Implemented
 2.3 Goals                                 Planned
 2.4 Work                                  Planned
 2.5 Activity                              Planned

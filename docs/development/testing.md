@@ -11,7 +11,12 @@ npm run build
 npm test
 ```
 
-`npm test` runs Node's built-in test runner against `src/business-state/validation.test.ts` (event-type format, approval/AgentRun lifecycle rules). It does not connect to a database.
+`npm test` runs Node's built-in test runner against:
+
+- `src/business-state/validation.test.ts` (event-type format, approval/AgentRun lifecycle rules)
+- `src/command-center/overview/attention.test.ts` (Owner Attention projection)
+
+These tests do not connect to a database.
 
 ## Development verification
 

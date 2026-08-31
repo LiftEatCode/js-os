@@ -1,6 +1,6 @@
 # Command Center
 
-**Status:** In progress. Milestone 2.1 (shell + navigation) is implemented. Later Command Center milestones are planned.
+**Status:** In progress. Milestone 2.1 (shell + navigation) and Milestone 2.2 (business overview) are implemented. Later Command Center milestones are planned.
 
 The Command Center is the internal JS OS operating interface for JS Solutions.
 
@@ -30,7 +30,7 @@ Command Center
 
 | Area | Purpose | Milestone |
 |---|---|---|
-| Overview | Current company state and owner attention | 2.2 Planned |
+| Overview | Current company state and owner attention | 2.2 Implemented |
 | Goals | Strategic objectives and measurable progress | 2.3 Planned |
 | Work | WorkItems across JS Solutions | 2.4 Planned |
 | Activity | BusinessEvent operational history | 2.5 Planned |
@@ -77,7 +77,62 @@ Prisma (`src/prisma/db.ts`)
 Neon
 ```
 
-Pages and layouts must not query Prisma directly. Milestone 2.1 does not load live Goals, WorkItems, events, approvals, or agent runs. Optional organization display was deferred so the shell stayed focused.
+Pages and layouts must not query Prisma directly. Milestone 2.2 Overview is a server-rendered, read-only page that loads live state through `@/business-state`.
+
+## Overview (Milestone 2.2)
+
+**Status:** Implemented
+
+`/app` is request-time (`dynamic = 'force-dynamic'`). It does not cache a build-time snapshot of business state. There is no client fetching, polling, or API route for this page.
+
+### Sections
+
+- Organization identity (`name`, `status`, optional description)
+- Summary counts: Active Goals, Open Work, Pending Approvals, Active Agents
+- Owner Attention (derived)
+- Active Goals preview
+- Current open WorkItems (up to 5)
+- Pending Approvals (up to 5, no approve/reject actions)
+- Recent BusinessEvents (up to 8)
+- Configured organizational AgentDefinitions
+
+Real zeros and empty lists are displayed. No fabricated metrics.
+
+### Open Work
+
+Open Work is a Command Center definition, not a database field:
+
+```text
+WorkItem.status is not COMPLETED and not CANCELLED
+```
+
+That includes `BACKLOG`, `READY`, `IN_PROGRESS`, `BLOCKED`, and `WAITING_APPROVAL`.
+
+### Owner Attention
+
+Deterministic derived state in `src/command-center/overview/attention.ts`. It is not AI reasoning, not a policy engine, and not persisted.
+
+Conditions (open work only where work is involved):
+
+1. Critical open WorkItems (`priority = CRITICAL`)
+2. Failed AgentRuns (`status = FAILED`)
+3. Pending Approvals
+4. Blocked open WorkItems (`status = BLOCKED`)
+5. Overdue open WorkItems (`dueAt` before now)
+
+A WorkItem appears in at most one group (critical, then blocked, then overdue). Ordering within groups: oldest created for critical/blocked, most recent failure for AgentRuns, oldest `requestedAt` for approvals, earliest `dueAt` for overdue.
+
+Empty copy: “No items currently require owner attention.” That does **not** mean the business is healthy; it means no currently modeled attention conditions matched.
+
+Presentation severity (`critical` / `warning` / `info`) is UI-only. It does not change stored WorkItem or Approval enums.
+
+### AgentDefinitions
+
+The Overview lists configured organizational roles. An AgentDefinition row is not an operational AI agent.
+
+### Timestamps
+
+Instants are formatted in the Organization timezone (`America/Chicago` for JS Solutions) using Temporal, not a separate date library.
 
 ## Knowledge / documentation
 
@@ -95,14 +150,14 @@ The Command Center is currently unauthenticated development functionality. Do no
 
 The sidebar System area shows `Development` or `Production` from `NODE_ENV`. It does not expose hosts, connection strings, or credentials.
 
-## What 2.1 does not include
+## What 2.1–2.2 do not include
 
-- Live business overview or fake metrics
-- Goal, work, activity, approval, or agent feature UIs
+- Goal, work, activity, approval, or agent *management* UIs
+- Approval or AgentRun actions from Overview
 - Documentation renderer / MDX
 - Auth
 - Tools, agents, orchestration, APIs created for their own sake
-- Schema or business-state mutations
+- Schema or business-state mutations from the Command Center
 
 ## Related
 

@@ -6,7 +6,14 @@ import postgres from '@prisma/orm-postgres/runtime';
 import type { Contract } from './contract.d';
 import contractJson from './contract.json' with { type: 'json' };
 
-dotenv.config({ path: resolve(import.meta.dirname, '../../.env.local') });
+// Next.js already injects `.env.local`. CLI scripts do not, and they have
+// `import.meta.dirname`. Skip dotenv when the runtime URL is already present.
+if (!process.env['DATABASE_URL']) {
+  const envFile = import.meta.dirname
+    ? resolve(import.meta.dirname, '../../.env.local')
+    : resolve(process.cwd(), '.env.local');
+  dotenv.config({ path: envFile });
+}
 
 export const db = postgres<Contract>({
   contractJson,

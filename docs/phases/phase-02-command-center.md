@@ -12,7 +12,7 @@ Give humans a central view of running JS Solutions: what is happening, what need
 
 ```text
 2.1 Command Center shell + navigation     Implemented
-2.2 Business overview                     Planned
+2.2 Business overview                     Implemented
 2.3 Goals                                 Planned
 2.4 Work                                  Planned
 2.5 Activity                              Planned
@@ -22,7 +22,7 @@ Give humans a central view of running JS Solutions: what is happening, what need
 2.9 Integration + polish                  Planned
 ```
 
-Routes for 2.2–2.8 exist as placeholders. That is not feature completion.
+Routes for 2.3–2.8 exist as placeholders. That is not feature completion.
 
 ## Milestone 2.1 — Shell + navigation
 
@@ -35,9 +35,18 @@ Routes for 2.2–2.8 exist as placeholders. That is not feature completion.
 - Landing page `/` remains a deliberate entry point (no auto-redirect to `/app`)
 - Unauthenticated development; auth is future work
 
+## Milestone 2.2 — Business overview
+
+**Status:** Implemented
+
+- Server-rendered `/app` Overview using `@/business-state` only
+- Read-only: no mutations, server actions, or approval/agent controls
+- Live organization identity, summary counts, Owner Attention, and section previews
+- Owner Attention is a deterministic derived projection, not AI
+- Real empty/zero states are shown; no fabricated data
+
 ## Remaining work
 
-- 2.2 live Overview from business-state services (no fake counts)
 - 2.3–2.7 feature screens for Goals, Work, Activity, Approvals, Agents
 - 2.8 Knowledge browser over canonical `docs/` markdown
 - 2.9 polish, empty-state quality, and cross-page consistency
@@ -50,7 +59,7 @@ Read and coordinate. The Command Center does not execute external tools. UI must
 
 ## Exit criteria
 
-Owner can see goals, work, approvals, and recent events from live business state. Not met until later milestones land on real data.
+Owner can see goals, work, approvals, and recent events from live business state. Partially met: Overview reads live state; dedicated management screens are still planned.
 
 ## Related
 
