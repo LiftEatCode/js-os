@@ -1,0 +1,2053 @@
+[
+  {
+    "id": "schema.public",
+    "label": "Create schema \"public\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres"
+    },
+    "precheck": [],
+    "execute": [
+      {
+        "description": "Create schema \"public\"",
+        "sql": "CREATE SCHEMA IF NOT EXISTS \"public\"",
+        "params": []
+      }
+    ],
+    "postcheck": []
+  },
+  {
+    "id": "table.agentDefinition",
+    "label": "Create table \"agentDefinition\"",
+    "summary": "Creates table \"agentDefinition\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "agentDefinition"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"agentDefinition\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"agentDefinition\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"agentDefinition\"",
+        "sql": "CREATE TABLE \"public\".\"agentDefinition\" (\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"description\" text,\n  \"id\" uuid NOT NULL,\n  \"instructions\" text,\n  \"name\" text NOT NULL,\n  \"organizationId\" uuid NOT NULL,\n  \"permissionLevel\" text NOT NULL,\n  \"role\" text NOT NULL,\n  \"slug\" text NOT NULL,\n  \"status\" text NOT NULL,\n  \"updatedAt\" timestamptz NOT NULL,\n  PRIMARY KEY (\"id\"),\n  CONSTRAINT \"agentDefinition_permissionLevel_check_18ea6cb7\" CHECK (\"permissionLevel\" IN ('OBSERVE', 'RECOMMEND', 'PREPARE', 'EXECUTE')),\n  CONSTRAINT \"agentDefinition_role_check_cc0de23b\" CHECK (\"role\" IN ('CEO', 'SALES', 'MARKETING', 'CLIENT_OPERATIONS', 'ENGINEERING', 'FINANCE', 'GENERAL')),\n  CONSTRAINT \"agentDefinition_status_check_fe77e76c\" CHECK (\"status\" IN ('ACTIVE', 'PAUSED', 'DISABLED'))\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"agentDefinition\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"agentDefinition\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "table.agentRun",
+    "label": "Create table \"agentRun\"",
+    "summary": "Creates table \"agentRun\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "agentRun"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"agentRun\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"agentRun\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"agentRun\"",
+        "sql": "CREATE TABLE \"public\".\"agentRun\" (\n  \"agentDefinitionId\" uuid NOT NULL,\n  \"completedAt\" timestamptz,\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"error\" text,\n  \"id\" uuid NOT NULL,\n  \"inputSnapshot\" jsonb,\n  \"organizationId\" uuid NOT NULL,\n  \"output\" jsonb,\n  \"startedAt\" timestamptz NOT NULL,\n  \"status\" text NOT NULL,\n  \"triggerReference\" text,\n  \"triggerType\" text NOT NULL,\n  PRIMARY KEY (\"id\"),\n  CONSTRAINT \"agentRun_status_check_be53ae1d\" CHECK (\"status\" IN ('QUEUED', 'RUNNING', 'COMPLETED', 'FAILED', 'CANCELLED')),\n  CONSTRAINT \"agentRun_triggerType_check_297f4d40\" CHECK (\"triggerType\" IN ('MANUAL', 'SCHEDULED', 'BUSINESS_EVENT', 'WORK_ITEM', 'SYSTEM'))\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"agentRun\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"agentRun\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "table.approval",
+    "label": "Create table \"approval\"",
+    "summary": "Creates table \"approval\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "approval"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"approval\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"approval\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"approval\"",
+        "sql": "CREATE TABLE \"public\".\"approval\" (\n  \"actionType\" text NOT NULL,\n  \"agentRunId\" uuid,\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"decidedAt\" timestamptz,\n  \"decisionReason\" text,\n  \"description\" text,\n  \"expiresAt\" timestamptz,\n  \"id\" uuid NOT NULL,\n  \"organizationId\" uuid NOT NULL,\n  \"payload\" jsonb,\n  \"requestedAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"requestedById\" text,\n  \"requestedByType\" text NOT NULL,\n  \"riskLevel\" text NOT NULL,\n  \"status\" text NOT NULL,\n  \"title\" text NOT NULL,\n  \"updatedAt\" timestamptz NOT NULL,\n  \"workItemId\" uuid,\n  PRIMARY KEY (\"id\"),\n  CONSTRAINT \"approval_requestedByType_check_1048f7e2\" CHECK (\"requestedByType\" IN ('USER', 'AGENT', 'SYSTEM')),\n  CONSTRAINT \"approval_riskLevel_check_a114ba6a\" CHECK (\"riskLevel\" IN ('LOW', 'MEDIUM', 'HIGH', 'CRITICAL')),\n  CONSTRAINT \"approval_status_check_6bd5878b\" CHECK (\"status\" IN ('PENDING', 'APPROVED', 'REJECTED', 'CANCELLED', 'EXPIRED'))\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"approval\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"approval\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "table.businessEvent",
+    "label": "Create table \"businessEvent\"",
+    "summary": "Creates table \"businessEvent\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "businessEvent"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"businessEvent\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"businessEvent\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"businessEvent\"",
+        "sql": "CREATE TABLE \"public\".\"businessEvent\" (\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"description\" text,\n  \"eventType\" text NOT NULL,\n  \"id\" uuid NOT NULL,\n  \"metadata\" jsonb,\n  \"occurredAt\" timestamptz NOT NULL,\n  \"organizationId\" uuid NOT NULL,\n  \"sourceId\" text,\n  \"sourceType\" text NOT NULL,\n  \"title\" text NOT NULL,\n  PRIMARY KEY (\"id\"),\n  CONSTRAINT \"businessEvent_sourceType_check_9da6f6a4\" CHECK (\"sourceType\" IN ('SYSTEM', 'USER', 'AGENT', 'JS_GROWTH', 'GITHUB', 'EMAIL', 'CALENDAR', 'PAYMENTS', 'OTHER'))\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"businessEvent\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"businessEvent\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "table.goal",
+    "label": "Create table \"goal\"",
+    "summary": "Creates table \"goal\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "goal"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"goal\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"goal\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"goal\"",
+        "sql": "CREATE TABLE \"public\".\"goal\" (\n  \"completedAt\" timestamptz,\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"currentValue\" numeric,\n  \"description\" text,\n  \"id\" uuid NOT NULL,\n  \"metricName\" text,\n  \"metricUnit\" text,\n  \"organizationId\" uuid NOT NULL,\n  \"priority\" text NOT NULL,\n  \"status\" text NOT NULL,\n  \"targetDate\" timestamptz,\n  \"targetValue\" numeric,\n  \"timeHorizon\" text NOT NULL,\n  \"title\" text NOT NULL,\n  \"updatedAt\" timestamptz NOT NULL,\n  PRIMARY KEY (\"id\"),\n  CONSTRAINT \"goal_priority_check_0838e5f0\" CHECK (\"priority\" IN ('LOW', 'MEDIUM', 'HIGH', 'CRITICAL')),\n  CONSTRAINT \"goal_status_check_5ae56698\" CHECK (\"status\" IN ('DRAFT', 'ACTIVE', 'ACHIEVED', 'PAUSED', 'CANCELLED')),\n  CONSTRAINT \"goal_timeHorizon_check_3e6bad9b\" CHECK (\"timeHorizon\" IN ('SHORT_TERM', 'QUARTERLY', 'ANNUAL', 'LONG_TERM'))\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"goal\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"goal\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "table.organization",
+    "label": "Create table \"organization\"",
+    "summary": "Creates table \"organization\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "organization"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"organization\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"organization\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"organization\"",
+        "sql": "CREATE TABLE \"public\".\"organization\" (\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"description\" text,\n  \"id\" uuid NOT NULL,\n  \"name\" text NOT NULL,\n  \"slug\" text NOT NULL,\n  \"status\" text NOT NULL,\n  \"timezone\" text NOT NULL,\n  \"updatedAt\" timestamptz NOT NULL,\n  PRIMARY KEY (\"id\"),\n  CONSTRAINT \"organization_status_check_ee520df2\" CHECK (\"status\" IN ('ACTIVE', 'INACTIVE'))\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"organization\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"organization\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "table.workItem",
+    "label": "Create table \"workItem\"",
+    "summary": "Creates table \"workItem\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "workItem"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"workItem\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"workItem\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"workItem\"",
+        "sql": "CREATE TABLE \"public\".\"workItem\" (\n  \"agentRunId\" uuid,\n  \"assignedAgentId\" uuid,\n  \"completedAt\" timestamptz,\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"description\" text,\n  \"dueAt\" timestamptz,\n  \"goalId\" uuid,\n  \"id\" uuid NOT NULL,\n  \"organizationId\" uuid NOT NULL,\n  \"parentId\" uuid,\n  \"priority\" text NOT NULL,\n  \"sourceId\" text,\n  \"sourceType\" text,\n  \"startedAt\" timestamptz,\n  \"status\" text NOT NULL,\n  \"title\" text NOT NULL,\n  \"updatedAt\" timestamptz NOT NULL,\n  \"workType\" text NOT NULL,\n  PRIMARY KEY (\"id\"),\n  CONSTRAINT \"workItem_priority_check_0838e5f0\" CHECK (\"priority\" IN ('LOW', 'MEDIUM', 'HIGH', 'CRITICAL')),\n  CONSTRAINT \"workItem_sourceType_check_4cee9020\" CHECK (\"sourceType\" IN ('JS_GROWTH', 'GITHUB', 'EMAIL', 'CALENDAR', 'PAYMENTS', 'OTHER')),\n  CONSTRAINT \"workItem_status_check_5f213c7d\" CHECK (\"status\" IN ('BACKLOG', 'READY', 'IN_PROGRESS', 'BLOCKED', 'WAITING_APPROVAL', 'COMPLETED', 'CANCELLED')),\n  CONSTRAINT \"workItem_workType_check_39327d1a\" CHECK (\"workType\" IN ('TASK', 'REVIEW', 'RESEARCH', 'CONTENT', 'OUTREACH', 'ENGINEERING', 'CLIENT_WORK', 'ADMIN', 'DECISION'))\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"workItem\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"workItem\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "unique.agentDefinition.agentDefinition_organizationId_slug_key",
+    "label": "Add unique constraint on \"agentDefinition\" (organizationId, slug)",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "unique",
+        "name": "agentDefinition_organizationId_slug_key",
+        "table": "agentDefinition"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"agentDefinition_organizationId_slug_key\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "agentDefinition_organizationId_slug_key",
+          "public",
+          "\"public\".\"agentDefinition\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add unique constraint \"agentDefinition_organizationId_slug_key\"",
+        "sql": "ALTER TABLE \"public\".\"agentDefinition\" ADD CONSTRAINT \"agentDefinition_organizationId_slug_key\" UNIQUE (\"organizationId\", \"slug\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"agentDefinition_organizationId_slug_key\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "agentDefinition_organizationId_slug_key",
+          "public",
+          "\"public\".\"agentDefinition\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "unique.organization.organization_slug_key",
+    "label": "Add unique constraint on \"organization\" (slug)",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "unique",
+        "name": "organization_slug_key",
+        "table": "organization"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"organization_slug_key\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "organization_slug_key",
+          "public",
+          "\"public\".\"organization\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add unique constraint \"organization_slug_key\"",
+        "sql": "ALTER TABLE \"public\".\"organization\" ADD CONSTRAINT \"organization_slug_key\" UNIQUE (\"slug\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"organization_slug_key\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "organization_slug_key",
+          "public",
+          "\"public\".\"organization\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.agentDefinition.agentDefinition_organizationId_idx_2e17ef41",
+    "label": "Create index \"agentDefinition_organizationId_idx_2e17ef41\" on \"agentDefinition\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "agentDefinition_organizationId_idx_2e17ef41",
+        "table": "agentDefinition"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"agentDefinition_organizationId_idx_2e17ef41\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"agentDefinition_organizationId_idx_2e17ef41\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"agentDefinition_organizationId_idx_2e17ef41\"",
+        "sql": "CREATE INDEX \"agentDefinition_organizationId_idx_2e17ef41\" ON \"public\".\"agentDefinition\" (\"organizationId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"agentDefinition_organizationId_idx_2e17ef41\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"agentDefinition_organizationId_idx_2e17ef41\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.agentDefinition.agentDefinition_organizationId_role_idx_35d41160",
+    "label": "Create index \"agentDefinition_organizationId_role_idx_35d41160\" on \"agentDefinition\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "agentDefinition_organizationId_role_idx_35d41160",
+        "table": "agentDefinition"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"agentDefinition_organizationId_role_idx_35d41160\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"agentDefinition_organizationId_role_idx_35d41160\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"agentDefinition_organizationId_role_idx_35d41160\"",
+        "sql": "CREATE INDEX \"agentDefinition_organizationId_role_idx_35d41160\" ON \"public\".\"agentDefinition\" (\"organizationId\", \"role\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"agentDefinition_organizationId_role_idx_35d41160\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"agentDefinition_organizationId_role_idx_35d41160\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.agentDefinition.agentDefinition_organizationId_status_idx_21af5e82",
+    "label": "Create index \"agentDefinition_organizationId_status_idx_21af5e82\" on \"agentDefinition\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "agentDefinition_organizationId_status_idx_21af5e82",
+        "table": "agentDefinition"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"agentDefinition_organizationId_status_idx_21af5e82\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"agentDefinition_organizationId_status_idx_21af5e82\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"agentDefinition_organizationId_status_idx_21af5e82\"",
+        "sql": "CREATE INDEX \"agentDefinition_organizationId_status_idx_21af5e82\" ON \"public\".\"agentDefinition\" (\"organizationId\", \"status\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"agentDefinition_organizationId_status_idx_21af5e82\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"agentDefinition_organizationId_status_idx_21af5e82\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.agentRun.agentRun_agentDefinitionId_createdAt_idx_da35ba50",
+    "label": "Create index \"agentRun_agentDefinitionId_createdAt_idx_da35ba50\" on \"agentRun\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "agentRun_agentDefinitionId_createdAt_idx_da35ba50",
+        "table": "agentRun"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"agentRun_agentDefinitionId_createdAt_idx_da35ba50\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"agentRun_agentDefinitionId_createdAt_idx_da35ba50\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"agentRun_agentDefinitionId_createdAt_idx_da35ba50\"",
+        "sql": "CREATE INDEX \"agentRun_agentDefinitionId_createdAt_idx_da35ba50\" ON \"public\".\"agentRun\" (\"agentDefinitionId\", \"createdAt\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"agentRun_agentDefinitionId_createdAt_idx_da35ba50\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"agentRun_agentDefinitionId_createdAt_idx_da35ba50\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.agentRun.agentRun_agentDefinitionId_idx_3b61897d",
+    "label": "Create index \"agentRun_agentDefinitionId_idx_3b61897d\" on \"agentRun\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "agentRun_agentDefinitionId_idx_3b61897d",
+        "table": "agentRun"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"agentRun_agentDefinitionId_idx_3b61897d\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"agentRun_agentDefinitionId_idx_3b61897d\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"agentRun_agentDefinitionId_idx_3b61897d\"",
+        "sql": "CREATE INDEX \"agentRun_agentDefinitionId_idx_3b61897d\" ON \"public\".\"agentRun\" (\"agentDefinitionId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"agentRun_agentDefinitionId_idx_3b61897d\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"agentRun_agentDefinitionId_idx_3b61897d\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.agentRun.agentRun_organizationId_createdAt_idx_c52d1cc3",
+    "label": "Create index \"agentRun_organizationId_createdAt_idx_c52d1cc3\" on \"agentRun\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "agentRun_organizationId_createdAt_idx_c52d1cc3",
+        "table": "agentRun"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"agentRun_organizationId_createdAt_idx_c52d1cc3\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"agentRun_organizationId_createdAt_idx_c52d1cc3\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"agentRun_organizationId_createdAt_idx_c52d1cc3\"",
+        "sql": "CREATE INDEX \"agentRun_organizationId_createdAt_idx_c52d1cc3\" ON \"public\".\"agentRun\" (\"organizationId\", \"createdAt\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"agentRun_organizationId_createdAt_idx_c52d1cc3\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"agentRun_organizationId_createdAt_idx_c52d1cc3\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.agentRun.agentRun_organizationId_idx_2e17ef41",
+    "label": "Create index \"agentRun_organizationId_idx_2e17ef41\" on \"agentRun\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "agentRun_organizationId_idx_2e17ef41",
+        "table": "agentRun"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"agentRun_organizationId_idx_2e17ef41\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"agentRun_organizationId_idx_2e17ef41\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"agentRun_organizationId_idx_2e17ef41\"",
+        "sql": "CREATE INDEX \"agentRun_organizationId_idx_2e17ef41\" ON \"public\".\"agentRun\" (\"organizationId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"agentRun_organizationId_idx_2e17ef41\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"agentRun_organizationId_idx_2e17ef41\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.agentRun.agentRun_organizationId_status_idx_21af5e82",
+    "label": "Create index \"agentRun_organizationId_status_idx_21af5e82\" on \"agentRun\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "agentRun_organizationId_status_idx_21af5e82",
+        "table": "agentRun"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"agentRun_organizationId_status_idx_21af5e82\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"agentRun_organizationId_status_idx_21af5e82\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"agentRun_organizationId_status_idx_21af5e82\"",
+        "sql": "CREATE INDEX \"agentRun_organizationId_status_idx_21af5e82\" ON \"public\".\"agentRun\" (\"organizationId\", \"status\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"agentRun_organizationId_status_idx_21af5e82\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"agentRun_organizationId_status_idx_21af5e82\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.approval.approval_agentRunId_idx_1f80425e",
+    "label": "Create index \"approval_agentRunId_idx_1f80425e\" on \"approval\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "approval_agentRunId_idx_1f80425e",
+        "table": "approval"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"approval_agentRunId_idx_1f80425e\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"approval_agentRunId_idx_1f80425e\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"approval_agentRunId_idx_1f80425e\"",
+        "sql": "CREATE INDEX \"approval_agentRunId_idx_1f80425e\" ON \"public\".\"approval\" (\"agentRunId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"approval_agentRunId_idx_1f80425e\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"approval_agentRunId_idx_1f80425e\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.approval.approval_expiresAt_idx_6b6b8c10",
+    "label": "Create index \"approval_expiresAt_idx_6b6b8c10\" on \"approval\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "approval_expiresAt_idx_6b6b8c10",
+        "table": "approval"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"approval_expiresAt_idx_6b6b8c10\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"approval_expiresAt_idx_6b6b8c10\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"approval_expiresAt_idx_6b6b8c10\"",
+        "sql": "CREATE INDEX \"approval_expiresAt_idx_6b6b8c10\" ON \"public\".\"approval\" (\"expiresAt\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"approval_expiresAt_idx_6b6b8c10\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"approval_expiresAt_idx_6b6b8c10\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.approval.approval_organizationId_idx_2e17ef41",
+    "label": "Create index \"approval_organizationId_idx_2e17ef41\" on \"approval\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "approval_organizationId_idx_2e17ef41",
+        "table": "approval"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"approval_organizationId_idx_2e17ef41\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"approval_organizationId_idx_2e17ef41\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"approval_organizationId_idx_2e17ef41\"",
+        "sql": "CREATE INDEX \"approval_organizationId_idx_2e17ef41\" ON \"public\".\"approval\" (\"organizationId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"approval_organizationId_idx_2e17ef41\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"approval_organizationId_idx_2e17ef41\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.approval.approval_organizationId_status_idx_21af5e82",
+    "label": "Create index \"approval_organizationId_status_idx_21af5e82\" on \"approval\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "approval_organizationId_status_idx_21af5e82",
+        "table": "approval"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"approval_organizationId_status_idx_21af5e82\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"approval_organizationId_status_idx_21af5e82\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"approval_organizationId_status_idx_21af5e82\"",
+        "sql": "CREATE INDEX \"approval_organizationId_status_idx_21af5e82\" ON \"public\".\"approval\" (\"organizationId\", \"status\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"approval_organizationId_status_idx_21af5e82\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"approval_organizationId_status_idx_21af5e82\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.approval.approval_workItemId_idx_2fd4a055",
+    "label": "Create index \"approval_workItemId_idx_2fd4a055\" on \"approval\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "approval_workItemId_idx_2fd4a055",
+        "table": "approval"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"approval_workItemId_idx_2fd4a055\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"approval_workItemId_idx_2fd4a055\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"approval_workItemId_idx_2fd4a055\"",
+        "sql": "CREATE INDEX \"approval_workItemId_idx_2fd4a055\" ON \"public\".\"approval\" (\"workItemId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"approval_workItemId_idx_2fd4a055\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"approval_workItemId_idx_2fd4a055\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.businessEvent.businessEvent_organizationId_eventType_idx_0d6dee9b",
+    "label": "Create index \"businessEvent_organizationId_eventType_idx_0d6dee9b\" on \"businessEvent\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "businessEvent_organizationId_eventType_idx_0d6dee9b",
+        "table": "businessEvent"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"businessEvent_organizationId_eventType_idx_0d6dee9b\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"businessEvent_organizationId_eventType_idx_0d6dee9b\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"businessEvent_organizationId_eventType_idx_0d6dee9b\"",
+        "sql": "CREATE INDEX \"businessEvent_organizationId_eventType_idx_0d6dee9b\" ON \"public\".\"businessEvent\" (\"organizationId\", \"eventType\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"businessEvent_organizationId_eventType_idx_0d6dee9b\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"businessEvent_organizationId_eventType_idx_0d6dee9b\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.businessEvent.businessEvent_organizationId_idx_2e17ef41",
+    "label": "Create index \"businessEvent_organizationId_idx_2e17ef41\" on \"businessEvent\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "businessEvent_organizationId_idx_2e17ef41",
+        "table": "businessEvent"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"businessEvent_organizationId_idx_2e17ef41\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"businessEvent_organizationId_idx_2e17ef41\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"businessEvent_organizationId_idx_2e17ef41\"",
+        "sql": "CREATE INDEX \"businessEvent_organizationId_idx_2e17ef41\" ON \"public\".\"businessEvent\" (\"organizationId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"businessEvent_organizationId_idx_2e17ef41\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"businessEvent_organizationId_idx_2e17ef41\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.businessEvent.businessEvent_organizationId_occurredAt_idx_959410e1",
+    "label": "Create index \"businessEvent_organizationId_occurredAt_idx_959410e1\" on \"businessEvent\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "businessEvent_organizationId_occurredAt_idx_959410e1",
+        "table": "businessEvent"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"businessEvent_organizationId_occurredAt_idx_959410e1\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"businessEvent_organizationId_occurredAt_idx_959410e1\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"businessEvent_organizationId_occurredAt_idx_959410e1\"",
+        "sql": "CREATE INDEX \"businessEvent_organizationId_occurredAt_idx_959410e1\" ON \"public\".\"businessEvent\" (\"organizationId\", \"occurredAt\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"businessEvent_organizationId_occurredAt_idx_959410e1\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"businessEvent_organizationId_occurredAt_idx_959410e1\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.businessEvent.businessEvent_sourceType_sourceId_idx_9b8c3bc3",
+    "label": "Create index \"businessEvent_sourceType_sourceId_idx_9b8c3bc3\" on \"businessEvent\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "businessEvent_sourceType_sourceId_idx_9b8c3bc3",
+        "table": "businessEvent"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"businessEvent_sourceType_sourceId_idx_9b8c3bc3\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"businessEvent_sourceType_sourceId_idx_9b8c3bc3\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"businessEvent_sourceType_sourceId_idx_9b8c3bc3\"",
+        "sql": "CREATE INDEX \"businessEvent_sourceType_sourceId_idx_9b8c3bc3\" ON \"public\".\"businessEvent\" (\"sourceType\", \"sourceId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"businessEvent_sourceType_sourceId_idx_9b8c3bc3\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"businessEvent_sourceType_sourceId_idx_9b8c3bc3\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.goal.goal_organizationId_idx_2e17ef41",
+    "label": "Create index \"goal_organizationId_idx_2e17ef41\" on \"goal\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "goal_organizationId_idx_2e17ef41",
+        "table": "goal"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"goal_organizationId_idx_2e17ef41\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"goal_organizationId_idx_2e17ef41\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"goal_organizationId_idx_2e17ef41\"",
+        "sql": "CREATE INDEX \"goal_organizationId_idx_2e17ef41\" ON \"public\".\"goal\" (\"organizationId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"goal_organizationId_idx_2e17ef41\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"goal_organizationId_idx_2e17ef41\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.goal.goal_organizationId_priority_idx_433e555d",
+    "label": "Create index \"goal_organizationId_priority_idx_433e555d\" on \"goal\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "goal_organizationId_priority_idx_433e555d",
+        "table": "goal"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"goal_organizationId_priority_idx_433e555d\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"goal_organizationId_priority_idx_433e555d\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"goal_organizationId_priority_idx_433e555d\"",
+        "sql": "CREATE INDEX \"goal_organizationId_priority_idx_433e555d\" ON \"public\".\"goal\" (\"organizationId\", \"priority\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"goal_organizationId_priority_idx_433e555d\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"goal_organizationId_priority_idx_433e555d\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.goal.goal_organizationId_status_idx_21af5e82",
+    "label": "Create index \"goal_organizationId_status_idx_21af5e82\" on \"goal\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "goal_organizationId_status_idx_21af5e82",
+        "table": "goal"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"goal_organizationId_status_idx_21af5e82\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"goal_organizationId_status_idx_21af5e82\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"goal_organizationId_status_idx_21af5e82\"",
+        "sql": "CREATE INDEX \"goal_organizationId_status_idx_21af5e82\" ON \"public\".\"goal\" (\"organizationId\", \"status\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"goal_organizationId_status_idx_21af5e82\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"goal_organizationId_status_idx_21af5e82\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.goal.goal_targetDate_idx_0073106e",
+    "label": "Create index \"goal_targetDate_idx_0073106e\" on \"goal\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "goal_targetDate_idx_0073106e",
+        "table": "goal"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"goal_targetDate_idx_0073106e\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"goal_targetDate_idx_0073106e\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"goal_targetDate_idx_0073106e\"",
+        "sql": "CREATE INDEX \"goal_targetDate_idx_0073106e\" ON \"public\".\"goal\" (\"targetDate\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"goal_targetDate_idx_0073106e\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"goal_targetDate_idx_0073106e\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.workItem.workItem_agentRunId_idx_1f80425e",
+    "label": "Create index \"workItem_agentRunId_idx_1f80425e\" on \"workItem\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "workItem_agentRunId_idx_1f80425e",
+        "table": "workItem"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"workItem_agentRunId_idx_1f80425e\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"workItem_agentRunId_idx_1f80425e\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"workItem_agentRunId_idx_1f80425e\"",
+        "sql": "CREATE INDEX \"workItem_agentRunId_idx_1f80425e\" ON \"public\".\"workItem\" (\"agentRunId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"workItem_agentRunId_idx_1f80425e\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"workItem_agentRunId_idx_1f80425e\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.workItem.workItem_assignedAgentId_idx_ea867a24",
+    "label": "Create index \"workItem_assignedAgentId_idx_ea867a24\" on \"workItem\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "workItem_assignedAgentId_idx_ea867a24",
+        "table": "workItem"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"workItem_assignedAgentId_idx_ea867a24\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"workItem_assignedAgentId_idx_ea867a24\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"workItem_assignedAgentId_idx_ea867a24\"",
+        "sql": "CREATE INDEX \"workItem_assignedAgentId_idx_ea867a24\" ON \"public\".\"workItem\" (\"assignedAgentId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"workItem_assignedAgentId_idx_ea867a24\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"workItem_assignedAgentId_idx_ea867a24\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.workItem.workItem_goalId_idx_8733343e",
+    "label": "Create index \"workItem_goalId_idx_8733343e\" on \"workItem\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "workItem_goalId_idx_8733343e",
+        "table": "workItem"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"workItem_goalId_idx_8733343e\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"workItem_goalId_idx_8733343e\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"workItem_goalId_idx_8733343e\"",
+        "sql": "CREATE INDEX \"workItem_goalId_idx_8733343e\" ON \"public\".\"workItem\" (\"goalId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"workItem_goalId_idx_8733343e\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"workItem_goalId_idx_8733343e\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.workItem.workItem_organizationId_dueAt_idx_ccae183e",
+    "label": "Create index \"workItem_organizationId_dueAt_idx_ccae183e\" on \"workItem\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "workItem_organizationId_dueAt_idx_ccae183e",
+        "table": "workItem"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"workItem_organizationId_dueAt_idx_ccae183e\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"workItem_organizationId_dueAt_idx_ccae183e\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"workItem_organizationId_dueAt_idx_ccae183e\"",
+        "sql": "CREATE INDEX \"workItem_organizationId_dueAt_idx_ccae183e\" ON \"public\".\"workItem\" (\"organizationId\", \"dueAt\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"workItem_organizationId_dueAt_idx_ccae183e\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"workItem_organizationId_dueAt_idx_ccae183e\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.workItem.workItem_organizationId_idx_2e17ef41",
+    "label": "Create index \"workItem_organizationId_idx_2e17ef41\" on \"workItem\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "workItem_organizationId_idx_2e17ef41",
+        "table": "workItem"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"workItem_organizationId_idx_2e17ef41\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"workItem_organizationId_idx_2e17ef41\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"workItem_organizationId_idx_2e17ef41\"",
+        "sql": "CREATE INDEX \"workItem_organizationId_idx_2e17ef41\" ON \"public\".\"workItem\" (\"organizationId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"workItem_organizationId_idx_2e17ef41\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"workItem_organizationId_idx_2e17ef41\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.workItem.workItem_organizationId_priority_idx_433e555d",
+    "label": "Create index \"workItem_organizationId_priority_idx_433e555d\" on \"workItem\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "workItem_organizationId_priority_idx_433e555d",
+        "table": "workItem"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"workItem_organizationId_priority_idx_433e555d\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"workItem_organizationId_priority_idx_433e555d\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"workItem_organizationId_priority_idx_433e555d\"",
+        "sql": "CREATE INDEX \"workItem_organizationId_priority_idx_433e555d\" ON \"public\".\"workItem\" (\"organizationId\", \"priority\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"workItem_organizationId_priority_idx_433e555d\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"workItem_organizationId_priority_idx_433e555d\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.workItem.workItem_organizationId_status_idx_21af5e82",
+    "label": "Create index \"workItem_organizationId_status_idx_21af5e82\" on \"workItem\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "workItem_organizationId_status_idx_21af5e82",
+        "table": "workItem"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"workItem_organizationId_status_idx_21af5e82\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"workItem_organizationId_status_idx_21af5e82\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"workItem_organizationId_status_idx_21af5e82\"",
+        "sql": "CREATE INDEX \"workItem_organizationId_status_idx_21af5e82\" ON \"public\".\"workItem\" (\"organizationId\", \"status\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"workItem_organizationId_status_idx_21af5e82\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"workItem_organizationId_status_idx_21af5e82\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.workItem.workItem_parentId_idx_6a68f597",
+    "label": "Create index \"workItem_parentId_idx_6a68f597\" on \"workItem\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "workItem_parentId_idx_6a68f597",
+        "table": "workItem"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"workItem_parentId_idx_6a68f597\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"workItem_parentId_idx_6a68f597\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"workItem_parentId_idx_6a68f597\"",
+        "sql": "CREATE INDEX \"workItem_parentId_idx_6a68f597\" ON \"public\".\"workItem\" (\"parentId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"workItem_parentId_idx_6a68f597\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"workItem_parentId_idx_6a68f597\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.agentDefinition.agentDefinition_organizationId_fkey",
+    "label": "Add foreign key \"agentDefinition_organizationId_fkey\" on \"agentDefinition\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "agentDefinition_organizationId_fkey",
+        "table": "agentDefinition"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"agentDefinition_organizationId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "agentDefinition_organizationId_fkey",
+          "public",
+          "\"public\".\"agentDefinition\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"agentDefinition_organizationId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"agentDefinition\"\nADD CONSTRAINT \"agentDefinition_organizationId_fkey\"\nFOREIGN KEY (\"organizationId\")\nREFERENCES \"public\".\"organization\" (\"id\")\nON DELETE RESTRICT"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"agentDefinition_organizationId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "agentDefinition_organizationId_fkey",
+          "public",
+          "\"public\".\"agentDefinition\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.agentRun.agentRun_organizationId_fkey",
+    "label": "Add foreign key \"agentRun_organizationId_fkey\" on \"agentRun\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "agentRun_organizationId_fkey",
+        "table": "agentRun"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"agentRun_organizationId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "agentRun_organizationId_fkey",
+          "public",
+          "\"public\".\"agentRun\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"agentRun_organizationId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"agentRun\"\nADD CONSTRAINT \"agentRun_organizationId_fkey\"\nFOREIGN KEY (\"organizationId\")\nREFERENCES \"public\".\"organization\" (\"id\")\nON DELETE RESTRICT"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"agentRun_organizationId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "agentRun_organizationId_fkey",
+          "public",
+          "\"public\".\"agentRun\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.agentRun.agentRun_agentDefinitionId_fkey",
+    "label": "Add foreign key \"agentRun_agentDefinitionId_fkey\" on \"agentRun\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "agentRun_agentDefinitionId_fkey",
+        "table": "agentRun"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"agentRun_agentDefinitionId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "agentRun_agentDefinitionId_fkey",
+          "public",
+          "\"public\".\"agentRun\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"agentRun_agentDefinitionId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"agentRun\"\nADD CONSTRAINT \"agentRun_agentDefinitionId_fkey\"\nFOREIGN KEY (\"agentDefinitionId\")\nREFERENCES \"public\".\"agentDefinition\" (\"id\")\nON DELETE RESTRICT"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"agentRun_agentDefinitionId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "agentRun_agentDefinitionId_fkey",
+          "public",
+          "\"public\".\"agentRun\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.approval.approval_organizationId_fkey",
+    "label": "Add foreign key \"approval_organizationId_fkey\" on \"approval\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "approval_organizationId_fkey",
+        "table": "approval"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"approval_organizationId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "approval_organizationId_fkey",
+          "public",
+          "\"public\".\"approval\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"approval_organizationId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"approval\"\nADD CONSTRAINT \"approval_organizationId_fkey\"\nFOREIGN KEY (\"organizationId\")\nREFERENCES \"public\".\"organization\" (\"id\")\nON DELETE RESTRICT"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"approval_organizationId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "approval_organizationId_fkey",
+          "public",
+          "\"public\".\"approval\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.approval.approval_workItemId_fkey",
+    "label": "Add foreign key \"approval_workItemId_fkey\" on \"approval\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "approval_workItemId_fkey",
+        "table": "approval"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"approval_workItemId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "approval_workItemId_fkey",
+          "public",
+          "\"public\".\"approval\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"approval_workItemId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"approval\"\nADD CONSTRAINT \"approval_workItemId_fkey\"\nFOREIGN KEY (\"workItemId\")\nREFERENCES \"public\".\"workItem\" (\"id\")\nON DELETE SET NULL"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"approval_workItemId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "approval_workItemId_fkey",
+          "public",
+          "\"public\".\"approval\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.approval.approval_agentRunId_fkey",
+    "label": "Add foreign key \"approval_agentRunId_fkey\" on \"approval\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "approval_agentRunId_fkey",
+        "table": "approval"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"approval_agentRunId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "approval_agentRunId_fkey",
+          "public",
+          "\"public\".\"approval\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"approval_agentRunId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"approval\"\nADD CONSTRAINT \"approval_agentRunId_fkey\"\nFOREIGN KEY (\"agentRunId\")\nREFERENCES \"public\".\"agentRun\" (\"id\")\nON DELETE RESTRICT"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"approval_agentRunId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "approval_agentRunId_fkey",
+          "public",
+          "\"public\".\"approval\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.businessEvent.businessEvent_organizationId_fkey",
+    "label": "Add foreign key \"businessEvent_organizationId_fkey\" on \"businessEvent\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "businessEvent_organizationId_fkey",
+        "table": "businessEvent"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"businessEvent_organizationId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "businessEvent_organizationId_fkey",
+          "public",
+          "\"public\".\"businessEvent\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"businessEvent_organizationId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"businessEvent\"\nADD CONSTRAINT \"businessEvent_organizationId_fkey\"\nFOREIGN KEY (\"organizationId\")\nREFERENCES \"public\".\"organization\" (\"id\")\nON DELETE RESTRICT"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"businessEvent_organizationId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "businessEvent_organizationId_fkey",
+          "public",
+          "\"public\".\"businessEvent\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.goal.goal_organizationId_fkey",
+    "label": "Add foreign key \"goal_organizationId_fkey\" on \"goal\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "goal_organizationId_fkey",
+        "table": "goal"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"goal_organizationId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "goal_organizationId_fkey",
+          "public",
+          "\"public\".\"goal\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"goal_organizationId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"goal\"\nADD CONSTRAINT \"goal_organizationId_fkey\"\nFOREIGN KEY (\"organizationId\")\nREFERENCES \"public\".\"organization\" (\"id\")\nON DELETE RESTRICT"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"goal_organizationId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "goal_organizationId_fkey",
+          "public",
+          "\"public\".\"goal\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.workItem.workItem_organizationId_fkey",
+    "label": "Add foreign key \"workItem_organizationId_fkey\" on \"workItem\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "workItem_organizationId_fkey",
+        "table": "workItem"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"workItem_organizationId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "workItem_organizationId_fkey",
+          "public",
+          "\"public\".\"workItem\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"workItem_organizationId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"workItem\"\nADD CONSTRAINT \"workItem_organizationId_fkey\"\nFOREIGN KEY (\"organizationId\")\nREFERENCES \"public\".\"organization\" (\"id\")\nON DELETE RESTRICT"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"workItem_organizationId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "workItem_organizationId_fkey",
+          "public",
+          "\"public\".\"workItem\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.workItem.workItem_goalId_fkey",
+    "label": "Add foreign key \"workItem_goalId_fkey\" on \"workItem\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "workItem_goalId_fkey",
+        "table": "workItem"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"workItem_goalId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "workItem_goalId_fkey",
+          "public",
+          "\"public\".\"workItem\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"workItem_goalId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"workItem\"\nADD CONSTRAINT \"workItem_goalId_fkey\"\nFOREIGN KEY (\"goalId\")\nREFERENCES \"public\".\"goal\" (\"id\")\nON DELETE SET NULL"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"workItem_goalId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "workItem_goalId_fkey",
+          "public",
+          "\"public\".\"workItem\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.workItem.workItem_parentId_fkey",
+    "label": "Add foreign key \"workItem_parentId_fkey\" on \"workItem\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "workItem_parentId_fkey",
+        "table": "workItem"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"workItem_parentId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "workItem_parentId_fkey",
+          "public",
+          "\"public\".\"workItem\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"workItem_parentId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"workItem\"\nADD CONSTRAINT \"workItem_parentId_fkey\"\nFOREIGN KEY (\"parentId\")\nREFERENCES \"public\".\"workItem\" (\"id\")\nON DELETE SET NULL"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"workItem_parentId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "workItem_parentId_fkey",
+          "public",
+          "\"public\".\"workItem\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.workItem.workItem_agentRunId_fkey",
+    "label": "Add foreign key \"workItem_agentRunId_fkey\" on \"workItem\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "workItem_agentRunId_fkey",
+        "table": "workItem"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"workItem_agentRunId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "workItem_agentRunId_fkey",
+          "public",
+          "\"public\".\"workItem\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"workItem_agentRunId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"workItem\"\nADD CONSTRAINT \"workItem_agentRunId_fkey\"\nFOREIGN KEY (\"agentRunId\")\nREFERENCES \"public\".\"agentRun\" (\"id\")\nON DELETE RESTRICT"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"workItem_agentRunId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "workItem_agentRunId_fkey",
+          "public",
+          "\"public\".\"workItem\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.workItem.workItem_assignedAgentId_fkey",
+    "label": "Add foreign key \"workItem_assignedAgentId_fkey\" on \"workItem\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "workItem_assignedAgentId_fkey",
+        "table": "workItem"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"workItem_assignedAgentId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "workItem_assignedAgentId_fkey",
+          "public",
+          "\"public\".\"workItem\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"workItem_assignedAgentId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"workItem\"\nADD CONSTRAINT \"workItem_assignedAgentId_fkey\"\nFOREIGN KEY (\"assignedAgentId\")\nREFERENCES \"public\".\"agentDefinition\" (\"id\")\nON DELETE SET NULL"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"workItem_assignedAgentId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "workItem_assignedAgentId_fkey",
+          "public",
+          "\"public\".\"workItem\""
+        ]
+      }
+    ]
+  }
+]
