@@ -45,4 +45,10 @@ npm run contract:emit
 
 `contract:emit` is offline. It does not need a database.
 
+Development business-state bootstrap (not a migration; development only):
+
+```bash
+npm run db:bootstrap
+```
+
 Schema changes against Neon: [database workflow](database-workflow.md). Never apply a migration before reviewing its plan. Never point local setup at production.

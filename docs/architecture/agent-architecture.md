@@ -17,6 +17,35 @@ Fields: `id`, `organizationId`, `name`, `slug`, `description?`, `status`, `role`
 
 `permissionLevel` is the **maximum autonomy ceiling**. It does not authorize individual tools. Future tools must define their own permission and approval requirements. No tool model exists yet.
 
+### Development bootstrap rows
+
+**Status:** Implemented (development database)
+
+`npm run db:bootstrap` creates these six AgentDefinition rows if they are missing. These are persistent organizational role definitions.
+
+Permission levels in the table below are **initial defaults**. Later changes (for example CEO `RECOMMEND` → `PREPARE`) are preserved when bootstrap is rerun. Bootstrap does not continuously enforce mutable operating configuration.
+
+Identity (`slug` + expected `role`) is checked. A known slug with the wrong role fails loudly and is not rewritten.
+
+```text
+AgentDefinition exists
+≠
+operational autonomous agent exists
+```
+
+The rows do **not** mean LLM reasoning, agent runs, tools, autonomous execution, or scheduled operation exist.
+
+| slug | role | permissionLevel |
+|---|---|---|
+| ceo | CEO | RECOMMEND |
+| sales | SALES | RECOMMEND |
+| marketing | MARKETING | RECOMMEND |
+| client-operations | CLIENT_OPERATIONS | RECOMMEND |
+| engineering | ENGINEERING | RECOMMEND |
+| finance | FINANCE | OBSERVE |
+
+CEO is initially `RECOMMEND`, not `EXECUTE`. Finance is initially more restrictive: `OBSERVE`. `instructions` is left null on create; operating policy stays in version-controlled documentation.
+
 Deleting an AgentDefinition cannot cascade-delete historical AgentRuns (`Restrict` on `AgentRun.agentDefinitionId`).
 
 ## AgentRun

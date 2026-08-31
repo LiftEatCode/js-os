@@ -2,7 +2,7 @@
 
 **Status:** Draft operating definition
 
-Until seeded Organization/Goal rows exist, treat these as examples of the *kind* of goals JS OS should hold — not as approved numeric targets:
+Until Goal rows exist, treat these as examples of the *kind* of goals JS OS should hold — not as approved numeric targets:
 
 - Grow durable recurring service and product revenue
 - Convert prospecting and audits (JS Growth) into signed work
@@ -10,4 +10,4 @@ Until seeded Organization/Goal rows exist, treat these as examples of the *kind*
 - Ship JS Growth product capability without letting JS OS duplicate it
 - Increase autonomy only on proven, low-risk workflows
 
-Real goals belong in the Goal model after Phase 1 seed.
+Real goals belong in the Goal model in a later Phase 1 step. The Organization row already exists in development (`js-solutions`).

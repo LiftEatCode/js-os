@@ -32,7 +32,7 @@ See [phase-00-foundation.md](phases/phase-00-foundation.md).
 
 **Key safety boundary:** No production mutations from development. No Cascade deletes. JS Growth records are not duplicated.
 
-**Exit criteria:** Contract implemented; development schema applied and verified; initial JS Solutions seed; business-state access/service layer. Seed and service layer are still remaining.
+**Exit criteria:** Contract implemented; development schema applied and verified; initial JS Solutions Organization and AgentDefinitions bootstrapped; business-state access/service layer. Service layer (and deliberate Goal rows) are still remaining.
 
 See [phase-01-business-state.md](phases/phase-01-business-state.md).
 

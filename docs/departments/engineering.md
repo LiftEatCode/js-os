@@ -34,4 +34,6 @@ Client Operations (bugs), Marketing (site/SEO technical), CEO (priority).
 
 ## Current implementation status
 
-AgentRole `ENGINEERING` exists. No GitHub or Vercel integration.
+**Implementation status:** planned (department operations)
+
+An AgentDefinition row exists in the development database (`slug: engineering`, `permissionLevel: RECOMMEND`). That is a role definition, not an operational engineering agent. No GitHub or Vercel integration.

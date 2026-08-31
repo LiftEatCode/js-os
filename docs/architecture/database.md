@@ -58,14 +58,15 @@ Authoritative domain decisions: [business state](business-state.md).
 - Development database connected
 - Initial business-state migration planned and applied to development
 - CLI loads `.env.local` and uses `DIRECT_URL`
-- Runtime client uses `DATABASE_URL`
+- Runtime client uses `DATABASE_URL` and loads `.env.local`
+- Development bootstrap of Organization `js-solutions` and six AgentDefinitions
 
 **Not implemented:**
 
 - Production migration of later schema changes (follow the same plan-then-migrate rule)
 - Preview/staging database
-- Seed data
 - Application query layer
+- Goal bootstrap (deliberate later step)
 
 ## Connection split
 

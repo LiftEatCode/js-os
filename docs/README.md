@@ -55,7 +55,7 @@ Strategic context for JS Solutions. Mission, vision, values, and goals are **dra
 
 ## Departments
 
-Future operating definitions. **Implementation status: planned.** No agent prompts.
+Future operating definitions. Department **operations** are planned. AgentDefinition role rows exist in development; that is not an operational agent.
 
 | Document | Purpose |
 |---|---|
@@ -117,7 +117,7 @@ None are implemented. JS Growth is specified in most detail because the boundary
 |---|---|
 | [Local setup](development/local-setup.md) | Node 24, npm, env files, install, validation. |
 | [Environments](development/environments.md) | Dev vs production Neon; preview future. |
-| [Database workflow](development/database-workflow.md) | Prisma 8 plan-then-migrate; URL split. |
+| [Database workflow](development/database-workflow.md) | Prisma 8 plan-then-migrate; URL split; development bootstrap. |
 | [Testing](development/testing.md) | Current scripts; future isolated DB tests. |
 | [Deployment](development/deployment.md) | Intended Vercel hosting; not a live claim. |
 
@@ -144,4 +144,4 @@ How ADRs work and the accepted decisions: [decisions/README.md](decisions/README
 |---|---|
 | [Roadmap](roadmap.md) | Phases 0–15: objective, capabilities, safety, exit criteria. |
 | [Phase 0 — Foundation](phases/phase-00-foundation.md) | Repo, Next.js, architecture, Node 24, Prisma 8 foundation. |
-| [Phase 1 — Business State](phases/phase-01-business-state.md) | Contract, Neon, migration; seed and service layer remaining. |
+| [Phase 1 — Business State](phases/phase-01-business-state.md) | Contract, Neon, migration, org/agent bootstrap; service layer remaining. |

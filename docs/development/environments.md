@@ -24,6 +24,8 @@ JS OS will store goals, work, approvals, events, and agent-run history. Accident
 
 `DATABASE_URL` is pooled (runtime). `DIRECT_URL` is direct (Prisma CLI). Each environment has its own pair. See [ADR-004](../decisions/ADR-004-neon-environment-isolation.md).
 
+Local development uses the Neon development branch via `.env.local`. `npm run db:bootstrap` is development-only (`JS_OS_BOOTSTRAP_TARGET=development`). Production bootstrap is not supported.
+
 ## Not implemented
 
 - Preview/staging Neon branch or per-PR databases

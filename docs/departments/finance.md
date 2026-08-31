@@ -34,4 +34,6 @@ CEO (goals), Sales (close), Client Operations (delivery vs billable), Engineerin
 
 ## Current implementation status
 
-AgentRole `FINANCE` exists. No payments integration.
+**Implementation status:** planned (department operations)
+
+An AgentDefinition row exists in the development database (`slug: finance`, `permissionLevel: OBSERVE`). Finance is more restrictive than other departments at bootstrap. That is a role definition, not an operational finance agent. No payments integration.

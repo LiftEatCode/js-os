@@ -37,6 +37,46 @@ Application request handling must not run schema-management commands (`db init`,
 
 Do not use `prisma db push` as the normal production strategy.
 
+## Business-state bootstrap
+
+**Status:** Implemented (development only)
+
+Foundational JS Solutions rows (not disposable demo seed):
+
+```bash
+npm run db:bootstrap
+```
+
+Creates missing rows only:
+
+```text
+1 Organization   slug js-solutions
+6 AgentDefinitions
+  ceo, sales, marketing, client-operations, engineering, finance
+```
+
+Does not create Goals, WorkItems, Approvals, AgentRuns, or BusinessEvents. Does not delete or truncate.
+
+> Bootstrap establishes missing foundational records. It does not continuously enforce mutable operating configuration.
+
+Safe to run more than once:
+
+- Missing org/agent rows are created with initial defaults.
+- Existing rows are left unchanged (`status`, `permissionLevel`, `instructions`, `description`, and other mutable fields are preserved).
+- Identity drift fails loudly (Organization `js-solutions` with an unexpected name, or a known agent slug with an unexpected `role`) instead of being silently rewritten.
+
+Safety:
+
+- Script requires `JS_OS_BOOTSTRAP_TARGET=development` (`npm run db:bootstrap` sets this).
+- Refuses `NODE_ENV=production` and hosts that look like production.
+- Prints host and database name only — never connection strings or passwords.
+- Neon endpoint names do not always include the branch word “development”, so the host printout must be confirmed as the development branch.
+- Production bootstrap is not supported.
+
+Uses `DATABASE_URL` (pooled runtime). Node 24 CLI scripts that write `timestamptz` defaults need `--harmony-temporal` (included in the npm script) because Prisma 8 `instantNow` requires Temporal.
+
+Details of the rows: [business state](../architecture/business-state.md), [agent architecture](../architecture/agent-architecture.md).
+
 ## Source of truth
 
 ```text

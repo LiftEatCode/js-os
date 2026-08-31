@@ -34,4 +34,6 @@ CEO (priorities), Marketing (campaigns), Client Operations (handoff after close)
 
 ## Current implementation status
 
-AgentRole `SALES` exists. No sales UI or JS Growth connection.
+**Implementation status:** planned (department operations)
+
+An AgentDefinition row exists in the development database (`slug: sales`, `permissionLevel: RECOMMEND`). That is a role definition, not an operational sales agent. No sales UI or JS Growth connection.

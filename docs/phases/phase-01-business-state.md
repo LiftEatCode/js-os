@@ -6,7 +6,7 @@ Phase 1 is not complete.
 
 ## Goals
 
-Create the durable internal model JS OS will reason about: seven core entities, Prisma contract, referential integrity, Neon isolation, and a reviewed development migration.
+Create the durable internal model JS OS will reason about: seven core entities, Prisma contract, referential integrity, Neon isolation, a reviewed development migration, and initial JS Solutions configuration.
 
 ## Completed work
 
@@ -20,6 +20,20 @@ Create the durable internal model JS OS will reason about: seven core entities, 
 - `.env.local` for local secrets (gitignored)
 - Initial migration `migrations/app/20260831T1616_initial_business_state` planned and applied to **development**
 - Development schema verification against that migration
+- Initial Organization bootstrap (`js-solutions`)
+- Initial AgentDefinitions (`ceo`, `sales`, `marketing`, `client-operations`, `engineering`, `finance`)
+
+## Checklist
+
+```text
+Business-state design                 Implemented
+Prisma contract                       Implemented
+Development migration                 Implemented
+Neon development database             Implemented
+Initial organization bootstrap        Implemented
+Initial AgentDefinitions              Implemented
+Business-state access/service layer   Remaining
+```
 
 ## Key decisions
 
@@ -30,6 +44,8 @@ See [business state](../architecture/business-state.md) and:
 - [ADR-006](../decisions/ADR-006-permission-and-approval-boundaries.md) — permission ceiling and approvals (intent)
 
 Locked model rules include: one Organization entity; one WorkItem model; JS Growth canonical for product sales data; Approval ≠ execution; `permissionLevel` is a ceiling; AgentRun ≠ chat; BusinessEvent append-oriented with string `eventType`; JSON limited to four fields; internal provenance via FKs; `sourceType`/`sourceId` external only; no Goal hierarchy; no auth/org membership in v0.1.
+
+Bootstrap creates missing Organization and AgentDefinition rows by natural key. It does not overwrite mutable fields on rerun. Identity drift (wrong Organization name or AgentDefinition role) fails loudly. It is not a Prisma 7 seed framework. AgentDefinition rows are role definitions, not operational agents. Goals are deferred to a later deliberate step.
 
 ## Validation
 
@@ -47,11 +63,15 @@ npm run lint
 npm run build
 ```
 
-Database verify/migrate were used against **development** during this phase. Do not re-run mutating database commands from documentation tasks.
+Development configuration (does not migrate):
+
+```bash
+npm run db:bootstrap
+```
 
 ## Remaining work
 
-- Bootstrap/seed initial JS Solutions business state
 - Business-state access/service layer
+- Deliberate Goal rows (not in the initial bootstrap)
 
 Not in Phase 1: Command Center UI, tools, CEO loop, integrations, auth.

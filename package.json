@@ -9,7 +9,8 @@
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
-    "contract:emit": "prisma contract emit"
+    "contract:emit": "prisma contract emit",
+    "db:bootstrap": "JS_OS_BOOTSTRAP_TARGET=development node --harmony-temporal --env-file=.env.local src/scripts/bootstrap-business-state.ts"
   },
   "dependencies": {
     "@prisma/orm-postgres": "^8.0.0-rc.8",

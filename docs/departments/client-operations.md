@@ -34,4 +34,6 @@ Sales (new clients), Marketing (retainers), Engineering (site issues), Finance (
 
 ## Current implementation status
 
-AgentRole `CLIENT_OPERATIONS` exists. No client ops UI.
+**Implementation status:** planned (department operations)
+
+An AgentDefinition row exists in the development database (`slug: client-operations`, `permissionLevel: RECOMMEND`). That is a role definition, not an operational client-ops agent. No client ops UI.

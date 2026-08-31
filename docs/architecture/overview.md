@@ -31,11 +31,12 @@ What exists now:
 - Isolated Neon development and production branches
 - Pooled runtime URL (`DATABASE_URL`) and direct CLI URL (`DIRECT_URL`)
 - Local secrets in gitignored `.env.local`
+- Development bootstrap: JS Solutions Organization + six AgentDefinition role rows
 
 What does not exist yet:
 
 - Command Center UI
-- Seeded JS Solutions business state
+- Goal rows (deferred; not part of initial bootstrap)
 - Business-state service/access layer
 - Tools, permissions enforcement, or tool execution
 - CEO review loop

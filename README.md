@@ -6,7 +6,7 @@ JS OS is a separate application from **JS Growth**. JS Solutions is the company.
 
 ## Current status
 
-**In progress — Phase 1 (Business State).** Foundation (Phase 0) is complete. The Prisma 8 contract and development schema exist. Seed data and a business-state service layer remain.
+**In progress — Phase 1 (Business State).** Foundation (Phase 0) is complete. The Prisma 8 contract, development schema, JS Solutions Organization, and six AgentDefinition role rows exist. A business-state service layer remains.
 
 Stack in use: Next.js 16, React 19, TypeScript, Tailwind, Prisma 8, PostgreSQL on Neon (isolated development and production branches).
 
@@ -41,6 +41,12 @@ Prisma contract (offline):
 
 ```bash
 npm run contract:emit
+```
+
+Development bootstrap (not a migration; development only):
+
+```bash
+npm run db:bootstrap
 ```
 
 Never apply a database migration before reviewing its plan. Never point development at production. Details: [docs/development/local-setup.md](docs/development/local-setup.md).

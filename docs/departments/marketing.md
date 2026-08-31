@@ -34,4 +34,6 @@ Sales (demand), Client Operations (client marketing deliverables), Engineering (
 
 ## Current implementation status
 
-AgentRole `MARKETING` exists. No marketing workflows implemented.
+**Implementation status:** planned (department operations)
+
+An AgentDefinition row exists in the development database (`slug: marketing`, `permissionLevel: RECOMMEND`). That is a role definition, not an operational marketing agent. No marketing workflows implemented.

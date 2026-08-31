@@ -1,6 +1,6 @@
 # Business state
 
-**Status:** Implemented (Prisma 8 contract). Application access/seed layer is remaining Phase 1 work.
+**Status:** Implemented (Prisma 8 contract + development bootstrap of Organization and AgentDefinitions). Application access/service layer is remaining Phase 1 work.
 
 JS OS reasons from durable business state, not from chat history. The Phase 1 model is intentionally small.
 
@@ -27,6 +27,17 @@ Fields: `id`, `name`, `slug` (unique), `description?`, `timezone` (IANA string, 
 Status: `ACTIVE` | `INACTIVE`.
 
 Owns all Phase 1 entities. No billing, address, tax, users, or CRM fields in v0.1. Auth and membership stay outside the model.
+
+Development bootstrap (`npm run db:bootstrap`) writes one organization:
+
+```text
+name: JS Solutions
+slug: js-solutions
+status: ACTIVE
+timezone: America/Chicago
+```
+
+Development bootstrap (`npm run db:bootstrap`) creates that organization if it is missing. If `js-solutions` already exists, bootstrap leaves mutable fields alone and only verifies identity (expected name `JS Solutions`). It does not continuously enforce operating configuration. Goals are not bootstrapped yet.
 
 ## Goal
 
@@ -127,8 +138,8 @@ See [database](database.md). Naming: PascalCase models, camelCase fields, SCREAM
 
 ## Remaining Phase 1 work
 
-- Seed initial JS Solutions business state
 - Business-state access/service layer
+- Deliberate Goal rows (not part of the initial bootstrap)
 
 ## Related
 

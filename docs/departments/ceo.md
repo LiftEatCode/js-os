@@ -37,4 +37,6 @@ Receives department signals; does not own JS Growth records.
 
 ## Current implementation status
 
-AgentRole `CEO` exists on AgentDefinition. No reasoning loop, UI, or tools.
+**Implementation status:** planned (department operations)
+
+An AgentDefinition row exists in the development database (`slug: ceo`, `permissionLevel: RECOMMEND`). That is a persistent role definition, not an operational agent. No reasoning loop, tools, AgentRuns, or UI.

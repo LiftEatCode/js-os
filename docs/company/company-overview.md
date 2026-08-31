@@ -28,4 +28,6 @@ JS OS            internal command layer
 
 See [system boundaries](../architecture/system-boundaries.md).
 
+Development bootstrap writes one Organization row (`slug: js-solutions`, timezone `America/Chicago`). That is operating configuration in the JS OS database, not a legal filing.
+
 Revenue figures, headcount, pricing, and legal entity details are not recorded in this repository and must not be invented here.
