@@ -4,11 +4,13 @@
 
 This document defines the database foundation for JS OS Phase 1.
 
-It records provider, isolation, migration, and security decisions before Prisma is installed and before any schema is written.
+Prisma ORM 8 is now installed as project infrastructure. The JS OS business models have not been translated yet. The v0.1 domain model remains in `docs/data-model.md` and will be implemented in a later dedicated step.
 
-Do not treat this file as an implemented database. There is no Prisma schema, no migrations, no client, and no environment files with credentials yet.
+```text
+No database has been initialized, verified, signed, or migrated yet.
+```
 
-The v0.1 domain model lives in `docs/data-model.md`. The first Prisma schema should be generated from that document, not designed ad hoc during installation.
+Do not treat this file as a live database. There is no Neon project, no connection string, no `db init`, no `db sign`, and no migrations.
 
 ---
 
@@ -16,21 +18,59 @@ The v0.1 domain model lives in `docs/data-model.md`. The first Prisma schema sho
 
 ```text
 Database: PostgreSQL
-Managed provider: Neon
-ORM / migration tooling: Prisma
+Provider: Neon
+ORM: Prisma ORM 8
 ```
 
 Why:
 
 - PostgreSQL is a strong fit for relational business state: organizations, goals, work items, approvals, events, and agent runs have explicit relationships and statuses.
-- Prisma provides an explicit schema and committed migration history, which matches how JS OS should evolve durable state.
+- Prisma 8 is the current Prisma ORM line. JS OS is pinned to Node 24, which Prisma 8 requires.
+- This is a new internal system with no legacy Prisma 7 implementation to preserve.
 - Neon provides managed PostgreSQL and works well with serverless Next.js deployments on Vercel.
 - JS OS should have its own database rather than sharing JS Growth's database.
 - Cross-system integration with JS Growth should happen through APIs and integration boundaries, not direct table coupling.
 
-JS Growth already uses PostgreSQL/Neon with Prisma. JS OS should follow a similar stack for operational familiarity, but the databases remain independent.
+JS Growth already uses PostgreSQL/Neon. JS OS follows a similar stack for operational familiarity, but the databases remain independent.
 
 This does not add FastAPI, queues, workers, or LLM infrastructure. Those wait until a later feature requires them.
+
+---
+
+## Prisma 8 status
+
+Installed as a foundation only:
+
+- CLI: `prisma@8.0.0-rc.10`
+- Postgres adapter: `@prisma/orm-postgres@8.0.0-rc.8`
+- CLI engine: `@prisma/cli-engine@0.2.3`
+
+Prisma 8 is contract-first. It uses a newer workflow than Prisma 7 (`schema.prisma` + `@prisma/client` + `prisma migrate`):
+
+```text
+contract
+emit
+db init
+db verify
+db sign
+```
+
+Current project state:
+
+```text
+contract source: src/prisma/contract.prisma
+emitted artifacts: src/prisma/contract.json, src/prisma/contract.d.ts
+runtime client: src/prisma/db.ts (unused by the Next.js app)
+CLI config: prisma.config.ts
+```
+
+The starter User/Post sample models were removed. The contract is empty on purpose until `docs/data-model.md` is translated.
+
+```text
+No database has been initialized, verified, signed, or migrated yet.
+```
+
+Do not run `db init`, `db verify`, `db sign`, `db push`, `contract infer`, or `--probe-db` until a dedicated Neon database exists.
 
 ---
 
@@ -41,6 +81,8 @@ This does not add FastAPI, queues, workers, or LLM infrastructure. Those wait un
 Environment separation is a safety boundary, not just convenience.
 
 JS OS will store goals, work, approvals, business events, and agent runs. Accidental writes to production would corrupt operating state and audit history.
+
+Normal application request handling must not perform schema-management operations (`db init`, `db update`, `db migrate`, `db sign`). Those are CLI/ops paths only.
 
 ---
 
@@ -60,20 +102,18 @@ Use a dedicated Neon development database or development branch.
 
 Do not use the production database for local development.
 
-Local `.env.local` will eventually contain values such as:
+Local secrets belong in `.env` or `.env.local` (gitignored). `.env.example` documents empty placeholders only:
 
 ```text
 DATABASE_URL=
 DIRECT_URL=
 ```
 
-Do not create `.env.local` as part of this design step. `.gitignore` already ignores `.env*` and allows `.env.example`. `.env.example` should be added when Prisma is installed, not now.
-
 ### Preview / Staging
 
 Vercel Preview deployments should use a non-production database.
 
-Prefer a dedicated preview/staging database or Neon branch.
+Long-term Preview strategy remains isolated Neon branches.
 
 Preview environments must never point at production credentials.
 
@@ -82,6 +122,8 @@ Preview environments must never point at production credentials.
 Production Vercel deployments use the production JS OS database only.
 
 Production credentials should exist only in production environment configuration.
+
+Production database operations must remain controlled.
 
 ---
 
@@ -100,6 +142,8 @@ Approval
 AgentDefinition
 AgentRun
 ```
+
+Those models are not in the Prisma contract yet.
 
 JS OS should not directly own or duplicate canonical JS Growth records such as:
 
@@ -134,24 +178,23 @@ A future integration service may fetch the current record from JS Growth.
 
 Do not design the JS Growth API in this document.
 
-This matches `docs/data-model.md`: `sourceType` / `sourceId` are for external or integration-origin references. Core JS OS relationships use dedicated foreign keys. JS OS and JS Growth must not share tables or rely on direct cross-database joins.
+This matches `docs/data-model.md`: `sourceType` / `sourceId` are for external or integration-origin references. Core JS OS relationships use dedicated foreign keys.
+
+```text
+JS OS DB               JS Growth DB
+    │                        │
+    └──── API/Integration ───┘
+```
+
+> JS OS and JS Growth must not rely on direct cross-database joins.
 
 ---
 
 ## Prisma strategy
 
-Prisma will be introduced after this database-design commit.
+Prisma 8 is installed. Do not add `@prisma/client` or other Prisma 7 packages.
 
-Initial expected packages later:
-
-```text
-prisma
-@prisma/client
-```
-
-Do not install them yet.
-
-The initial Prisma schema should be generated from `docs/data-model.md`, including the v0.1 decisions:
+The first real schema should be generated from `docs/data-model.md`, including the v0.1 decisions:
 
 - entity-specific enums
 - optional `WorkItem.agentRunId`
@@ -164,42 +207,37 @@ The initial Prisma schema should be generated from `docs/data-model.md`, includi
 
 ## Prisma generation
 
-After Prisma is installed, Prisma Client generation should become part of the normal project workflow.
+Prisma Client generation in Prisma 8 is `contract emit`.
 
-Expected future scripts may include:
+Current script:
 
 ```json
-"db:generate": "prisma generate",
-"db:validate": "prisma validate"
+"contract:emit": "prisma contract emit"
 ```
 
-Do not add these scripts until Prisma is installed.
+`contract emit` is offline. It does not need a database connection.
+
+After the JS OS models are authored, changing `src/prisma/contract.prisma` requires re-running `npm run contract:emit`.
 
 ---
 
-## Migration strategy
+## Database workflow (not run yet)
+
+Prisma 8 does not use Prisma 7 `prisma migrate dev` / `prisma migrate deploy` as the default path.
+
+Intended later workflow:
 
 ### Development
 
-Schema changes should be made through Prisma migrations.
+1. Edit `src/prisma/contract.prisma`
+2. `npm run contract:emit`
+3. Against the **development** database only, use Prisma 8 database commands such as `db init` (first time) or the documented update/migration commands
 
-Expected workflow later:
-
-```bash
-npx prisma migrate dev --name <migration-name>
-```
-
-Development migrations should run only against the development database.
+Development commands must run only against the development database.
 
 ### Production
 
-Production schema changes should use committed migrations.
-
-Expected deployment command later:
-
-```bash
-npx prisma migrate deploy
-```
+Production schema changes should use committed migration artifacts once that workflow is introduced.
 
 Do not use:
 
@@ -207,25 +245,32 @@ Do not use:
 prisma db push
 ```
 
-as the normal production schema-management strategy.
+Prisma 8 does not treat `db push` as the production schema-management strategy. Direct schema push must not replace committed history.
 
-`db push` may be useful for temporary prototyping. It must not replace migration history once the real schema exists.
+```text
+No database has been initialized, verified, signed, or migrated yet.
+```
 
 ---
 
-## Migration source of truth
+## Contract and migration source of truth
+
+Until JS OS models exist, `docs/data-model.md` remains the domain source of truth.
+
+After models are translated, the Prisma 8 source of truth will be:
 
 ```text
-prisma/schema.prisma
+src/prisma/contract.prisma
 +
-prisma/migrations/
+src/prisma/contract.json
+src/prisma/contract.d.ts
++
+future committed migrations
 ```
 
-will eventually become the source of truth for database structure.
+`contract.json` and `contract.d.ts` are generated by `contract emit` and should be committed. Do not edit them by hand.
 
-All production schema changes should be represented by committed migrations.
-
-Until those files exist, `docs/data-model.md` is the domain source of truth and this document is the database-operations source of truth.
+All production schema changes should be represented by committed migrations once that workflow is enabled.
 
 ---
 
@@ -233,16 +278,26 @@ Until those files exist, `docs/data-model.md` is the domain source of truth and 
 
 Neon may expose both pooled and direct database connections.
 
-Expected future convention:
+Documented future convention:
 
 ```text
 DATABASE_URL
 DIRECT_URL
 ```
 
-- `DATABASE_URL` is used by the application runtime.
-- `DIRECT_URL` may be used by Prisma migration/admin operations when appropriate.
-- Exact Neon connection configuration should be confirmed when Prisma is installed.
+Meaning:
+
+- `DATABASE_URL` is the pooled Neon connection for JS OS application runtime (`src/prisma/db.ts`).
+- `DIRECT_URL` is the direct Neon connection for Prisma CLI/database-management operations where required.
+
+The generated Prisma 8 `prisma.config.ts` currently uses `DATABASE_URL` for the CLI `db.connection` value. The installed Prisma 8 skill and scaffold document `DATABASE_URL` as the single config/runtime variable. They do not document a `DIRECT_URL` split.
+
+JS OS therefore keeps the generated `DATABASE_URL` wiring for now:
+
+- Changing the CLI datasource to `DIRECT_URL` would be a Prisma 7/Neon assumption, not a Prisma 8-documented default.
+- `DIRECT_URL` is not set locally, so pointing the CLI at it now would break offline validation without inventing credentials.
+
+Exact Neon pooled vs direct mapping remains an open implementation decision for when the Neon project is created.
 
 Do not put real credentials or hostnames in this repository's documentation.
 
@@ -315,7 +370,9 @@ Recommend UUID/CUID-style application-generated IDs rather than sequential busin
 
 Do not lock the project into numeric auto-increment IDs.
 
-The exact Prisma ID strategy (`cuid`, `cuid2`, UUID, or similar) should be selected during schema implementation.
+The exact Prisma 8 ID strategy should be selected during schema implementation.
+
+The removed Prisma starter models used `Int @id @default(autoincrement())`. That is scaffold only and is not the JS OS ID decision.
 
 ---
 
@@ -348,8 +405,9 @@ decidedAt
 - Production database credentials should be limited to production environments.
 - Database access should be server-side only.
 - Never expose a raw database connection to browser/client code.
+- `src/prisma/db.ts` must not be imported from client components.
 
-`.gitignore` already ignores `.env*` files. That does not replace discipline: credentials must not appear in source, docs, or client bundles.
+`.gitignore` ignores `.env*` and allows `.env.example`. That does not replace discipline: credentials must not appear in source, docs, or client bundles.
 
 ---
 
@@ -397,14 +455,14 @@ JS OS Database          JS Growth Database
 
 ## Environment variable documentation
 
-Expected future `.env.example` database variables:
+`.env.example` now contains empty placeholders only:
 
 ```text
 DATABASE_URL=
 DIRECT_URL=
 ```
 
-`.env.example` does not exist yet. Create it during the Prisma implementation step, with empty documented values and no secrets.
+Copy to `.env` or `.env.local` when a real Neon database exists. Do not commit filled values.
 
 ---
 
@@ -418,17 +476,22 @@ DIRECT_URL=
 - Commit every production migration.
 - Back up or otherwise protect important production data before risky schema changes.
 - Keep JS OS and JS Growth databases independently deployable.
+- Do not run db init, db verify, or db sign until a dedicated non-production database exists.
+- Do not let application request handling perform schema-management operations.
 ```
 
 ---
 
 ## Open Implementation Decisions
 
-These are left for the Prisma implementation step unless a later review resolves them.
+Resolved:
 
-1. Exact Prisma version compatible with the current Next.js/Node environment.
-2. Exact Neon pooled/direct connection configuration.
-3. Whether Preview should use one persistent staging DB or per-branch Neon databases.
+1. Prisma version: Prisma ORM 8 (`prisma@8.0.0-rc.10`, `@prisma/orm-postgres@8.0.0-rc.8`) on Node 24.
+
+Still open until Neon/schema implementation:
+
+2. Exact Neon pooled/direct connection configuration, including whether CLI `prisma.config.ts` should later read `DIRECT_URL`.
+3. Whether Preview should use one persistent staging DB or per-branch Neon databases. Long-term intent remains isolated Neon branches.
 4. Exact ID generator (`cuid`, `cuid2`, UUID, etc.).
 5. Test database isolation mechanism.
 6. Whether production migration deployment happens through Vercel build/deploy or a separate controlled CI step.
@@ -436,8 +499,8 @@ These are left for the Prisma implementation step unless a later review resolves
 Low-risk notes only:
 
 - Prefer application-generated UUID/CUID-style IDs over auto-increment integers, but do not pick the generator yet.
-- Prefer `prisma migrate deploy` over `db push` in production, regardless of whether deploy runs in Vercel or CI.
-- Preview must not share the production database; persistent staging vs per-branch Neon can be chosen at implementation.
+- Preview must not share the production database.
+- Keep generated Prisma 8 `DATABASE_URL` wiring until Neon exists.
 
 ---
 
@@ -446,8 +509,8 @@ Low-risk notes only:
 This design is intended to match:
 
 - `README.md` — JS OS vs JS Growth boundaries; infrastructure added only when a feature needs it
-- `docs/architecture.md` — durable business state; JS Growth integration rather than duplication; database deferred until the first real use case (Phase 1 schema implementation)
+- `docs/architecture.md` — durable business state; JS Growth integration rather than duplication
 - `docs/roadmap.md` — Phase 1 business-state entities
 - `docs/data-model.md` — owned entities, external `sourceType` / `sourceId`, append-oriented events, approval payloads, AgentRun audit fields
 
-No Prisma packages, schema, migrations, client code, API routes, or UI are implied by this document.
+No JS OS business models, Neon database, API routes, UI, or application queries are implied by the current Prisma 8 foundation.

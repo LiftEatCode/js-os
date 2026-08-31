@@ -1,0 +1,7 @@
+// Prisma 8 starter contract for JS OS.
+//
+// This file is the Prisma 8 PSL contract, not a Prisma 7 schema.prisma.
+// JS OS business models are intentionally not defined here yet.
+// Translate docs/data-model.md in the next dedicated step.
+//
+// No database has been initialized, verified, signed, or migrated yet.
