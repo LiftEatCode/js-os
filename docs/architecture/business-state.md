@@ -62,8 +62,15 @@ Fields: `id`, `organizationId`, `goalId?`, `parentId?`, `agentRunId?`, `title`, 
 - Status: `BACKLOG` | `READY` | `IN_PROGRESS` | `BLOCKED` | `WAITING_APPROVAL` | `COMPLETED` | `CANCELLED`
 - Priority: `WorkItemPriority` (entity-specific)
 - Work type: `TASK` | `REVIEW` | `RESEARCH` | `CONTENT` | `OUTREACH` | `ENGINEERING` | `CLIENT_WORK` | `ADMIN` | `DECISION`
-- Self-relation: named `WorkItemHierarchy` (`parent` / `children`)
+- Self-relation: named `WorkItemHierarchy` (`parent` / `children`). A WorkItem cannot become its own ancestor.
 - No JSON metadata
+- `sourceType` / `sourceId` are external/integration provenance only. Owner-created Command Center work leaves them null.
+- `agentRunId` is the creating AgentRun for future agent workflows. Owner-created work does not set it.
+- `startedAt` / `completedAt` are owned by the WorkItem service: first `IN_PROGRESS` sets `startedAt` if empty; `COMPLETED` sets/clears `completedAt`; `CANCELLED` is not completion.
+- `WAITING_APPROVAL` is a WorkItem status, not an Approval record.
+- Open work = not `COMPLETED` and not `CANCELLED`. Overdue is derived (`dueAt < now` while open).
+- WorkItems are not deleted. Terminal state uses `COMPLETED` or `CANCELLED`.
+- Command Center Work management (Milestone 2.4) is owner-operated. WorkItem *rows* are operating-state population; none are bootstrapped.
 
 ### Internal vs external origin
 

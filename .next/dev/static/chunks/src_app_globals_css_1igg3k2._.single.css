@@ -468,6 +468,10 @@
     margin-top: calc(var(--spacing) * 8);
   }
 
+  .mb-1 {
+    margin-bottom: var(--spacing);
+  }
+
   .block {
     display: block;
   }

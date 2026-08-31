@@ -4,5 +4,8 @@
   "/app/goals/new/page": "app/app/goals/new/page.js",
   "/app/goals/page": "app/app/goals/page.js",
   "/app/page": "app/app/page.js",
+  "/app/work/[workItemId]/page": "app/app/work/[workItemId]/page.js",
+  "/app/work/new/page": "app/app/work/new/page.js",
+  "/app/work/page": "app/app/work/page.js",
   "/page": "app/page.js"
 }

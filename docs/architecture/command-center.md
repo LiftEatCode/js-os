@@ -1,6 +1,6 @@
 # Command Center
 
-**Status:** In progress. Milestones 2.1 (shell + navigation), 2.2 (business overview), and 2.3 (Goals) are implemented. Later Command Center milestones are planned.
+**Status:** In progress. Milestones 2.1–2.4 (shell, Overview, Goals, Work) are implemented. Later Command Center milestones are planned.
 
 The Command Center is the internal JS OS operating interface for JS Solutions.
 
@@ -32,13 +32,13 @@ Command Center
 |---|---|---|
 | Overview | Current company state and owner attention | 2.2 Implemented |
 | Goals | Strategic objectives and measurable progress | 2.3 Implemented |
-| Work | WorkItems across JS Solutions | 2.4 Planned |
+| Work | WorkItems across JS Solutions | 2.4 Implemented |
 | Activity | BusinessEvent operational history | 2.5 Planned |
 | Approvals | Human decision / authorization queue | 2.6 Planned |
 | Agents | Organizational AgentDefinitions and later activity | 2.7 Planned |
 | Knowledge | Internal documentation browser | 2.8 Planned |
 
-Routes and navigation exist for all seven areas. Work, Activity, Approvals, Agents, and Knowledge remain placeholders until their milestones. Goals is implemented.
+Routes and navigation exist for all seven areas. Activity, Approvals, Agents, and Knowledge remain placeholders until their milestones. Goals and Work are implemented.
 
 ## Route structure
 
@@ -52,7 +52,9 @@ The Next.js App Router lives in `src/app/`. The Command Center URL `/app` is the
 /app/goals             Goal list (optional `?status=` filter)
 /app/goals/new         Create Goal
 /app/goals/[goalId]    Goal detail, edit, progress, status
-/app/work
+/app/work                 WorkItem list (optional status/priority/workType filters)
+/app/work/new             Create WorkItem
+/app/work/[workItemId]    WorkItem detail, edit, status, assignment
 /app/activity
 /app/approvals
 /app/agents
@@ -230,6 +232,78 @@ Goal management mutates Goal business state only. There is no atomic mutation-pl
 
 Agent planning, automatic Goal or WorkItem creation, Goal hierarchy, recommendations, scoring, AI interpretation, tools, integrations, auth, deletion, progress history/charts, or a generic workflow engine.
 
+## Work (Milestone 2.4)
+
+**Status:** Implemented
+
+WorkItems are execution state: what needs to happen to move the business forward. Milestone 2.4 is owner-managed. Assigning an AgentDefinition does not start an AgentRun and does not make that role operational.
+
+### Routes and mutations
+
+Same Server Action pattern as Goals: parse → write-access check → `getJsSolutionsOrganization()` → verify linked Goal / parent / AgentDefinition belong to JS Solutions → WorkItem service → revalidate `/app`, `/app/work`, `/app/work/[id]`. Create redirects to detail. Edit remains on detail.
+
+The same `JS_OS_COMMAND_CENTER_WRITES` safeguard applies. There is no Work-specific flag.
+
+### List
+
+Server-rendered. Filters: `status`, `priority`, and `workType` may be combined. Ordering after `listWorkItems()` (`createdAt` desc in the service):
+
+```text
+status:    IN_PROGRESS, BLOCKED, WAITING_APPROVAL, READY, BACKLOG, COMPLETED, CANCELLED
+priority:  CRITICAL, HIGH, MEDIUM, LOW
+then:      earliest dueAt (nulls last)
+then:      newest createdAt
+```
+
+Open work = not `COMPLETED` and not `CANCELLED`. Terminal work stays visible and slightly de-emphasized. Empty copy: “No work items have been defined yet.”
+
+### Creation and editing
+
+Form defaults only: status `BACKLOG`, priority `MEDIUM`, work type `TASK`. No default Goal, parent, or assignee.
+
+Editable: title, description, status, priority, workType, goalId, parentId, assignedAgentId, dueAt. Not editable: id, organizationId, agentRunId, sourceType, sourceId, startedAt, completedAt, createdAt, updatedAt.
+
+`sourceType` / `sourceId` are integration provenance. Owner-created work leaves them null. They may be shown read-only when present. `agentRunId` is the creating AgentRun for future agent workflows and is never owner-editable. This milestone does not create AgentRuns.
+
+### Goal, assignee, parent
+
+Linked Goals and AgentDefinitions are loaded through `@/business-state` and verified against the JS Solutions Organization. Assignee UI copy is “Configured assignee,” not “agent currently working.”
+
+Parent/child is a simple optional `parentId`. Detail shows direct children only. A WorkItem cannot parent itself or become its own ancestor (`wouldCreateParentCycle`). There is no tree editor.
+
+### Lifecycle timestamps
+
+Owned by the WorkItem service:
+
+- First entry into `IN_PROGRESS` sets `startedAt` if empty. Later changes do not reset it.
+- Entering `COMPLETED` sets `completedAt` if empty.
+- Leaving `COMPLETED` clears `completedAt`.
+- `CANCELLED` is not completion and does not set `completedAt`.
+
+The UI never writes these fields. There is no deletion; use `COMPLETED` or `CANCELLED`.
+
+### Status semantics
+
+The owner may move among persisted statuses. No transition policy engine yet.
+
+`WAITING_APPROVAL` means the WorkItem is marked as waiting for authorization. It does **not** create an Approval record. Approval remains a separate model (Milestone 2.6).
+
+`BLOCKED` is a status only. No blocker entity or dependency graph.
+
+Overdue is derived (`dueAt < now` and open). It is not persisted.
+
+### Overview
+
+Work mutations revalidate `/app`. Open Work count, Current Work, and Owner Attention (critical / blocked / overdue open work) update from the same services. Current Work rows and attention work items link to `/app/work/[workItemId]`.
+
+### BusinessEvent
+
+WorkItem mutations do not write BusinessEvents. Same audit gap as Goals.
+
+### Not in 2.4
+
+Agent-created work, automatic planning/decomposition, tool or approval execution, workflow engines, workers, schedulers, deletion, or fabricated AgentRuns/Approvals.
+
 ## Knowledge / documentation
 
 Markdown files under `docs/` remain the canonical source of truth.
@@ -246,15 +320,15 @@ The Command Center is currently unauthenticated development functionality. Do no
 
 The sidebar System area shows `Development` or `Production` from `NODE_ENV`. It does not expose hosts, connection strings, or credentials. `next start` therefore labels Production even on a developer machine. That is a known Milestone 2.1 limitation; it is not inferred from the Neon hostname. Do not treat the label as write-access state — writes use the separate `JS_OS_COMMAND_CENTER_WRITES` check above.
 
-## What 2.1–2.3 do not include
+## What 2.1–2.4 do not include
 
-- Work, activity, approval, or agent *management* UIs
+- Activity, approval, or agent *management* UIs
 - Approval or AgentRun actions from Overview
 - Documentation renderer / MDX
 - Auth
 - Tools, agents, orchestration, APIs created for their own sake
-- Goal deletion
-- Automatic BusinessEvent writes from Goal mutations
+- Goal or WorkItem deletion
+- Automatic BusinessEvent writes from Goal or WorkItem mutations
 
 ## Related
 

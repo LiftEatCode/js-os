@@ -37,6 +37,7 @@ export type OverviewGoalRow = {
 };
 
 export type OverviewWorkRow = {
+  id: string;
   title: string;
   status: WorkItem['status'];
   priority: WorkItem['priority'];
@@ -138,6 +139,7 @@ export async function loadOverview(): Promise<OverviewData> {
       timeHorizon: goal.timeHorizon,
     })),
     work: currentWork.map((item) => ({
+      id: item.id,
       title: item.title,
       status: item.status,
       priority: item.priority,

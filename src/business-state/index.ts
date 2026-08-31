@@ -28,6 +28,8 @@ export {
   updateWorkItemStatus,
 } from './work-items.ts';
 
+export { wouldCreateParentCycle } from './work-item-hierarchy.ts';
+
 export {
   getBusinessEventById,
   listBusinessEvents,

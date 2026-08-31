@@ -45,4 +45,6 @@ No ProposedAction entity in v0.1. `payload` holds the proposed action.
 
 Approvals remain durable. Execution does not happen in this layer. `approveApproval` / `rejectApproval` / `cancelApproval` only update authorization state.
 
+`WorkItem.status = WAITING_APPROVAL` is a work-status mark only. Command Center Work management does **not** create an Approval when the owner selects that status. Milestone 2.6 will implement authorization workflows as a separate domain.
+
 See [approval policy](../policies/approvals.md), [risk policy](../policies/risk.md), and [business-state services](business-state-services.md).

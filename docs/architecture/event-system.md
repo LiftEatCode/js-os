@@ -43,7 +43,7 @@ An AgentRun may conceptually produce BusinessEvents. v0.1 does **not** include `
 - Do not use JSON as a substitute for core typed fields.
 - `eventType` at the service boundary must be `lowercase.dot.notation`.
 
-Command Center Goal management (Milestone 2.3) does **not** emit BusinessEvents. There is no atomic state-mutation-plus-event pattern yet. Do not add non-atomic demonstration events to make Activity look populated. Unified auditing remains future work.
+Command Center Goal and Work management (Milestones 2.3–2.4) do **not** emit BusinessEvents. There is no atomic state-mutation-plus-event pattern yet. Do not add non-atomic demonstration events to make Activity look populated. Unified auditing remains future cross-cutting work.
 
 ## Related
 

@@ -151,7 +151,7 @@ export function buildOwnerAttention(input: BuildOwnerAttentionInput): OwnerAtten
       kind: 'critical_work',
       title: item.title,
       description: `Open ${item.status} work with CRITICAL priority.`,
-      href: '/app/work',
+      href: `/app/work/${item.id}`,
       severity: 'critical',
     });
   }
@@ -199,7 +199,7 @@ export function buildOwnerAttention(input: BuildOwnerAttentionInput): OwnerAtten
       kind: 'blocked_work',
       title: item.title,
       description: 'Open work is BLOCKED.',
-      href: '/app/work',
+      href: `/app/work/${item.id}`,
       severity: 'warning',
     });
   }
@@ -218,7 +218,7 @@ export function buildOwnerAttention(input: BuildOwnerAttentionInput): OwnerAtten
       kind: 'overdue_work',
       title: item.title,
       description: 'Open work is past its due date.',
-      href: '/app/work',
+      href: `/app/work/${item.id}`,
       severity: 'warning',
     });
   }

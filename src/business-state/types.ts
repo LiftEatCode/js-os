@@ -101,6 +101,7 @@ export type WorkItemListFilter = {
   workType?: WorkType;
   goalId?: string | null;
   assignedAgentId?: string | null;
+  parentId?: string | null;
 };
 
 export type RecordBusinessEventInput = {

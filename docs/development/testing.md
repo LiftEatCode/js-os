@@ -19,6 +19,10 @@ npm test
 - `src/command-center/write-access.test.ts` (writes disabled by default; development + explicit opt-in)
 - `src/command-center/goals/ordering.test.ts` (Goal list ordering)
 - `src/command-center/goals/parse.test.ts` (form parsing, enums, decimal strings)
+- `src/business-state/work-item-lifecycle.test.ts` (`startedAt` / `completedAt`; CANCELLED is not completion)
+- `src/business-state/work-item-hierarchy.test.ts` (self-parent and descendant cycle rejection)
+- `src/command-center/work/ordering.test.ts` (WorkItem list ordering)
+- `src/command-center/work/parse.test.ts` (Work form parsing, enums, due dates)
 
 These tests do not connect to a database. Do not mutate Neon from automated tests.
 

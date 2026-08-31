@@ -42,6 +42,38 @@
       },
       "filename": "src/command-center/goals/actions.ts",
       "exportedName": "updateGoalProgressAction"
+    },
+    "601014a2162f425caff72866deb8e98cf0704c5390": {
+      "workers": {
+        "app/app/work/[workItemId]/page": {
+          "moduleId": "[project]/.next-internal/server/app/app/work/[workItemId]/page/actions.js { ACTIONS_MODULE0 => \"[project]/src/command-center/work/actions.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
+          "async": true,
+          "codeHash": null
+        },
+        "app/app/work/new/page": {
+          "moduleId": "[project]/.next-internal/server/app/app/work/new/page/actions.js { ACTIONS_MODULE0 => \"[project]/src/command-center/work/actions.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
+          "async": true,
+          "codeHash": null
+        }
+      },
+      "filename": "src/command-center/work/actions.ts",
+      "exportedName": "updateWorkItemAction"
+    },
+    "6070b4300df73ec56f00b9fe0a57c715733ac52761": {
+      "workers": {
+        "app/app/work/[workItemId]/page": {
+          "moduleId": "[project]/.next-internal/server/app/app/work/[workItemId]/page/actions.js { ACTIONS_MODULE0 => \"[project]/src/command-center/work/actions.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
+          "async": true,
+          "codeHash": null
+        },
+        "app/app/work/new/page": {
+          "moduleId": "[project]/.next-internal/server/app/app/work/new/page/actions.js { ACTIONS_MODULE0 => \"[project]/src/command-center/work/actions.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
+          "async": true,
+          "codeHash": null
+        }
+      },
+      "filename": "src/command-center/work/actions.ts",
+      "exportedName": "createWorkItemAction"
     }
   },
   "edge": {},

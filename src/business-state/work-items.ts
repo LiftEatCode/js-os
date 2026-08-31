@@ -1,3 +1,4 @@
+/// <reference types="temporal-polyfill/types/global" />
 import { db } from '../prisma/db.ts';
 import { BusinessStateNotFoundError } from './errors.ts';
 import type {
@@ -8,6 +9,7 @@ import type {
   WorkItemStatus,
 } from './types.ts';
 import { requireNonEmptyString, omitUndefined } from './validation.ts';
+import { initialWorkItemLifecycle, nextWorkItemLifecycle } from './work-item-lifecycle.ts';
 
 export async function getWorkItemById(id: string): Promise<WorkItem | null> {
   return db.orm.public.WorkItem.where({ id }).first();
@@ -21,6 +23,7 @@ export async function listWorkItems(filter: WorkItemListFilter): Promise<WorkIte
     workType?: WorkItemListFilter['workType'];
     goalId?: string | null;
     assignedAgentId?: string | null;
+    parentId?: string | null;
   } = { organizationId: filter.organizationId };
 
   if (filter.status) {
@@ -38,6 +41,9 @@ export async function listWorkItems(filter: WorkItemListFilter): Promise<WorkIte
   if (filter.assignedAgentId !== undefined) {
     where.assignedAgentId = filter.assignedAgentId;
   }
+  if (filter.parentId !== undefined) {
+    where.parentId = filter.parentId;
+  }
 
   return db.orm.public.WorkItem.where(where)
     .orderBy((item) => item.createdAt.desc())
@@ -46,12 +52,14 @@ export async function listWorkItems(filter: WorkItemListFilter): Promise<WorkIte
 
 export async function createWorkItem(input: CreateWorkItemInput): Promise<WorkItem> {
   const title = requireNonEmptyString(input.title, 'title');
+  const status = input.status ?? 'BACKLOG';
+  const lifecycle = initialWorkItemLifecycle(status, Temporal.Now.instant());
 
   return db.orm.public.WorkItem.create({
     organizationId: input.organizationId,
     title,
     description: input.description ?? null,
-    status: input.status ?? 'BACKLOG',
+    status,
     priority: input.priority,
     workType: input.workType,
     goalId: input.goalId ?? null,
@@ -61,6 +69,8 @@ export async function createWorkItem(input: CreateWorkItemInput): Promise<WorkIt
     sourceId: input.sourceId ?? null,
     assignedAgentId: input.assignedAgentId ?? null,
     dueAt: input.dueAt ?? null,
+    startedAt: lifecycle.startedAt,
+    completedAt: lifecycle.completedAt,
   });
 }
 
@@ -73,6 +83,22 @@ export async function updateWorkItem(id: string, input: UpdateWorkItemInput): Pr
   const patch: UpdateWorkItemInput = { ...input };
   if (input.title !== undefined) {
     patch.title = requireNonEmptyString(input.title, 'title');
+  }
+
+  if (input.status !== undefined) {
+    const lifecycle = nextWorkItemLifecycle(
+      existing.status,
+      input.status,
+      existing.startedAt,
+      existing.completedAt,
+      Temporal.Now.instant(),
+    );
+    if (lifecycle.startedAt !== undefined) {
+      patch.startedAt = lifecycle.startedAt;
+    }
+    if (lifecycle.completedAt !== undefined) {
+      patch.completedAt = lifecycle.completedAt;
+    }
   }
 
   await db.orm.public.WorkItem.where({ id }).update(
@@ -89,18 +115,5 @@ export async function updateWorkItemStatus(
   id: string,
   status: WorkItemStatus,
 ): Promise<WorkItem> {
-  const existing = await getWorkItemById(id);
-  if (!existing) {
-    throw new BusinessStateNotFoundError(`WorkItem not found: ${id}`);
-  }
-
-  const patch: UpdateWorkItemInput = { status };
-  if (status === 'IN_PROGRESS' && existing.startedAt === null) {
-    patch.startedAt = Temporal.Now.instant();
-  }
-  if ((status === 'COMPLETED' || status === 'CANCELLED') && existing.completedAt === null) {
-    patch.completedAt = Temporal.Now.instant();
-  }
-
-  return updateWorkItem(id, patch);
+  return updateWorkItem(id, { status });
 }

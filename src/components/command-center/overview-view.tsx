@@ -88,6 +88,7 @@ export function OverviewView({ data }: { data: OverviewData }) {
               meta: [item.status, item.priority, item.workType, item.dueAtLabel]
                 .filter(Boolean)
                 .join(" · "),
+              href: `/app/work/${item.id}`,
             }))}
           />
         )}

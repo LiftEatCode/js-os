@@ -32,7 +32,7 @@ npm run dev
 
 The app landing page is `/`. The Command Center is `/app`. Auth is not implemented.
 
-Goal creation and editing are Server Actions. They succeed only when `NODE_ENV` is `development` and `.env.local` contains `JS_OS_COMMAND_CENTER_WRITES=true`. Leave the flag false unless you are entering real JS Solutions Goals. Do not create placeholder Goal rows.
+Goal and WorkItem creation and editing are Server Actions. They succeed only when `NODE_ENV` is `development` and `.env.local` contains `JS_OS_COMMAND_CENTER_WRITES=true`. Leave the flag false unless you are entering real JS Solutions Goals or work. Do not create placeholder rows.
 
 ## Validation
 

@@ -35,6 +35,8 @@ operational autonomous agent exists
 
 The rows do **not** mean LLM reasoning, agent runs, tools, autonomous execution, or scheduled operation exist.
 
+Command Center Work (Milestone 2.4) may assign a WorkItem to an AgentDefinition. That is a configured-role pointer (`assignedAgentId`). It does not start an AgentRun and does not make the role operational. `WorkItem.agentRunId` remains the creating-run relationship and is not owner-editable.
+
 | slug | role | permissionLevel |
 |---|---|---|
 | ceo | CEO | RECOMMEND |

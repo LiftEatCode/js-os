@@ -14,7 +14,7 @@ Give humans a central view of running JS Solutions: what is happening, what need
 2.1 Command Center shell + navigation     Implemented
 2.2 Business overview                     Implemented
 2.3 Goals                                 Implemented
-2.4 Work                                  Planned
+2.4 Work                                  Implemented
 2.5 Activity                              Planned
 2.6 Approvals                             Planned
 2.7 Agents                                Planned
@@ -22,7 +22,7 @@ Give humans a central view of running JS Solutions: what is happening, what need
 2.9 Integration + polish                  Planned
 ```
 
-Routes for 2.4–2.8 exist as placeholders. That is not feature completion.
+Routes for 2.5–2.8 exist as placeholders. That is not feature completion.
 
 ## Milestone 2.1 — Shell + navigation
 
@@ -59,9 +59,23 @@ Routes for 2.4–2.8 exist as placeholders. That is not feature completion.
 - Temporary unauthenticated write safeguard: `NODE_ENV === "development"` and `JS_OS_COMMAND_CENTER_WRITES === "true"`
 - Goal mutations do not write BusinessEvents (no atomic mutation+event pattern yet)
 
+## Milestone 2.4 — Work
+
+**Status:** Implemented
+
+- Server-rendered `/app/work`, `/app/work/new`, `/app/work/[workItemId]`
+- Reads through `@/business-state` with `getJsSolutionsOrganization()` scoping
+- Mutations via Server Actions → WorkItem services; same write-access safeguard as Goals
+- Owner can view, filter, create, inspect, edit, change status/priority, assign configured AgentDefinitions, link Goals, set due dates, and set optional parent/child
+- No WorkItem deletion (`COMPLETED` / `CANCELLED`)
+- `startedAt` / `completedAt` owned by the WorkItem service; `CANCELLED` is not completion
+- `WAITING_APPROVAL` does not create an Approval
+- Assignment does not start an AgentRun
+- Work mutations do not write BusinessEvents
+
 ## Remaining work
 
-- 2.4–2.7 feature screens for Work, Activity, Approvals, Agents
+- 2.5–2.7 feature screens for Activity, Approvals, Agents
 - 2.8 Knowledge browser over canonical `docs/` markdown
 - 2.9 polish, empty-state quality, and cross-page consistency
 - Authentication (replaces the Command Center write safeguard)
@@ -75,7 +89,7 @@ Read and coordinate. The Command Center does not execute external tools. UI must
 
 ## Exit criteria
 
-Owner can see goals, work, approvals, and recent events from live business state. Partially met: Overview reads live state; Goals can be managed when writes are enabled; dedicated Work/Activity/Approvals/Agents screens are still planned.
+Owner can see goals, work, approvals, and recent events from live business state. Partially met: Overview is live; Goals and Work can be managed when writes are enabled; dedicated Activity/Approvals/Agents screens are still planned.
 
 ## Related
 

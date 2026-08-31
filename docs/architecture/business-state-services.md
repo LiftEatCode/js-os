@@ -59,6 +59,27 @@ updateGoalProgress   currentValue only; delegates to updateGoal
 
 Numeric `targetValue` / `currentValue` are Prisma `numeric` values. Application code should pass decimal strings and avoid `parseFloat`. Empty optional numerics are stored as `null`.
 
+## WorkItem services
+
+```text
+getWorkItemById
+listWorkItems          optional status / priority / workType / goalId / assignedAgentId / parentId; createdAt desc
+createWorkItem
+updateWorkItem
+updateWorkItemStatus   status only; delegates to updateWorkItem
+wouldCreateParentCycle ancestry invariant (pure helper)
+```
+
+`createWorkItem` defaults status to `BACKLOG`. Lifecycle timestamps are applied on create and whenever `updateWorkItem` receives a status:
+
+- First entry to `IN_PROGRESS` sets `startedAt` if empty. Later changes do not reset it.
+- Entering `COMPLETED` sets `completedAt` if empty. Leaving `COMPLETED` clears it.
+- `CANCELLED` does not set `completedAt`.
+
+`listWorkItems` can filter `parentId` so Command Center can load direct children without a generic graph query.
+
+Command Center Work forms do not pass `sourceType`, `sourceId`, or `agentRunId`. Those remain service-level fields for integrations and future AgentRuns.
+
 ## Centralized database access
 
 All services use the single runtime in `src/prisma/db.ts` (`DATABASE_URL`). That module initializes Temporal via `temporal-polyfill/full/global` before queries run. CLI scripts load `.env.local` from this module when `DATABASE_URL` is not already set; Next.js injects `.env.local` itself.
@@ -79,7 +100,7 @@ Append-only. `recordBusinessEvent()` creates rows. There is no update or delete 
 
 `eventType` must be `lowercase.dot.notation` (for example `lead.created`).
 
-There is no transactional “mutate Goal + record BusinessEvent” helper. Command Center Goal Server Actions therefore persist Goal rows only. Unified mutation-to-BusinessEvent auditing is a future cross-cutting concern.
+There is no transactional “mutate Goal or WorkItem + record BusinessEvent” helper. Command Center Goal and Work Server Actions therefore persist those rows only. Unified mutation-to-BusinessEvent auditing is a future cross-cutting concern.
 
 ## Approval
 
@@ -121,7 +142,7 @@ Prisma integrity errors are not swallowed.
 
 ## Tests and verification
 
-Unit tests cover validation, Goal `completedAt` lifecycle, Command Center write-access, Goal list ordering, and Goal form parsing (`npm test`). There is no isolated mutating test database yet, so services are not integration-tested against Neon in CI.
+Unit tests cover validation, Goal `completedAt` lifecycle, WorkItem lifecycle and parent-cycle checks, Command Center write-access, Goal/Work list ordering, and form parsing (`npm test`). There is no isolated mutating test database yet, so services are not integration-tested against Neon in CI.
 
 Read-only development check:
 
