@@ -1,6 +1,6 @@
 # Architecture overview
 
-**Status:** Implemented through Phase 2. Phase 3 (Tools + Permissions) is in progress; milestone 3.1 is implemented.
+**Status:** Implemented through Phase 2. Phase 3 (Tools + Permissions) is in progress; milestones 3.1–3.3 are implemented.
 
 JS OS is the internal operating system for JS Solutions. It is the orchestration and command platform for business operations across sales, marketing, client operations, engineering, finance, and AI-assisted workflows.
 
@@ -103,8 +103,8 @@ Updated business state
 | Command Center | Internal operating UI | Implemented (Phase 2) |
 | Business state | Durable goals, work, events, approvals, agents | Implemented (contract + services) |
 | Reasoning | CEO/department review of state vs goals | Planned |
-| Tools | Explicit execution boundary | In progress (3.1–3.2 implemented; runtime planned) |
-| Permissions | Autonomy ceiling plus per-tool checks | Planned (Phase 3 design; not enforced) |
+| Tools | Explicit execution boundary | In progress (3.1–3.3 implemented; coordinator planned) |
+| Permissions | Autonomy ceiling plus per-tool checks | In progress (3.3 technical evaluator; approval/policy planned) |
 | Approvals | Authorization for proposed actions | Implemented (Command Center + atomic commands; execution future) |
 | Execution | Performing an authorized tool attempt | Planned (model exists; coordinator does not) |
 | Events | Append-oriented timeline | Implemented (model + append API) |

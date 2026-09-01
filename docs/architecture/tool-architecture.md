@@ -1,20 +1,20 @@
 # Tool architecture
 
-**Status:** Milestones 3.1 and 3.2 implemented (persistence + code registry). Permission/approval evaluators, coordinator, tool adapters, and Command Center Tools are still planned.
+**Status:** Milestones 3.1–3.3 implemented (persistence, code registry, technical permission evaluator). Approval evaluation, coordinator, tool adapters, and Command Center Tools are still planned.
 
 ```text
 Future actor
     ↓
 ToolRequest        ← implemented persistent model
     ↓
-Authorization      ← planned (3.3 / 3.5)
+Authorization      ← 3.3 permission evaluator implemented; 3.5 approval planned
     ↓
 ToolExecution      ← implemented persistent model
     ↓
 Adapter            ← planned (3.6)
 ```
 
-The code registry exists. There is no permission evaluator, no coordinator, and no Command Center Tools area. Do not treat later Phase 3 milestones as shipped.
+The code registry and technical permission evaluator exist. There is no approval evaluator, coordinator, or Command Center Tools area. Do not treat later Phase 3 milestones as shipped.
 
 Tools are the controlled execution boundary. Actors must not receive unrestricted access to external services, credentials, or important state mutations.
 
@@ -85,7 +85,7 @@ Phase 3 does not implement autonomous agent behavior, model invocation, schedule
 
 - **USER** is not limited by an AgentDefinition permission ceiling. Owner invocation still requires the tool to be enabled, input validation, approval when the tool says `ALWAYS`, organization scoping, execution lifecycle, and audit.
 - **AGENT** is limited by the referenced AgentDefinition’s `permissionLevel` and `ACTIVE` status.
-- **SYSTEM** is reserved for future scheduled operations. Do not implement schedules in Phase 3.
+- **SYSTEM** is reserved for future scheduled operations. The 3.3 evaluator may technically allow SYSTEM for an enabled tool. There is no scheduler or SYSTEM invocation path.
 
 ## Permission ceiling vs required permission
 
@@ -544,30 +544,64 @@ Agents and UI may see “GitHub connection available”, never `GITHUB_TOKEN=...
 
 ## Permission evaluation
 
-Deterministic service `evaluateToolPermission`. Ordinary denials return a typed result; they do not throw.
+**Status:** Implemented (Milestone 3.3). Pure function `evaluateToolPermission(actor, definition)` in `src/tools/evaluate-permission.ts`. It does not look up the registry, fetch AgentDefinitions, persist rows, or inspect approval/risk/`persistExecution`.
+
+`enabled` is currently the registry’s global code-level flag. A future `ToolConfiguration` layer may supply an effective-enabled result; that is not implemented.
+
+Implemented order:
+
+```text
+Resolved ToolDefinition
+      ↓
+enabled?
+      ↓
+actor supported/active?
+      ↓
+agent ceiling sufficient?
+      ↓
+ALLOW / DENY
+```
+
+Denial precedence:
+
+```text
+1. TOOL_DISABLED
+2. ACTOR_NOT_ALLOWED
+3. INSUFFICIENT_PERMISSION
+4. ALLOW
+```
 
 Inputs:
 
 ```text
-actorType
-agentPermissionLevel?   // required for AGENT
-agentStatus?            // required for AGENT
-toolEnabled
-toolRequiredPermission
+actor (USER | AGENT | SYSTEM projection; no DB object)
+definition.enabled
+definition.requiredPermission
+AGENT only: agentDefinition.status, agentDefinition.permissionLevel
 ```
 
 Algorithm:
 
-1. If the tool is not enabled → `TOOL_DISABLED`.
-2. If `actorType` is unknown or unsupported in this phase → `ACTOR_NOT_ALLOWED`.
-3. If `actorType = AGENT` and definition is missing or not `ACTIVE` → `ACTOR_NOT_ALLOWED`.
-4. If `actorType = AGENT` and `rank(ceiling) < rank(required)` → `INSUFFICIENT_PERMISSION`.
-5. If `actorType = USER` or `SYSTEM`, skip the agent ceiling (USER/SYSTEM are not AgentDefinitions).
+1. If the tool is not enabled → `TOOL_DISABLED` (all actors).
+2. If `actor.type` is unknown or unsupported → `ACTOR_NOT_ALLOWED`.
+3. If `actor.type = AGENT` and definition is missing or not `ACTIVE` → `ACTOR_NOT_ALLOWED`.
+4. If `actor.type = AGENT` and `rank(ceiling) < rank(required)` → `INSUFFICIENT_PERMISSION`.
+5. If `actor.type = USER` or `SYSTEM`, skip the agent ceiling (USER/SYSTEM are not AgentDefinitions).
 6. Otherwise `allowed: true`.
 
-`SYSTEM` is reserved; Phase 3 should not invoke it except in tests.
+Ranks are numeric, not lexical: `OBSERVE=0 < RECOMMEND=1 < PREPARE=2 < EXECUTE=3`. Agent and tool permission enums are ranked separately with the same semantics.
+
+USER is technically allowed for any enabled tool. That is not unrestricted execution: later approval, policy, input validation, and the coordinator still apply.
+
+SYSTEM is technically allowed for any enabled tool. It is reserved for future scheduled/system workflows. There is no SYSTEM invocation path, scheduler, or production SYSTEM caller. Tests only.
+
+Tool-not-found belongs to registry lookup, not this evaluator. The core function assumes a resolved `ToolDefinition`.
+
+Approval evaluation is not part of 3.3. `approvalRequirement` and `riskLevel` are ignored here.
 
 ## Approval evaluation
+
+**Status:** Planned (Milestone 3.5). Not invoked by the 3.3 permission evaluator.
 
 Separate service `evaluateToolApproval`.
 

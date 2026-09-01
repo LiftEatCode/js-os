@@ -29,7 +29,7 @@ Do not treat Planned/Future text as shipped capability.
 | [Business-state services](architecture/business-state-services.md) | Typed access layer over the seven Phase 1 models. |
 | [Event system](architecture/event-system.md) | BusinessEvent as append-oriented timeline. |
 | [Agent architecture](architecture/agent-architecture.md) | AgentDefinition vs AgentRun; permission ceiling. |
-| [Tool architecture](architecture/tool-architecture.md) | Phase 3 execution boundary; 3.1 persistence and 3.2 registry implemented, runtime not. |
+| [Tool architecture](architecture/tool-architecture.md) | Phase 3 execution boundary; 3.1–3.3 persistence, registry, and permission evaluator implemented. Runtime/coordinator not. |
 | [Approval system](architecture/approval-system.md) | Approval authorizes; it does not execute. |
 | [Command Center](architecture/command-center.md) | Internal operating UI: routes, navigation, Goals, Work, Activity, Approvals, Agents, Knowledge. |
 | [Knowledge system](architecture/knowledge-system.md) | `docs/` as source of truth; read-only Command Center browser. |
@@ -151,4 +151,4 @@ How ADRs work and the accepted decisions: [decisions/README.md](decisions/README
 | [Phase 0 — Foundation](phases/phase-00-foundation.md) | Repo, Next.js, architecture, Node 24, Prisma 8 foundation. |
 | [Phase 1 — Business State](phases/phase-01-business-state.md) | Contract, Neon, bootstrap, service layer. Complete; Goal rows later. |
 | [Phase 2 — Command Center](phases/phase-02-command-center.md) | Shell, Overview, Goals, Work, Activity, Approvals, Agents, and Knowledge. Complete. |
-| [Phase 3 — Tools + Permissions](phases/phase-03-tools-permissions.md) | Controlled execution boundary. In progress; 3.1–3.2 implemented. |
+| [Phase 3 — Tools + Permissions](phases/phase-03-tools-permissions.md) | Controlled execution boundary. In progress; 3.1–3.3 implemented. |

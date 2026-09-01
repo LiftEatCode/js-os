@@ -12,6 +12,19 @@ export type { DefineToolInput, ToolDefinition } from './definition.ts';
 export { ToolRegistry, createToolRegistry } from './registry.ts';
 
 export {
+  createAgentToolActor,
+  createSystemToolActor,
+  createUserToolActor,
+  evaluateToolPermission,
+} from './evaluate-permission.ts';
+export type {
+  ToolPermissionActor,
+  ToolPermissionAgentProjection,
+  ToolPermissionDenialCode,
+  ToolPermissionEvaluation,
+} from './evaluate-permission.ts';
+
+export {
   assertToolExecutionTransition,
   assertToolRequestTransition,
   canCancelToolExecution,

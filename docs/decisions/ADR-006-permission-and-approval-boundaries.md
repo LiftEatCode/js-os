@@ -2,9 +2,11 @@
 
 ## Status
 
-Accepted (architectural intent)
+Accepted
 
-**Enforcement is not implemented.** There is no tool catalog, permission checker, or execution runner. Phase 3 records the execution-boundary design in [ADR-008](ADR-008-controlled-tool-execution-boundary.md); that ADR is also architectural intent until implementation lands.
+**Implemented:** technical permission evaluator (`evaluateToolPermission`). `AgentDefinition.permissionLevel` is the maximum technical capability ceiling. `ToolDefinition.requiredPermission` is the minimum technical permission required. USER and SYSTEM skip the agent ceiling; they still require the tool to be enabled. Disabled tools deny every actor.
+
+**Not implemented:** approval evaluation, operating policy, execution coordinator, real tools. EXECUTE still does not bypass approval, policy, risk controls, or tool enablement.
 
 ## Context
 
@@ -31,7 +33,7 @@ Agent → Tool Request → Permission Check → Approval Policy → Tool Executi
 - Later tool work must not bypass Approval
 - Phase 3 persistence is ToolRequest + ToolExecution with a code registry, not execution-inside-Approval ([ADR-008](ADR-008-controlled-tool-execution-boundary.md))
 - Policy documents describe direction until enforcement exists
-- Command Center (Milestone 2.7) can display and change the permission ceiling; that is configuration, not tool/policy enforcement. EXECUTE still does not bypass tools, policy, or approvals.
+- Command Center (Milestone 2.7) can display and change the permission ceiling; that is configuration. Milestone 3.3 enforces the ceiling against registered tool requirements for AGENT actors. EXECUTE still does not bypass tools, policy, or approvals.
 
 ## Alternatives considered
 

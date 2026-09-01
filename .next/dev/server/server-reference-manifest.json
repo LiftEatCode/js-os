@@ -2,11 +2,6 @@
   "node": {
     "60cc209e70ae7cdf3115b707f78be1fdeec5826fbf": {
       "workers": {
-        "app/app/goals/[goalId]/page": {
-          "moduleId": "[project]/.next-internal/server/app/app/goals/[goalId]/page/actions.js { ACTIONS_MODULE0 => \"[project]/src/command-center/goals/actions.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
-          "async": true,
-          "codeHash": null
-        },
         "app/app/goals/new/page": {
           "moduleId": "[project]/.next-internal/server/app/app/goals/new/page/actions.js { ACTIONS_MODULE0 => \"[project]/src/command-center/goals/actions.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
           "async": true,
@@ -18,11 +13,6 @@
     },
     "604a12c6933ecd4a30cadcc3dad83ba10c514a8fd8": {
       "workers": {
-        "app/app/goals/[goalId]/page": {
-          "moduleId": "[project]/.next-internal/server/app/app/goals/[goalId]/page/actions.js { ACTIONS_MODULE0 => \"[project]/src/command-center/goals/actions.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
-          "async": true,
-          "codeHash": null
-        },
         "app/app/goals/new/page": {
           "moduleId": "[project]/.next-internal/server/app/app/goals/new/page/actions.js { ACTIONS_MODULE0 => \"[project]/src/command-center/goals/actions.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
           "async": true,
@@ -32,24 +22,8 @@
       "filename": "src/command-center/goals/actions.ts",
       "exportedName": "createGoalAction"
     },
-    "6010189e377791e99dd239b8a297f74302fd442ed6": {
-      "workers": {
-        "app/app/goals/[goalId]/page": {
-          "moduleId": "[project]/.next-internal/server/app/app/goals/[goalId]/page/actions.js { ACTIONS_MODULE0 => \"[project]/src/command-center/goals/actions.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
-          "async": true,
-          "codeHash": null
-        }
-      },
-      "filename": "src/command-center/goals/actions.ts",
-      "exportedName": "updateGoalProgressAction"
-    },
     "601014a2162f425caff72866deb8e98cf0704c5390": {
       "workers": {
-        "app/app/work/[workItemId]/page": {
-          "moduleId": "[project]/.next-internal/server/app/app/work/[workItemId]/page/actions.js { ACTIONS_MODULE0 => \"[project]/src/command-center/work/actions.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
-          "async": true,
-          "codeHash": null
-        },
         "app/app/work/new/page": {
           "moduleId": "[project]/.next-internal/server/app/app/work/new/page/actions.js { ACTIONS_MODULE0 => \"[project]/src/command-center/work/actions.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
           "async": true,
@@ -61,11 +35,6 @@
     },
     "6070b4300df73ec56f00b9fe0a57c715733ac52761": {
       "workers": {
-        "app/app/work/[workItemId]/page": {
-          "moduleId": "[project]/.next-internal/server/app/app/work/[workItemId]/page/actions.js { ACTIONS_MODULE0 => \"[project]/src/command-center/work/actions.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
-          "async": true,
-          "codeHash": null
-        },
         "app/app/work/new/page": {
           "moduleId": "[project]/.next-internal/server/app/app/work/new/page/actions.js { ACTIONS_MODULE0 => \"[project]/src/command-center/work/actions.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
           "async": true,
@@ -85,39 +54,6 @@
       },
       "filename": "src/command-center/approvals/actions.ts",
       "exportedName": "createApprovalRequestAction"
-    },
-    "6098aa0410103bbd54eb69b0bdd61f722a7769fb5c": {
-      "workers": {
-        "app/app/approvals/[approvalId]/page": {
-          "moduleId": "[project]/.next-internal/server/app/app/approvals/[approvalId]/page/actions.js { ACTIONS_MODULE0 => \"[project]/src/command-center/approvals/actions.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
-          "async": true,
-          "codeHash": null
-        }
-      },
-      "filename": "src/command-center/approvals/actions.ts",
-      "exportedName": "decideApprovalAction"
-    },
-    "60ac45d1124698154c05c06c41f8f2ae0e62eb98c8": {
-      "workers": {
-        "app/app/agents/[agentId]/page": {
-          "moduleId": "[project]/.next-internal/server/app/app/agents/[agentId]/page/actions.js { ACTIONS_MODULE0 => \"[project]/src/command-center/agents/actions.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
-          "async": true,
-          "codeHash": null
-        }
-      },
-      "filename": "src/command-center/agents/actions.ts",
-      "exportedName": "changeAgentStatusAction"
-    },
-    "609581f89e75101d800335a24562a11bf81ae5f9b8": {
-      "workers": {
-        "app/app/agents/[agentId]/page": {
-          "moduleId": "[project]/.next-internal/server/app/app/agents/[agentId]/page/actions.js { ACTIONS_MODULE0 => \"[project]/src/command-center/agents/actions.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
-          "async": true,
-          "codeHash": null
-        }
-      },
-      "filename": "src/command-center/agents/actions.ts",
-      "exportedName": "changeAgentPermissionAction"
     }
   },
   "edge": {},

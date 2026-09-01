@@ -1,10 +1,10 @@
 # Phase 3 — Tools + Permissions
 
-**Status:** In progress. Milestones 3.1 and 3.2 are implemented. Evaluators, execution, and Command Center Tools are not.
+**Status:** In progress. Milestones 3.1, 3.2, and 3.3 are implemented. Approval evaluation, execution, and Command Center Tools are not.
 
 Phase 0–2 are complete. Phase 3 introduces the controlled execution boundary: registered tools, permission evaluation, request/execution lifecycle, approval integration, internal safe tools, and Command Center visibility.
 
-Do not treat later Phase 3 milestones as shipped. 3.1 is persistence. 3.2 is the code registry only.
+Do not treat later Phase 3 milestones as shipped. 3.1 is persistence. 3.2 is the code registry. 3.3 is technical permission evaluation only.
 
 ## Objective
 
@@ -15,8 +15,8 @@ Make execution an explicit, permissioned tool boundary so actors never call inte
 ```text
 3.1 Tool domain model + architecture     Implemented
 3.2 Tool registry                        Implemented
-3.3 Permission evaluation                Next
-3.4 Tool request/execution lifecycle     Planned
+3.3 Permission evaluation                Implemented
+3.4 Tool request/execution lifecycle     Next
 3.5 Approval integration                 Planned
 3.6 Internal safe tools                  Planned
 3.7 Tools Command Center                 Planned
@@ -66,12 +66,13 @@ Canonical design: [tool architecture](../architecture/tool-architecture.md), [AD
 
 ## Milestone 3.3 — Permission evaluation
 
-**Status:** Planned
+**Status:** Implemented
 
-- `evaluateToolPermission` and `evaluateToolApproval` as deterministic functions
-- Typed denial codes
-- Tests for USER vs AGENT vs disabled tools vs ceiling comparisons
-- No persistence
+- Pure `evaluateToolPermission(actor, definition)` in `src/tools/evaluate-permission.ts`
+- Typed denials: `TOOL_DISABLED`, `ACTOR_NOT_ALLOWED`, `INSUFFICIENT_PERMISSION`
+- USER and SYSTEM skip the agent ceiling; AGENT requires `ACTIVE` and `rank(ceiling) >= rank(required)`
+- Approval evaluation is **not** part of 3.3 (`evaluateToolApproval` remains planned for 3.5)
+- No persistence, registry lookup, or AgentDefinition DB fetch inside the evaluator
 
 ## Milestone 3.4 — Tool request/execution lifecycle
 
@@ -127,7 +128,7 @@ Call `createWorkItemCommand` / `updateWorkItemStatusCommand`. Organization-scope
 
 - At least one internal non-production tool can be requested and allowed or denied according to documented permission rules
 - Approval-required path can wait, approve, and only then execute via explicit continuation
-- Enforcement exists in code (today it does not)
+- Enforcement of the full request/execution path does not exist yet. Technical permission evaluation (3.3) is implemented; the coordinator does not call it.
 - No external integrations shipped as a Phase 3 requirement
 
 ## Key safety boundary
