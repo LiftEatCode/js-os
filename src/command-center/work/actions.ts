@@ -1,16 +1,14 @@
 'use server';
 
 import {
+  createWorkItemCommand,
+  updateWorkItemCommand,
+} from '@/business-commands/work-item-commands';
+import {
   BusinessStateNotFoundError,
   InvalidBusinessStateInputError,
-  createWorkItem,
-  getAgentDefinitionById,
-  getGoalById,
   getJsSolutionsOrganization,
   getWorkItemById,
-  listWorkItems,
-  updateWorkItem,
-  wouldCreateParentCycle,
 } from '@/business-state';
 import { revalidatePath } from 'next/cache';
 import { redirect, unstable_rethrow } from 'next/navigation';
@@ -21,6 +19,7 @@ export type { WorkFormState };
 
 function revalidateWorkPaths(workItemId?: string) {
   revalidatePath('/app');
+  revalidatePath('/app/activity');
   revalidatePath('/app/work');
   if (workItemId) {
     revalidatePath(`/app/work/${workItemId}`);
@@ -55,44 +54,6 @@ async function requireJsSolutionsWorkItem(workItemId: string) {
   return { organization, workItem };
 }
 
-async function assertLinkedEntities(
-  organizationId: string,
-  fields: { goalId: string | null; parentId: string | null; assignedAgentId: string | null },
-  currentWorkItemId?: string,
-) {
-  if (fields.goalId) {
-    const goal = await getGoalById(fields.goalId);
-    if (!goal || goal.organizationId !== organizationId) {
-      throw new InvalidBusinessStateInputError('Goal could not be found.');
-    }
-  }
-
-  if (fields.assignedAgentId) {
-    const agent = await getAgentDefinitionById(fields.assignedAgentId);
-    if (!agent || agent.organizationId !== organizationId) {
-      throw new InvalidBusinessStateInputError('Assigned role could not be found.');
-    }
-  }
-
-  if (fields.parentId) {
-    if (currentWorkItemId && fields.parentId === currentWorkItemId) {
-      throw new InvalidBusinessStateInputError('A work item cannot be its own parent.');
-    }
-    const parent = await getWorkItemById(fields.parentId);
-    if (!parent || parent.organizationId !== organizationId) {
-      throw new InvalidBusinessStateInputError('Parent work item could not be found.');
-    }
-    if (currentWorkItemId) {
-      const siblings = await listWorkItems({ organizationId });
-      if (wouldCreateParentCycle(currentWorkItemId, fields.parentId, siblings)) {
-        throw new InvalidBusinessStateInputError(
-          'A work item cannot become its own ancestor.',
-        );
-      }
-    }
-  }
-}
-
 export async function createWorkItemAction(
   _previous: WorkFormState,
   formData: FormData,
@@ -108,8 +69,7 @@ export async function createWorkItemAction(
   }
 
   try {
-    await assertLinkedEntities(organization.id, parsed.value);
-    const workItem = await createWorkItem({
+    const workItem = await createWorkItemCommand({
       organizationId: organization.id,
       title: parsed.value.title,
       description: parsed.value.description,
@@ -144,8 +104,9 @@ export async function updateWorkItemAction(
     if (!parsed.ok) {
       return parsed.state;
     }
-    await assertLinkedEntities(organization.id, parsed.value, workItem.id);
-    await updateWorkItem(workItem.id, {
+    await updateWorkItemCommand({
+      id: workItem.id,
+      organizationId: organization.id,
       title: parsed.value.title,
       description: parsed.value.description,
       status: parsed.value.status,

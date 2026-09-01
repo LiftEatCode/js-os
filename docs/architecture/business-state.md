@@ -95,7 +95,7 @@ Do not store JS OS record IDs in `sourceId`.
 
 ## BusinessEvent
 
-See [event system](event-system.md). Command Center Activity (2.5) is read-only. Consequential mutations that should appear in history belong on the atomic command boundary ([ADR-007](../decisions/ADR-007-atomic-business-mutation-and-event-recording.md)). Approval Command Center mutations use that boundary. Goal/Work services do not emit events today.
+See [event system](event-system.md). Command Center Activity (2.5) is read-only. Consequential Command Center mutations for Goals, Work, Approvals, and Agents go through the atomic command boundary ([ADR-007](../decisions/ADR-007-atomic-business-mutation-and-event-recording.md)). Public Goal/Work/Approval/Agent services mutate state only; they do not emit BusinessEvents.
 
 ## Approval
 

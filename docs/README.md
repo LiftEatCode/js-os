@@ -31,7 +31,7 @@ Do not treat Planned/Future text as shipped capability.
 | [Agent architecture](architecture/agent-architecture.md) | AgentDefinition vs AgentRun; permission ceiling. |
 | [Tool architecture](architecture/tool-architecture.md) | Future execution boundary; not implemented. |
 | [Approval system](architecture/approval-system.md) | Approval authorizes; it does not execute. |
-| [Command Center](architecture/command-center.md) | Internal operating UI: routes, navigation, Goals, Work, Activity, Approvals, Agents, Knowledge, implemented vs planned. |
+| [Command Center](architecture/command-center.md) | Internal operating UI: routes, navigation, Goals, Work, Activity, Approvals, Agents, Knowledge. |
 | [Knowledge system](architecture/knowledge-system.md) | `docs/` as source of truth; read-only Command Center browser. |
 | [Integrations (architecture)](architecture/integrations.md) | How JS OS will talk to other systems without duplicating them. |
 

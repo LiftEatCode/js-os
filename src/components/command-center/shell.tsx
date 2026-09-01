@@ -144,7 +144,10 @@ function SystemFooter({ environment }: { environment: string }) {
       <p className="text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
         System
       </p>
-      <p className="mt-1 text-sm text-zinc-700 dark:text-zinc-300">{environment}</p>
+      <p className="mt-1 text-sm text-zinc-700 dark:text-zinc-300">{environment} runtime</p>
+      <p className="mt-1 text-xs leading-5 text-zinc-500 dark:text-zinc-400">
+        Process runtime label only. It does not identify which database is connected.
+      </p>
       <p className="mt-1 text-xs leading-5 text-zinc-500 dark:text-zinc-400">
         Unauthenticated. Auth is future work.
       </p>

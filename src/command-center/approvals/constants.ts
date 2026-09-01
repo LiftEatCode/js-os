@@ -3,6 +3,7 @@ import type {
   ApprovalRiskLevel,
   ApprovalStatus,
 } from '../../business-state/types.ts';
+import { formatEnumLabel } from '../format.ts';
 
 export const APPROVAL_STATUSES = [
   'PENDING',
@@ -52,8 +53,5 @@ export const ACTION_TYPE_MAX_LENGTH = 120;
 export const APPROVAL_TITLE_MAX_LENGTH = 200;
 
 export function formatApprovalLabel(value: string): string {
-  return value
-    .split('_')
-    .map((part) => part.charAt(0) + part.slice(1).toLowerCase())
-    .join(' ');
+  return formatEnumLabel(value);
 }

@@ -1,13 +1,15 @@
 'use server';
 
 import {
+  createGoalCommand,
+  updateGoalCommand,
+  updateGoalProgressCommand,
+} from '@/business-commands/goal-commands';
+import {
   BusinessStateNotFoundError,
   InvalidBusinessStateInputError,
-  createGoal,
   getGoalById,
   getJsSolutionsOrganization,
-  updateGoal,
-  updateGoalProgress,
 } from '@/business-state';
 import { revalidatePath } from 'next/cache';
 import { redirect, unstable_rethrow } from 'next/navigation';
@@ -18,6 +20,7 @@ export type { GoalFormState };
 
 function revalidateGoalPaths(goalId?: string) {
   revalidatePath('/app');
+  revalidatePath('/app/activity');
   revalidatePath('/app/goals');
   if (goalId) {
     revalidatePath(`/app/goals/${goalId}`);
@@ -64,7 +67,7 @@ export async function createGoalAction(
   }
 
   try {
-    const goal = await createGoal({
+    const goal = await createGoalCommand({
       organizationId: organization.id,
       ...parsed.value,
     });
@@ -91,7 +94,9 @@ export async function updateGoalAction(
     if (!parsed.ok) {
       return parsed.state;
     }
-    await updateGoal(goal.id, {
+    await updateGoalCommand({
+      id: goal.id,
+      organizationId: organization.id,
       title: parsed.value.title,
       description: parsed.value.description,
       status: parsed.value.status,
@@ -126,8 +131,12 @@ export async function updateGoalProgressAction(
   }
 
   try {
-    const { goal } = await requireJsSolutionsGoal(goalId);
-    await updateGoalProgress(goal.id, parsed.currentValue);
+    const { organization, goal } = await requireJsSolutionsGoal(goalId);
+    await updateGoalProgressCommand({
+      id: goal.id,
+      organizationId: organization.id,
+      currentValue: parsed.currentValue,
+    });
     revalidateGoalPaths(goal.id);
     return {};
   } catch (error) {

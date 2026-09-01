@@ -5,6 +5,7 @@ import type {
   WorkItemPriority,
   WorkItemStatus,
 } from '../../business-state/types.ts';
+import { formatEnumLabel } from '../format.ts';
 
 export const CLOSED_WORK_STATUSES = ['COMPLETED', 'CANCELLED'] as const;
 
@@ -151,7 +152,7 @@ export function buildOwnerAttention(input: BuildOwnerAttentionInput): OwnerAtten
     grouped.critical_work.push({
       kind: 'critical_work',
       title: item.title,
-      description: `Open ${item.status} work with CRITICAL priority.`,
+      description: `Open ${formatEnumLabel(item.status)} work with ${formatEnumLabel(item.priority)} priority.`,
       href: `/app/work/${item.id}`,
       severity: 'critical',
     });
@@ -199,7 +200,7 @@ export function buildOwnerAttention(input: BuildOwnerAttentionInput): OwnerAtten
     grouped.blocked_work.push({
       kind: 'blocked_work',
       title: item.title,
-      description: 'Open work is BLOCKED.',
+      description: `Open work is ${formatEnumLabel(item.status)}.`,
       href: `/app/work/${item.id}`,
       severity: 'warning',
     });

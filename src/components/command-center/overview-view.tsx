@@ -1,5 +1,7 @@
 import Link from "next/link";
 import type { OverviewData } from "@/command-center/overview/load";
+import { formatEventTypeLabel, formatSourceType } from "@/command-center/activity/constants";
+import { formatEnumLabel } from "@/command-center/format";
 import { OverviewSection } from "./overview-section";
 import { PageHeader } from "./page-header";
 import { SummaryMetrics } from "./summary-metrics";
@@ -21,7 +23,7 @@ export function OverviewView({ data }: { data: OverviewData }) {
         description={description}
         actions={
           <p className="rounded-md border border-zinc-200 px-2 py-1 text-xs font-medium uppercase tracking-wide text-zinc-700 dark:border-zinc-700 dark:text-zinc-300">
-            {data.organization.status}
+            {formatEnumLabel(data.organization.status)}
           </p>
         }
       />
@@ -69,7 +71,7 @@ export function OverviewView({ data }: { data: OverviewData }) {
           <RowList
             rows={data.goals.map((goal) => ({
               title: goal.title,
-              meta: `${goal.status} · ${goal.priority} · ${goal.timeHorizon}`,
+              meta: `${formatEnumLabel(goal.status)} · ${formatEnumLabel(goal.priority)} · ${formatEnumLabel(goal.timeHorizon)}`,
               href: `/app/goals/${goal.id}`,
             }))}
           />
@@ -85,7 +87,7 @@ export function OverviewView({ data }: { data: OverviewData }) {
           <RowList
             rows={data.work.map((item) => ({
               title: item.title,
-              meta: [item.status, item.priority, item.workType, item.dueAtLabel]
+              meta: [formatEnumLabel(item.status), formatEnumLabel(item.priority), formatEnumLabel(item.workType), item.dueAtLabel]
                 .filter(Boolean)
                 .join(" · "),
               href: `/app/work/${item.id}`,
@@ -103,7 +105,7 @@ export function OverviewView({ data }: { data: OverviewData }) {
           <RowList
             rows={data.approvals.map((approval) => ({
               title: approval.title,
-              meta: [approval.riskLevel, approval.actionType, approval.requestedAtLabel]
+              meta: [formatEnumLabel(approval.riskLevel), approval.actionType, approval.requestedAtLabel]
                 .filter(Boolean)
                 .join(" · "),
               href: `/app/approvals/${approval.id}`,
@@ -121,7 +123,7 @@ export function OverviewView({ data }: { data: OverviewData }) {
           <RowList
             rows={data.events.map((event) => ({
               title: event.title,
-              meta: [event.eventType, event.sourceType, event.occurredAtLabel]
+              meta: [formatEventTypeLabel(event.eventType), formatSourceType(event.sourceType), event.occurredAtLabel]
                 .filter(Boolean)
                 .join(" · "),
               detail: event.description,
@@ -143,7 +145,7 @@ export function OverviewView({ data }: { data: OverviewData }) {
           <RowList
             rows={data.agents.map((agent) => ({
               title: agent.name,
-              meta: `${agent.role} · ${agent.status} · ${agent.permissionLevel}`,
+              meta: `${formatEnumLabel(agent.role)} · ${formatEnumLabel(agent.status)} · ${formatEnumLabel(agent.permissionLevel)}`,
               href: `/app/agents/${agent.id}`,
             }))}
           />
@@ -164,7 +166,7 @@ function RowList({
         const body = (
           <>
             <p className="text-sm font-medium text-zinc-950 dark:text-zinc-50">{row.title}</p>
-            <p className="mt-0.5 text-xs uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+            <p className="mt-0.5 text-xs tracking-wide text-zinc-500 dark:text-zinc-400">
               {row.meta}
             </p>
             {row.detail ? (

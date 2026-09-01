@@ -3,6 +3,7 @@ import type {
   AgentPermissionLevel,
   AgentRole,
 } from '../../business-state/types.ts';
+import { formatEnumLabel } from '../format.ts';
 
 export const AGENT_STATUSES = [
   'ACTIVE',
@@ -49,8 +50,5 @@ export const AGENT_STATUS_COPY: Record<AgentDefinitionStatus, string> = {
 };
 
 export function formatAgentLabel(value: string): string {
-  return value
-    .split('_')
-    .map((part) => (part === 'CEO' ? 'CEO' : part.charAt(0) + part.slice(1).toLowerCase()))
-    .join(' ');
+  return formatEnumLabel(value);
 }

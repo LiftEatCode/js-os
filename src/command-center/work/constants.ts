@@ -3,6 +3,7 @@ import type {
   WorkItemStatus,
   WorkType,
 } from '../../business-state/types.ts';
+import { formatEnumLabel } from '../format.ts';
 
 export const WORK_STATUSES = [
   'BACKLOG',
@@ -61,8 +62,5 @@ export const WORK_PRIORITY_SET = new Set<string>(WORK_PRIORITIES);
 export const WORK_TYPE_SET = new Set<string>(WORK_TYPES);
 
 export function formatWorkLabel(value: string): string {
-  return value
-    .split('_')
-    .map((part) => part.charAt(0) + part.slice(1).toLowerCase())
-    .join(' ');
+  return formatEnumLabel(value);
 }

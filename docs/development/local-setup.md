@@ -32,7 +32,7 @@ npm run dev
 
 The app landing page is `/`. The Command Center is `/app`. Auth is not implemented.
 
-Goal, WorkItem, Approval, and Agent configuration mutations are Server Actions. They succeed only when `NODE_ENV` is `development` and `.env.local` contains `JS_OS_COMMAND_CENTER_WRITES=true`. Leave the flag false unless you are entering real JS Solutions operating state. Do not create placeholder rows. Approving an Approval authorizes a proposal; it does not execute it. Changing an AgentDefinition does not start a run.
+Goal, WorkItem, Approval, and Agent configuration mutations are Server Actions. They succeed only when `NODE_ENV` is `development` and `.env.local` contains `JS_OS_COMMAND_CENTER_WRITES=true`. Leave the flag false unless you are entering real JS Solutions operating state. Do not create placeholder rows. Approving an Approval authorizes a proposal; it does not execute it. Changing an AgentDefinition does not start a run. Goal and Work commands append BusinessEvents in the same transaction as the state change.
 
 ## Validation
 

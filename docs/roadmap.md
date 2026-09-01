@@ -40,15 +40,15 @@ See [phase-01-business-state.md](phases/phase-01-business-state.md).
 
 ## Phase 2 — Command Center
 
-**Status:** In progress
+**Status:** Implemented
 
 **Objective:** Give humans a central view of running JS Solutions.
 
-**Major capabilities:** Command Center shell and navigation (2.1); live business overview (2.2); owner-managed Goals (2.3); owner-managed WorkItems (2.4); read-only Activity (2.5); owner-managed Approvals (2.6); AgentDefinition configuration and AgentRun history (2.7); Knowledge browser over `docs/` (2.8); later polish.
+**Major capabilities:** Command Center shell and navigation (2.1); live business overview (2.2); owner-managed Goals (2.3); owner-managed WorkItems (2.4); read-only Activity (2.5); owner-managed Approvals (2.6); AgentDefinition configuration and AgentRun history (2.7); Knowledge browser over `docs/` (2.8); Goal/Work command+event migration and operating-surface polish (2.9).
 
-**Key safety boundary:** Read and coordinate. The dashboard does not execute external tools. UI uses business-state services, not raw Prisma. Unauthenticated writes require development plus explicit `JS_OS_COMMAND_CENTER_WRITES=true`. Approving an Approval does not execute the proposed action.
+**Key safety boundary:** Read and coordinate. The dashboard does not execute external tools. UI uses business-state services for reads and business commands for consequential writes, not raw Prisma. Unauthenticated writes require development plus explicit `JS_OS_COMMAND_CENTER_WRITES=true`. Approving an Approval does not execute the proposed action.
 
-**Exit criteria:** Owner can see goals, work, approvals, agents, knowledge, and recent events from live business state. Partially met: Overview, Goals, Work, Activity, Approvals, Agents, and Knowledge are implemented; polish remains. Approval and Agent configuration commands emit BusinessEvents; Goal/Work history still waits on command-layer migration.
+**Exit criteria:** Owner can see goals, work, approvals, agents, knowledge, and recent events from live business state. Met. Goal, Work, Approval, and Agent configuration commands emit BusinessEvents.
 
 **Milestones:**
 
@@ -61,7 +61,7 @@ See [phase-01-business-state.md](phases/phase-01-business-state.md).
 2.6 Approvals                             Implemented
 2.7 Agents                                Implemented
 2.8 Knowledge / documentation browser     Implemented
-2.9 Integration + polish                  Planned
+2.9 Integration + polish                  Implemented
 ```
 
 See [phase-02-command-center.md](phases/phase-02-command-center.md).

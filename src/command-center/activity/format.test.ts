@@ -9,9 +9,9 @@ import { parseEventTypeFilter, parseSourceTypeFilter } from './parse.ts';
 
 describe('activity formatting', () => {
   it('formats known event types without changing the stored value', () => {
-    assert.equal(formatEventTypeLabel('work.completed'), 'Work Completed');
-    assert.equal(formatEventTypeLabel('goal.status_changed'), 'Goal Status Changed');
-    assert.equal(formatEventTypeLabel('agent.run.failed'), 'Agent Run Failed');
+    assert.equal(formatEventTypeLabel('goal.progress_updated'), 'Goal Progress Updated');
+    assert.equal(formatEventTypeLabel('work.created'), 'Work Created');
+    assert.equal(formatEventTypeLabel('work.status_changed'), 'Work Status Changed');
   });
 
   it('formats unknown event types from arbitrary dot notation', () => {

@@ -1,6 +1,6 @@
 # Architecture overview
 
-**Status:** Implemented through Phase 1. Command Center shell (2.1), Overview (2.2), Goals (2.3), Work (2.4), Activity (2.5), Approvals (2.6), Agents (2.7), and Knowledge (2.8) are implemented. Later Command Center milestones and later phases are planned.
+**Status:** Implemented through Phase 2. Phase 3 (Tools + Permissions) is next.
 
 JS OS is the internal operating system for JS Solutions. It is the orchestration and command platform for business operations across sales, marketing, client operations, engineering, finance, and AI-assisted workflows.
 
@@ -42,11 +42,11 @@ What exists now:
 - Owner-managed Approvals at `/app/approvals` (Milestone 2.6), using the atomic command/event boundary
 - AgentDefinition configuration and AgentRun history at `/app/agents` (Milestone 2.7)
 - Knowledge browser over canonical `docs/` at `/app/knowledge` (Milestone 2.8)
-- Atomic command/event boundary (`src/business-commands/`, ADR-007); Goal/Work mutations not yet migrated
+- Command Center integration and polish (Milestone 2.9)
+- Atomic command/event boundary (`src/business-commands/`, ADR-007) for Goal, Work, Approval, and Agent owner mutations
 
 What does not exist yet:
 
-- Command Center polish (Milestone 2.9)
 - Goal rows (deferred operating-state population, not unfinished schema)
 - Tools, permissions enforcement, or tool execution
 - CEO review loop
@@ -100,7 +100,7 @@ Updated business state
 
 | Layer | Role | Status |
 |---|---|---|
-| Command Center | Internal operating UI | In progress (2.1–2.8 implemented) |
+| Command Center | Internal operating UI | Implemented (Phase 2) |
 | Business state | Durable goals, work, events, approvals, agents | Implemented (contract + services) |
 | Reasoning | CEO/department review of state vs goals | Planned |
 | Tools | Explicit execution boundary | Future |

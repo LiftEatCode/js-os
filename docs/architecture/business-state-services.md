@@ -7,7 +7,7 @@ Typed application functions over the Phase 1 Prisma 8 contract. Future UI, agent
 ```text
 UI / future agents / future tools
                ↓
-       Business commands (`src/business-commands/`) for consequential Approval and Agent writes
+       Business commands (`src/business-commands/`) for consequential Goal, Work, Approval, and Agent writes
                ↓
        Business-State Services (`@/business-state`)
                ↓
@@ -59,6 +59,8 @@ updateGoalProgress   currentValue only; delegates to updateGoal
 
 `updateGoal` applies `nextGoalCompletedAt` when `status` is present. Callers must not treat `completedAt` as a UI field.
 
+Shared persistence lives in `src/business-state/goal-persistence.ts` (`db.orm` or `tx.orm`). Public helpers remain callable; they still do not emit BusinessEvents. Command Center uses `createGoalCommand` / `updateGoalCommand` / `updateGoalProgressCommand` so the Goal row and BusinessEvent commit together.
+
 Numeric `targetValue` / `currentValue` are Prisma `numeric` values. Application code should pass decimal strings and avoid `parseFloat`. Empty optional numerics are stored as `null`.
 
 ## WorkItem services
@@ -77,6 +79,8 @@ wouldCreateParentCycle ancestry invariant (pure helper)
 - First entry to `IN_PROGRESS` sets `startedAt` if empty. Later changes do not reset it.
 - Entering `COMPLETED` sets `completedAt` if empty. Leaving `COMPLETED` clears it.
 - `CANCELLED` does not set `completedAt`.
+
+Shared persistence lives in `src/business-state/work-item-persistence.ts` (`db.orm` or `tx.orm`). Public helpers remain callable; they still do not emit BusinessEvents. Command Center uses `createWorkItemCommand` / `updateWorkItemCommand` / `updateWorkItemStatusCommand` so the WorkItem row and BusinessEvent commit together. Parent cycle and linked Goal/Agent checks run inside that transaction. `WAITING_APPROVAL` does not create an Approval.
 
 `listWorkItems` can filter `parentId` so Command Center can load direct children without a generic graph query.
 
@@ -104,7 +108,7 @@ Append-only. `recordBusinessEvent()` creates rows. There is no update or delete 
 
 `listBusinessEvents` filters `organizationId`, optional `eventType` (exact), optional `sourceType`, and `limit` (default 50, max 200), ordered by `occurredAt` desc.
 
-There is no transactional helper inside this module. Atomic state+event recording belongs in `src/business-commands/` ([ADR-007](../decisions/ADR-007-atomic-business-mutation-and-event-recording.md)). Command implementations must use the transaction handle (`tx.orm`). `recordBusinessEventWithOrm(orm, …)` exists so commands can append events inside that transaction. Existing `createGoal` / `updateWorkItem` / `recordBusinessEvent` functions still use the global `db` client, so calling them sequentially is not atomic. Goal and Work Command Center actions have not been migrated. Approval Command Center actions use the command boundary.
+There is no transactional helper inside this module. Atomic state+event recording belongs in `src/business-commands/` ([ADR-007](../decisions/ADR-007-atomic-business-mutation-and-event-recording.md)). Command implementations must use the transaction handle (`tx.orm`). `recordBusinessEventWithOrm(orm, …)` exists so commands can append events inside that transaction. Public `createGoal` / `updateWorkItem` / `recordBusinessEvent` helpers still use the global `db` client and do not emit events; calling them sequentially is not atomic. Command Center Goal, Work, Approval, and Agent mutations use the command boundary.
 
 ## Approval
 
@@ -176,7 +180,7 @@ Prisma integrity errors are not swallowed.
 
 ## Tests and verification
 
-Unit tests cover validation, Goal `completedAt` lifecycle, Approval lifecycle, AgentDefinition no-op/status/permission rules, WorkItem lifecycle and parent-cycle checks, command-layer rollback pairing, Approval and Agent command atomicity, Command Center write-access, Goal/Work/Approval/Agent list ordering, Activity formatting/filters, and form parsing (`npm test`). There is no isolated mutating test database yet, so services are not integration-tested against Neon in CI.
+Unit tests cover validation, Goal `completedAt` lifecycle, Approval lifecycle, AgentDefinition no-op/status/permission rules, WorkItem lifecycle and parent-cycle checks, command-layer rollback pairing, Goal/Work/Approval/Agent command atomicity, Command Center write-access, Goal/Work/Approval/Agent list ordering, Activity formatting/filters, enum labels, and form parsing (`npm test`). There is no isolated mutating test database yet, so services are not integration-tested against Neon in CI.
 
 Read-only development check:
 

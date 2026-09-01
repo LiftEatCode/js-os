@@ -18,7 +18,7 @@ export default function NewGoalPage() {
     <div className="space-y-8">
       <PageHeader
         title="Create Goal"
-        description="Define a strategic objective for JS Solutions. Defaults to DRAFT until you choose otherwise."
+        description="Define a strategic objective for JS Solutions. Defaults to Draft until you choose otherwise."
         actions={
           <Link
             href="/app/goals"

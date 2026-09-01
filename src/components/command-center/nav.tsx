@@ -32,7 +32,7 @@ export const COMMAND_CENTER_NAV: CommandCenterNavItem[] = [
   {
     label: "Work",
     href: "/app/work",
-    description: "WorkItems across JS Solutions.",
+    description: "Work items across JS Solutions.",
     icon: "work",
   },
   {
@@ -50,7 +50,7 @@ export const COMMAND_CENTER_NAV: CommandCenterNavItem[] = [
   {
     label: "Agents",
     href: "/app/agents",
-    description: "Organizational AgentDefinitions and future activity.",
+    description: "Configured organizational roles and Agent Run history.",
     icon: "agents",
   },
   {

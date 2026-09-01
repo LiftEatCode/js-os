@@ -120,6 +120,7 @@ describe('buildOwnerAttention', () => {
     });
     assert.equal(items[0]?.kind, 'critical_work');
     assert.equal(items[0]?.severity, 'critical');
+    assert.equal(items[0]?.href, '/app/work/w1');
   });
 
   it('does not surface completed critical work', () => {
@@ -147,6 +148,7 @@ describe('buildOwnerAttention', () => {
       now,
     });
     assert.equal(items[0]?.kind, 'blocked_work');
+    assert.equal(items[0]?.href, '/app/work/w1');
   });
 
   it('surfaces overdue open work', () => {
@@ -163,6 +165,7 @@ describe('buildOwnerAttention', () => {
       now,
     });
     assert.equal(items[0]?.kind, 'overdue_work');
+    assert.equal(items[0]?.href, '/app/work/w1');
   });
 
   it('does not surface completed overdue work', () => {

@@ -166,7 +166,7 @@ function AgentFilters({
         permissionLevel={permissionLevel}
       />
       <FilterRow
-        label="Permission"
+        label="Permission ceiling"
         current={permissionLevel}
         items={AGENT_PERMISSION_LEVELS}
         queryKey="permissionLevel"

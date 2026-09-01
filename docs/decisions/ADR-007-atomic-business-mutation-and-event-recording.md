@@ -25,7 +25,7 @@ Existing services call the global `db` client. Calling `createGoal()` then `reco
 3. Command implementations must write through the transaction handle (`tx.orm`), not the global `db`.
 4. Raw business-state services remain lower-level primitives. They do not automatically emit events.
 5. Command Center, future agents, schedules, and integrations should call commands for consequential mutation paths once those commands exist.
-6. Goal and Work Command Center mutations are **not** migrated in this decision’s first implementation. Migrating them is a follow-on change so 2.3/2.4 stay stable.
+6. Goal and Work Command Center mutations are **not** migrated in this decision’s first implementation. Migrating them is a follow-on change so 2.3/2.4 stay stable. Milestone 2.9 completed that follow-on; see Consequences.
 
 ### Exceptions
 
@@ -38,10 +38,11 @@ Existing services call the global `db` client. Calling `createGoal()` then `reco
 - Operational history can become reliable: no partial state/event success.
 - An extra application layer exists (`src/business-commands/`).
 - Future commands must define `eventType`, human-readable title, and small metadata (IDs and deltas — not full row dumps).
-- Until Goal/Work commands exist, Activity may correctly omit those owner mutations.
+- Until Goal/Work commands exist, Activity may correctly omit those owner mutations. **Superseded in implementation by Milestone 2.9:** Goal and Work Command Center mutations now use this boundary (`createGoalCommand` / `updateGoalCommand` / `updateGoalProgressCommand` / `createWorkItemCommand` / `updateWorkItemCommand` / `updateWorkItemStatusCommand`). Events: `goal.created` / `goal.updated` / `goal.progress_updated` / `goal.status_changed` and `work.created` / `work.updated` / `work.status_changed`. Public `createGoal` / `updateGoal` / `createWorkItem` / `updateWorkItem` remain event-free primitives.
 - Approval Command Center mutations (Milestone 2.6) are the first production use of this boundary: `requestApprovalCommand` / `approveApprovalCommand` / `rejectApprovalCommand` / `cancelApprovalCommand` write through `tx.orm` and append `approval.requested` / `approved` / `rejected` / `cancelled` in the same transaction.
 - Agent configuration mutations (Milestone 2.7) use the same boundary: `changeAgentStatusCommand` / `changeAgentPermissionLevelCommand` append `agent.status_changed` / `agent.permission_changed`. Public `updateAgentStatus` / `updateAgentPermissionLevel` remain event-free primitives.
 - BusinessEvent remains operational event history, not a complete security audit log.
+- Residual concurrency: commands load current state inside the transaction, but Phase 2 does not add row locks or a version column. Concurrent owner edits can last-write-win.
 
 ## Alternatives considered
 

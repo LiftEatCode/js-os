@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getGoalById, getJsSolutionsOrganization } from "@/business-state";
+import { formatGoalLabel } from "@/command-center/goals/constants";
 import { isGoalUuid, instantToDateInput } from "@/command-center/goals/parse";
 import { formatBusinessDate, formatBusinessInstant } from "@/command-center/overview/format";
 import { isCommandCenterWriteEnabled } from "@/command-center/write-access";
@@ -51,7 +52,8 @@ export default async function GoalDetailPage({
         }
         meta={
           <p>
-            {goal.status} · {goal.priority} · {goal.timeHorizon}
+            {formatGoalLabel(goal.status)} · {formatGoalLabel(goal.priority)} ·{" "}
+            {formatGoalLabel(goal.timeHorizon)}
           </p>
         }
       />

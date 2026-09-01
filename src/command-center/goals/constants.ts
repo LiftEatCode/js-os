@@ -46,3 +46,5 @@ export const GOAL_FORM_DEFAULTS = {
 export const GOAL_STATUS_SET = new Set<string>(GOAL_STATUSES);
 export const GOAL_PRIORITY_SET = new Set<string>(GOAL_PRIORITIES);
 export const GOAL_TIME_HORIZON_SET = new Set<string>(GOAL_TIME_HORIZONS);
+
+export { formatEnumLabel as formatGoalLabel } from '../format.ts';

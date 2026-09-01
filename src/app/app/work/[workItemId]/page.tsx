@@ -137,9 +137,17 @@ export default async function WorkItemDetailPage({
         <Info
           label="Configured assignee"
           value={
-            assignee
-              ? `${assignee.name} · ${formatWorkLabel(assignee.role)} · ${formatWorkLabel(assignee.status)} · ${formatWorkLabel(assignee.permissionLevel)}`
-              : "None"
+            assignee ? (
+              <Link
+                href={`/app/agents/${assignee.id}`}
+                className="underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-900 dark:focus-visible:outline-zinc-100"
+              >
+                {assignee.name} · {formatWorkLabel(assignee.role)} ·{" "}
+                {formatWorkLabel(assignee.status)} · {formatWorkLabel(assignee.permissionLevel)}
+              </Link>
+            ) : (
+              "None"
+            )
           }
         />
         <Info

@@ -6,7 +6,7 @@ import {
   type Goal,
   type GoalStatus,
 } from "@/business-state";
-import { GOAL_LIST_STATUS_ORDER } from "@/command-center/goals/constants";
+import { GOAL_LIST_STATUS_ORDER, formatGoalLabel } from "@/command-center/goals/constants";
 import { sortGoals } from "@/command-center/goals/ordering";
 import { parseStatusFilter } from "@/command-center/goals/parse";
 import { formatBusinessDate } from "@/command-center/overview/format";
@@ -56,7 +56,7 @@ export default async function GoalsPage({
       {goals.length === 0 ? (
         <p className="text-sm leading-6 text-zinc-600 dark:text-zinc-400">
           {status
-            ? `No ${status} goals.`
+            ? `No ${formatGoalLabel(status)} goals.`
             : writesEnabled
               ? "No goals have been defined yet."
               : "No goals have been defined yet. Creation is unavailable while Command Center writes are disabled."}
@@ -78,7 +78,7 @@ function StatusFilter({ current }: { current: GoalStatus | undefined }) {
   const items: Array<{ label: string; href: string; status?: GoalStatus }> = [
     { label: "All", href: "/app/goals" },
     ...GOAL_LIST_STATUS_ORDER.map((status) => ({
-      label: status,
+      label: formatGoalLabel(status),
       href: `/app/goals?status=${status}`,
       status,
     })),
@@ -121,8 +121,9 @@ function GoalListItem({ goal, timeZone }: { goal: Goal; timeZone: string }) {
       className={`block px-4 py-3 hover:bg-zinc-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-900 dark:hover:bg-zinc-900 dark:focus-visible:outline-zinc-100 ${muted ? "opacity-80" : ""}`}
     >
       <p className="text-sm font-medium text-zinc-950 dark:text-zinc-50">{goal.title}</p>
-      <p className="mt-0.5 text-xs uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-        {goal.status} · {goal.priority} · {goal.timeHorizon}
+      <p className="mt-0.5 text-xs tracking-wide text-zinc-500 dark:text-zinc-400">
+        {formatGoalLabel(goal.status)} · {formatGoalLabel(goal.priority)} ·{" "}
+        {formatGoalLabel(goal.timeHorizon)}
         {target ? ` · ${target}` : ""}
       </p>
       <div className="mt-2">

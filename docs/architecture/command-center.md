@@ -1,12 +1,12 @@
 # Command Center
 
-**Status:** In progress. Milestones 2.1–2.8 (shell, Overview, Goals, Work, Activity, Approvals, Agents, Knowledge) are implemented. Later Command Center milestones are planned.
+**Status:** Implemented (Phase 2). Milestones 2.1–2.9 are complete.
 
 The Command Center is the internal JS OS operating interface for JS Solutions.
 
-It should eventually answer:
+It answers:
 
-> What is happening inside JS Solutions, what needs attention, and what is JS OS doing about it?
+> What is happening inside JS Solutions, what needs attention, what work is underway, what decisions require authorization, what agents are configured, and what operating knowledge exists?
 
 It is an internal business operating system, not a marketing analytics dashboard.
 
@@ -38,7 +38,7 @@ Command Center
 | Agents | Organizational AgentDefinitions and AgentRun history | 2.7 Implemented |
 | Knowledge | Internal documentation browser over `docs/` | 2.8 Implemented |
 
-Routes and navigation exist for all seven areas. Knowledge renders canonical `docs/` Markdown. Goals, Work, Activity, Approvals, Agents, and Knowledge are implemented.
+Routes and navigation exist for all seven areas. Knowledge renders canonical `docs/` Markdown. Goals, Work, Activity, Approvals, Agents, and Knowledge are implemented. Milestone 2.9 closed the Goal/Work BusinessEvent gap and polished cross-links, labels, and empty states.
 
 ## Route structure
 
@@ -79,16 +79,16 @@ Desktop: persistent sidebar. Mobile: header Menu control opens a modal dialog us
 ```text
 Command Center UI
         ↓
-Server Actions (Approvals/Agents → business commands; Goals/Work → business-state)
+Server Actions → business commands (Goals, Work, Approvals, Agents)
         ↓
-Business-State Services (`@/business-state`)
+Business-State Services (`@/business-state`) — reads and event-free primitives
         ↓
 Prisma (`src/prisma/db.ts`)
         ↓
 Neon
 ```
 
-Pages and layouts must not query Prisma directly. Reads go through `@/business-state`. Goal and Work mutations go through Command Center Server Actions, which call business-state services after a server-side write-access check. Approval and Agent configuration mutations go through business commands so the row and BusinessEvent commit together. Organization identity comes from `getJsSolutionsOrganization()` — never from a hardcoded UUID or browser form field.
+Pages and layouts must not query Prisma directly. Reads go through `@/business-state`. Consequential Goal, Work, Approval, and Agent mutations go through business commands so the row and BusinessEvent commit together. Public business-state mutation helpers remain callable and do not emit events. Organization identity comes from `getJsSolutionsOrganization()` — never from a hardcoded UUID or browser form field.
 
 ## Overview (Milestone 2.2)
 
@@ -166,14 +166,14 @@ assert write access (development + explicit opt-in)
     ↓
 getJsSolutionsOrganization()
     ↓
-business-state Goal service
+business command (`createGoalCommand` / `updateGoalCommand` / `updateGoalProgressCommand`)
     ↓
-revalidate /app, /app/goals, /app/goals/[goalId]
+revalidate /app, /app/activity, /app/goals, /app/goals/[goalId]
     ↓
 redirect (create) or remain on detail (edit / progress / status)
 ```
 
-The Server Action is the Command Center application boundary. The business-state service remains the persistence boundary.
+The Server Action is the Command Center application boundary. The business command is the atomic mutation+event boundary. Public Goal services remain event-free persistence primitives.
 
 List and detail pages are server-rendered (`dynamic = 'force-dynamic'`). Small Client Components (`GoalForm`, `GoalProgressForm`) exist only for pending state and action errors.
 
@@ -200,7 +200,7 @@ Create form defaults (UI only): status `DRAFT`, priority `MEDIUM`, time horizon 
 
 Editable on detail: title, description, status, priority, time horizon, target date, metric fields. Not editable: `id`, `organizationId`, `createdAt`, `updatedAt`, `completedAt`.
 
-Progress uses `updateGoalProgress()` and updates `currentValue` only.
+Progress uses `updateGoalProgressCommand` and updates `currentValue` only.
 
 ### Metric display
 
@@ -210,7 +210,7 @@ Numeric fields are validated and passed as decimal **strings**. Empty optional n
 
 ### `completedAt`
 
-The UI never writes `completedAt`. `createGoal` / `updateGoal` own the lifecycle:
+The UI never writes `completedAt`. Persistence (`createGoalWithOrm` / `updateGoalWithOrm`) owns the lifecycle:
 
 - Entering `ACHIEVED` sets `completedAt` if it is empty.
 - Leaving `ACHIEVED` clears `completedAt`.
@@ -233,7 +233,7 @@ This is a temporary development safeguard. Authentication will replace it. It is
 
 ### BusinessEvent auditing
 
-Goal management mutates Goal business state only. There is no atomic mutation-plus-BusinessEvent command pattern today. Unified mutation-to-BusinessEvent auditing remains a future cross-cutting concern. Goal Server Actions do not write demonstration events.
+Goal Command Center mutations go through `createGoalCommand` / `updateGoalCommand` / `updateGoalProgressCommand`. One event per owner action: `goal.created`, `goal.progress_updated`, `goal.status_changed` (status-only), or `goal.updated` (other field edits, including mixed status + fields). No-op updates write no event. Metadata is IDs and small deltas, not full Goal rows. Source is `USER` / `sourceId` null. Public `createGoal` / `updateGoal` / `updateGoalProgress` remain event-free.
 
 ### Not in 2.3
 
@@ -247,7 +247,7 @@ WorkItems are execution state: what needs to happen to move the business forward
 
 ### Routes and mutations
 
-Same Server Action pattern as Goals: parse → write-access check → `getJsSolutionsOrganization()` → verify linked Goal / parent / AgentDefinition belong to JS Solutions → WorkItem service → revalidate `/app`, `/app/work`, `/app/work/[id]`. Create redirects to detail. Edit remains on detail.
+Same Server Action pattern as Goals: parse → write-access check → `getJsSolutionsOrganization()` → business command (`createWorkItemCommand` / `updateWorkItemCommand`) which validates linked Goal / parent / AgentDefinition and parent cycles inside the transaction → revalidate `/app`, `/app/activity`, `/app/work`, `/app/work/[id]`. Create redirects to detail. Edit remains on detail.
 
 The same `JS_OS_COMMAND_CENTER_WRITES` safeguard applies. There is no Work-specific flag.
 
@@ -305,7 +305,7 @@ Work mutations revalidate `/app`. Open Work count, Current Work, and Owner Atten
 
 ### BusinessEvent
 
-WorkItem mutations do not write BusinessEvents. Same audit gap as Goals.
+Work Command Center mutations go through `createWorkItemCommand` / `updateWorkItemCommand` / `updateWorkItemStatusCommand`. One event per owner action: `work.created`, `work.status_changed` (status-only), or `work.updated`. No-op updates write no event. `WAITING_APPROVAL` does not create an Approval. Public `createWorkItem` / `updateWorkItem` remain event-free.
 
 ### Not in 2.4
 
@@ -323,7 +323,7 @@ Activity answers: what has happened inside JS OS. It is a read-only view of appe
 
 Filters are GET search params: `sourceType` (known enum) and `eventType` (exact string match — not a frontend enum). Unknown `eventType` values still render if they exist.
 
-Empty copy: “No business events have been recorded yet.” That is a valid development state. Approval Command Center mutations now append events atomically. Goal and Work mutations have not been migrated onto the atomic command boundary, so those owner edits still do not appear here.
+Empty copy: “No business events have been recorded yet.” That is a valid development state. Goal, Work, Approval, and Agent Command Center mutations append events atomically.
 
 Detail (`/app/activity/[eventId]`) shows title, description, eventType, sourceType, sourceId, occurredAt, createdAt, and metadata. Missing, invalid, or other-organization IDs are not found.
 
@@ -341,7 +341,7 @@ Recent Activity continues to use `listRecentBusinessEvents()`. Rows link to `/ap
 
 ### Command boundary
 
-Prisma 8 PostgreSQL supports `db.transaction`. Consequential mutations that should appear in history go through `src/business-commands/` so the state write and BusinessEvent append commit together. See [ADR-007](../decisions/ADR-007-atomic-business-mutation-and-event-recording.md). Approval Server Actions use that boundary. Goal and Work Server Actions still call business-state services only.
+Prisma 8 PostgreSQL supports `db.transaction`. Consequential mutations that should appear in history go through `src/business-commands/` so the state write and BusinessEvent append commit together. See [ADR-007](../decisions/ADR-007-atomic-business-mutation-and-event-recording.md). Goal, Work, Approval, and Agent Server Actions use that boundary.
 
 ## Approvals (Milestone 2.6)
 
@@ -373,7 +373,7 @@ Manual owner form: required title, actionType (`lowercase.dot.notation`), risk. 
 
 ### Detail and decisions
 
-Full request, payload JSON, related WorkItem (link to `/app/work/[id]`), related AgentRun (read-only; no AgentRun route yet). PENDING + writes: Approve / Reject / Cancel POST forms. Rejection requires a reason. CRITICAL requires a confirmation checkbox (server-validated). Terminal rows have no decision controls.
+Full request, payload JSON, related Work Item (link to `/app/work/[id]`), related Agent Run context (link to `/app/agents/[agentDefinitionId]` when the run’s AgentDefinition is in-org). There is no AgentRun detail route. PENDING + writes: Approve / Reject / Cancel POST forms. Rejection requires a reason. CRITICAL requires a confirmation checkbox (server-validated). Terminal rows have no decision controls.
 
 ### Overview and Activity
 
@@ -446,19 +446,30 @@ The Command Center is currently unauthenticated development functionality. Do no
 
 ## Environment indicator
 
-The sidebar System area shows `Development` or `Production` from `NODE_ENV`. It does not expose hosts, connection strings, or credentials. `next start` therefore labels Production even on a developer machine. That is a known Milestone 2.1 limitation; it is not inferred from the Neon hostname. Do not treat the label as write-access state — writes use the separate `JS_OS_COMMAND_CENTER_WRITES` check above.
+The sidebar System area shows a `Development` or `Production` **runtime** label from `NODE_ENV`. It does not identify which Neon branch or database is connected. `next start` therefore labels Production even on a developer machine. Do not treat the label as write-access state — writes use the separate `JS_OS_COMMAND_CENTER_WRITES` check above.
 
-## What 2.1–2.8 do not include
+## Phase 2 limitations
+
+These are accepted Phase 2 limits, not blockers:
+
+- No row-level locks or version columns (last-write-wins under concurrent owner edits)
+- No authentication or user identity (`sourceId` remains null for owner actions)
+- AgentRun volume queries are simple bounded scans
+- No persisted Approval expiration worker
+- No tools, policy engine, or runtime
+- Knowledge has substring search only (no semantic search, embeddings, or RAG)
+
+## What Phase 2 does not include
 
 - Approval or AgentRun actions from Overview (failed runs link to the AgentDefinition)
-- Auth
-- Tools, model invocation, schedules, orchestration
-- Goal, WorkItem, Approval, or AgentDefinition deletion
-- Goal/Work mutation migration onto atomic BusinessEvent commands
+- Auth / RBAC
+- Tools, model invocation, schedules, orchestration, policy engine
+- Goal, Work Item, Approval, or AgentDefinition deletion
 - Manual Activity event authoring
 - Approval execution after `APPROVED`
 - AgentRun creation or retry UI
 - Knowledge editing, embeddings, or RAG
+- Automatic coupling of Work `WAITING_APPROVAL` with Approval rows
 
 ## Related
 

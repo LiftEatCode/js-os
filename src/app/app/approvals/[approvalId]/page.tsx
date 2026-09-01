@@ -133,11 +133,28 @@ export default async function ApprovalDetailPage({
           }
         />
         <Info
-          label="Related agent run"
+          label="Related Agent Run"
           value={
-            relatedRun
-              ? [
-                  agentDefinition?.name ?? "Configured role",
+            relatedRun ? (
+              agentDefinition ? (
+                <Link
+                  href={`/app/agents/${agentDefinition.id}`}
+                  className="underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-900 dark:focus-visible:outline-zinc-100"
+                >
+                  {[
+                    agentDefinition.name,
+                    formatWorkLabel(relatedRun.status),
+                    formatWorkLabel(relatedRun.triggerType),
+                    relatedRun.startedAt
+                      ? formatBusinessInstant(relatedRun.startedAt, timeZone)
+                      : null,
+                  ]
+                    .filter(Boolean)
+                    .join(" · ")}
+                </Link>
+              ) : (
+                [
+                  "Configured role",
                   formatWorkLabel(relatedRun.status),
                   formatWorkLabel(relatedRun.triggerType),
                   relatedRun.startedAt
@@ -146,7 +163,10 @@ export default async function ApprovalDetailPage({
                 ]
                   .filter(Boolean)
                   .join(" · ")
-              : "None"
+              )
+            ) : (
+              "None"
+            )
           }
         />
       </dl>

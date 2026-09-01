@@ -11,6 +11,7 @@ import {
   GOAL_PRIORITIES,
   GOAL_STATUSES,
   GOAL_TIME_HORIZONS,
+  formatGoalLabel,
 } from "@/command-center/goals/constants";
 
 const inputClassName =
@@ -91,7 +92,7 @@ export function GoalForm({
           <select id="status" name="status" defaultValue={merged.status} className={inputClassName}>
             {GOAL_STATUSES.map((status) => (
               <option key={status} value={status}>
-                {status}
+                {formatGoalLabel(status)}
               </option>
             ))}
           </select>
@@ -105,7 +106,7 @@ export function GoalForm({
           >
             {GOAL_PRIORITIES.map((priority) => (
               <option key={priority} value={priority}>
-                {priority}
+                {formatGoalLabel(priority)}
               </option>
             ))}
           </select>
@@ -119,7 +120,7 @@ export function GoalForm({
           >
             {GOAL_TIME_HORIZONS.map((horizon) => (
               <option key={horizon} value={horizon}>
-                {horizon}
+                {formatGoalLabel(horizon)}
               </option>
             ))}
           </select>

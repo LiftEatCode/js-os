@@ -1,6 +1,6 @@
 # Event system
 
-**Status:** Implemented (model + append-only service + Command Center Activity). Approval and Agent configuration Command Center mutations emit events atomically. Emission from Goal/Work commands and integrations is future.
+**Status:** Implemented (model + append-only service + Command Center Activity). Goal, Work, Approval, and Agent Command Center mutations emit events atomically. Emission from integrations and AgentRuns is future.
 
 BusinessEvent is the operational timeline JS OS and future agents inspect. It is not chat history.
 
@@ -125,11 +125,43 @@ An AgentRun may conceptually produce BusinessEvents. v0.1 does **not** include `
 
 `/app/activity` and `/app/activity/[eventId]` list and inspect events for the JS Solutions Organization. List default limit is 50. Filters: `sourceType`, exact `eventType`.
 
-## Current Goal/Work audit gap
+BusinessEvent is **operational history**. It is not a complete security audit log, chat history, hidden reasoning, or a store of full object snapshots. Activity itself is read-only and does not author events. Knowledge is filesystem-based and does not emit BusinessEvents. Overview is read-only.
 
-Goal and Work Command Center mutations persist entity rows only. They do **not** write BusinessEvents. Sequential “mutate then record event” is rejected because partial success is misleading.
+### Phase 2 mutation / event coverage
 
-The adopted boundary is `src/business-commands/`: one `db.transaction` that mutates state and appends the event via `tx.orm`. Approval Command Center mutations use that boundary (`approval.requested` / `approved` / `rejected` / `cancelled`). Agent configuration mutations use it for `agent.status_changed` / `agent.permission_changed`. Goal/Work Server Actions have **not** been migrated. Until they are, Activity may correctly omit Goal/Work edits.
+| Area | Owner mutations? | Command boundary? | BusinessEvent? |
+|---|---|---|---|
+| Goals | Yes | Yes | Yes |
+| Work | Yes | Yes | Yes |
+| Activity | No | N/A | N/A |
+| Approvals | Yes | Yes | Yes |
+| Agents | Yes | Yes | Yes |
+| Knowledge | No | N/A | N/A |
+| Overview | No | N/A | N/A |
+
+Command Center owner actions use `sourceType = USER` and `sourceId = null`.
+
+### Goal and Work event policy
+
+One BusinessEvent per owner action. Do not emit multiple redundant events for one form submission.
+
+| Action | Event |
+|---|---|
+| Create Goal | `goal.created` |
+| Progress-only form | `goal.progress_updated` |
+| Status is the only meaningful change | `goal.status_changed` |
+| Other field edits, including mixed status + fields | `goal.updated` |
+| Create Work Item | `work.created` |
+| Status is the only meaningful change | `work.status_changed` |
+| Other field edits, including mixed status + fields | `work.updated` |
+
+No-op updates (no meaningful state change) return `InvalidBusinessStateInputError` and write no `*_changed` event.
+
+Metadata is small: IDs, titles, status/priority/workType, and previous/new deltas. No full row dumps, descriptions, or source payloads.
+
+Commands load current state **inside** the transaction before calculating deltas. There is no row locking or version column in Phase 2; concurrent owner edits can last-write-win.
+
+Goal/Work Server Actions call business commands. They do not call a public mutation service followed by `recordBusinessEvent()`.
 
 ## Related
 

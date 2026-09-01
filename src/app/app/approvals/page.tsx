@@ -95,8 +95,8 @@ export default async function ApprovalsPage({
           {filtered
             ? "No approvals match these filters."
             : writesEnabled
-              ? "No approval requests have been recorded yet."
-              : "No approval requests have been recorded yet. Creation is unavailable while Command Center writes are disabled."}
+              ? "No approvals have been recorded yet."
+              : "No approvals have been recorded yet. Creation is unavailable while Command Center writes are disabled."}
         </p>
       ) : (
         <ul className="divide-y divide-zinc-200 rounded-lg border border-zinc-200 bg-white dark:divide-zinc-800 dark:border-zinc-800 dark:bg-zinc-950">
