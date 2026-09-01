@@ -48,6 +48,13 @@ export {
 } from './approvals.ts';
 
 export {
+  isPendingPastExpiration,
+  isTerminalApprovalStatus,
+  nextApprovalDecision,
+  requireRejectionReason,
+} from './approval-lifecycle.ts';
+
+export {
   getAgentDefinitionById,
   getAgentDefinitionBySlug,
   listActiveAgentDefinitions,

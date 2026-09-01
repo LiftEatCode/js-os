@@ -25,6 +25,23 @@ export function requireEventType(eventType: string): string {
   return trimmed;
 }
 
+const ACTION_TYPE_PATTERN = /^[a-z][a-z0-9_]*(\.[a-z][a-z0-9_]*)+$/;
+const ACTION_TYPE_MAX_LENGTH = 120;
+
+export function isValidActionType(actionType: string): boolean {
+  return ACTION_TYPE_PATTERN.test(actionType);
+}
+
+export function requireActionType(actionType: string): string {
+  const trimmed = requireNonEmptyString(actionType, 'actionType');
+  if (!isValidActionType(trimmed) || trimmed.length > ACTION_TYPE_MAX_LENGTH) {
+    throw new InvalidBusinessStateInputError(
+      'actionType must use lowercase.dot.notation (for example outreach.send_email).',
+    );
+  }
+  return trimmed;
+}
+
 export function omitUndefined<T extends Record<string, unknown>>(input: T): Partial<T> {
   const result: Partial<T> = {};
   for (const key of Object.keys(input) as Array<keyof T>) {

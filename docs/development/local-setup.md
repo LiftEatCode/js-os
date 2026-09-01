@@ -16,7 +16,7 @@ Copy `.env.example` to `.env.local`. Fill pooled and direct Neon URLs for the **
 ```text
 DATABASE_URL=                    pooled runtime connection
 DIRECT_URL=                      direct Prisma CLI/admin connection
-JS_OS_COMMAND_CENTER_WRITES=false  temporary Goal write safeguard; set true only for local `next dev`
+JS_OS_COMMAND_CENTER_WRITES=false  temporary write safeguard; set true only for local `next dev`
 ```
 
 Do not commit `.env.local`. Do not paste real credentials into documentation or `NEXT_PUBLIC_*` variables.
@@ -32,7 +32,7 @@ npm run dev
 
 The app landing page is `/`. The Command Center is `/app`. Auth is not implemented.
 
-Goal and WorkItem creation and editing are Server Actions. They succeed only when `NODE_ENV` is `development` and `.env.local` contains `JS_OS_COMMAND_CENTER_WRITES=true`. Leave the flag false unless you are entering real JS Solutions Goals or work. Do not create placeholder rows.
+Goal, WorkItem, and Approval creation and editing are Server Actions. They succeed only when `NODE_ENV` is `development` and `.env.local` contains `JS_OS_COMMAND_CENTER_WRITES=true`. Leave the flag false unless you are entering real JS Solutions operating state. Do not create placeholder rows. Approving an Approval authorizes a proposal; it does not execute it.
 
 ## Validation
 

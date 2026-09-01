@@ -11,6 +11,7 @@ import {
   assertApprovalCanCancel,
   assertApprovalCanDecide,
   isValidEventType,
+  requireActionType,
   requireEventType,
   requireNonEmptyString,
 } from './validation.ts';
@@ -31,6 +32,13 @@ describe('business-state validation', () => {
     assert.equal(isValidEventType('Lead.Created'), false);
     assert.equal(isValidEventType('created'), false);
     assert.throws(() => requireEventType('CREATED'), InvalidBusinessStateInputError);
+  });
+
+  it('accepts lowercase.dot action types including underscores', () => {
+    assert.equal(requireActionType('  outreach.send_email  '), 'outreach.send_email');
+    assert.equal(requireActionType('payment.issue_refund'), 'payment.issue_refund');
+    assert.throws(() => requireActionType('Send Email'), InvalidBusinessStateInputError);
+    assert.throws(() => requireActionType('send'), InvalidBusinessStateInputError);
   });
 
   it('allows approval decisions only from PENDING', () => {

@@ -38,7 +38,8 @@ Existing services call the global `db` client. Calling `createGoal()` then `reco
 - Operational history can become reliable: no partial state/event success.
 - An extra application layer exists (`src/business-commands/`).
 - Future commands must define `eventType`, human-readable title, and small metadata (IDs and deltas — not full row dumps).
-- Until Goal/Work commands exist, Activity may correctly show zero events after owner mutations.
+- Until Goal/Work commands exist, Activity may correctly omit those owner mutations.
+- Approval Command Center mutations (Milestone 2.6) are the first production use of this boundary: `requestApprovalCommand` / `approveApprovalCommand` / `rejectApprovalCommand` / `cancelApprovalCommand` write through `tx.orm` and append `approval.requested` / `approved` / `rejected` / `cancelled` in the same transaction.
 - BusinessEvent remains operational event history, not a complete security audit log.
 
 ## Alternatives considered

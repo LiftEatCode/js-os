@@ -184,7 +184,7 @@ export function buildOwnerAttention(input: BuildOwnerAttentionInput): OwnerAtten
       kind: 'pending_approval',
       title: approval.title,
       description: 'Pending authorization. Approval does not execute the action.',
-      href: '/app/approvals',
+      href: `/app/approvals/${approval.id}`,
       severity: 'warning',
     });
   }

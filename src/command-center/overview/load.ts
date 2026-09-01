@@ -46,6 +46,7 @@ export type OverviewWorkRow = {
 };
 
 export type OverviewApprovalRow = {
+  id: string;
   title: string;
   riskLevel: Approval['riskLevel'];
   actionType: string;
@@ -148,6 +149,7 @@ export async function loadOverview(): Promise<OverviewData> {
       dueAtLabel: formatBusinessInstant(item.dueAt, timeZone),
     })),
     approvals: pendingApprovals.slice(0, PENDING_APPROVAL_LIMIT).map((approval) => ({
+      id: approval.id,
       title: approval.title,
       riskLevel: approval.riskLevel,
       actionType: approval.actionType,

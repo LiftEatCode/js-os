@@ -106,6 +106,7 @@ export function OverviewView({ data }: { data: OverviewData }) {
               meta: [approval.riskLevel, approval.actionType, approval.requestedAtLabel]
                 .filter(Boolean)
                 .join(" · "),
+              href: `/app/approvals/${approval.id}`,
             }))}
           />
         )}

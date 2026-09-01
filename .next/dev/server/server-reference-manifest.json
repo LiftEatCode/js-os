@@ -74,6 +74,28 @@
       },
       "filename": "src/command-center/work/actions.ts",
       "exportedName": "createWorkItemAction"
+    },
+    "60d7526cd884fe439fc1a2ee670905193bf99c04c3": {
+      "workers": {
+        "app/app/approvals/new/page": {
+          "moduleId": "[project]/.next-internal/server/app/app/approvals/new/page/actions.js { ACTIONS_MODULE0 => \"[project]/src/command-center/approvals/actions.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
+          "async": true,
+          "codeHash": null
+        }
+      },
+      "filename": "src/command-center/approvals/actions.ts",
+      "exportedName": "createApprovalRequestAction"
+    },
+    "6098aa0410103bbd54eb69b0bdd61f722a7769fb5c": {
+      "workers": {
+        "app/app/approvals/[approvalId]/page": {
+          "moduleId": "[project]/.next-internal/server/app/app/approvals/[approvalId]/page/actions.js { ACTIONS_MODULE0 => \"[project]/src/command-center/approvals/actions.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
+          "async": true,
+          "codeHash": null
+        }
+      },
+      "filename": "src/command-center/approvals/actions.ts",
+      "exportedName": "decideApprovalAction"
     }
   },
   "edge": {},

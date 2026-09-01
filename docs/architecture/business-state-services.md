@@ -7,7 +7,9 @@ Typed application functions over the Phase 1 Prisma 8 contract. Future UI, agent
 ```text
 UI / future agents / future tools
                ↓
-       Business-State Services
+       Business commands (`src/business-commands/`) for consequential Approval writes
+               ↓
+       Business-State Services (`@/business-state`)
                ↓
              Prisma (src/prisma/db.ts)
                ↓
@@ -102,11 +104,27 @@ Append-only. `recordBusinessEvent()` creates rows. There is no update or delete 
 
 `listBusinessEvents` filters `organizationId`, optional `eventType` (exact), optional `sourceType`, and `limit` (default 50, max 200), ordered by `occurredAt` desc.
 
-There is no transactional helper inside this module. Atomic state+event recording belongs in `src/business-commands/` ([ADR-007](../decisions/ADR-007-atomic-business-mutation-and-event-recording.md)). Command implementations must use the transaction handle (`tx.orm`). Existing `createGoal` / `updateWorkItem` / `recordBusinessEvent` functions still use the global `db` client, so calling them sequentially is not atomic. Goal and Work Command Center actions have not been migrated.
+There is no transactional helper inside this module. Atomic state+event recording belongs in `src/business-commands/` ([ADR-007](../decisions/ADR-007-atomic-business-mutation-and-event-recording.md)). Command implementations must use the transaction handle (`tx.orm`). `recordBusinessEventWithOrm(orm, …)` exists so commands can append events inside that transaction. Existing `createGoal` / `updateWorkItem` / `recordBusinessEvent` functions still use the global `db` client, so calling them sequentially is not atomic. Goal and Work Command Center actions have not been migrated. Approval Command Center actions use the command boundary.
 
 ## Approval
 
-Authorization only. `approveApproval` / `rejectApproval` / `cancelApproval` change status and `decidedAt`. They do not execute the proposed action.
+Authorization only. `approveApproval` / `rejectApproval` / `cancelApproval` change status, `decidedAt`, and `decisionReason`. They do not execute the proposed action.
+
+```text
+getApprovalById
+listApprovals            optional status / riskLevel / requestedByType / workItemId; requestedAt desc
+listPendingApprovals     status PENDING
+createApprovalRequest    always PENDING; actionType is lowercase.dot.notation
+approveApproval          PENDING → APPROVED; sets decidedAt
+rejectApproval           PENDING → REJECTED; requires decisionReason; sets decidedAt
+cancelApproval           PENDING → CANCELLED; sets decidedAt (final disposition)
+```
+
+There is no update-proposal API and no EXPIRED transition helper. `expiresAt` may be stored; reads do not mutate status when it is in the past.
+
+Decision services and commands share `src/business-state/approval-persistence.ts`, which accepts `db.orm` or `tx.orm`. Public helpers remain callable; they still do not emit BusinessEvents. Command Center uses `requestApprovalCommand` / `approveApprovalCommand` / `rejectApprovalCommand` / `cancelApprovalCommand` so the Approval row and BusinessEvent commit together.
+
+Rejection without `decisionReason` is invalid (intentional tightening of the Phase 1 helper). Approve and cancel reasons stay optional.
 
 Decisions are allowed only from `PENDING`.
 
@@ -144,7 +162,7 @@ Prisma integrity errors are not swallowed.
 
 ## Tests and verification
 
-Unit tests cover validation, Goal `completedAt` lifecycle, WorkItem lifecycle and parent-cycle checks, command-layer rollback pairing, Command Center write-access, Goal/Work list ordering, Activity formatting/filters, and form parsing (`npm test`). There is no isolated mutating test database yet, so services are not integration-tested against Neon in CI.
+Unit tests cover validation, Goal `completedAt` lifecycle, Approval lifecycle, WorkItem lifecycle and parent-cycle checks, command-layer rollback pairing, Approval command atomicity/duplicate-decision protection, Command Center write-access, Goal/Work/Approval list ordering, Activity formatting/filters, and form parsing (`npm test`). There is no isolated mutating test database yet, so services are not integration-tested against Neon in CI.
 
 Read-only development check:
 

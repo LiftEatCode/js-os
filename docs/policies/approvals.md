@@ -1,6 +1,6 @@
 # Approval policy
 
-**Status:** Designed (model implemented). Evaluation and enforcement are future.
+**Status:** Designed (model and Command Center implemented). Tool evaluation, execution, and enforcement are future.
 
 An Approval authorizes a proposed action. It does not perform the action.
 

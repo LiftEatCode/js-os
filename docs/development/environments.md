@@ -28,7 +28,7 @@ Local development uses the Neon development branch via `.env.local`. `npm run db
 
 ## Command Center writes
 
-The Command Center is unauthenticated. Goal and WorkItem mutations are disabled by default.
+The Command Center is unauthenticated. Goal, WorkItem, and Approval mutations are disabled by default.
 
 Writes require **both**:
 
@@ -37,7 +37,7 @@ NODE_ENV=development
 JS_OS_COMMAND_CENTER_WRITES=true
 ```
 
-`.env.example` documents `JS_OS_COMMAND_CENTER_WRITES=false`. For local Goal or Work management with `next dev`, a developer may set `JS_OS_COMMAND_CENTER_WRITES=true` in `.env.local`. Do not enable this in production. Authentication will replace this safeguard. There is no Work-specific write flag.
+`.env.example` documents `JS_OS_COMMAND_CENTER_WRITES=false`. For local Goal, Work, or Approval management with `next dev`, a developer may set `JS_OS_COMMAND_CENTER_WRITES=true` in `.env.local`. Do not enable this in production. Authentication will replace this safeguard. There is no Approval-specific write flag. Approving an Approval still does not execute the proposed action.
 
 The sidebar environment label uses `NODE_ENV` only (`next start` shows Production). That label is not a Neon-branch detector and is not the write-access check.
 

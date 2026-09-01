@@ -139,6 +139,8 @@ export type CreateApprovalRequestInput = {
 export type ApprovalListFilter = {
   organizationId: string;
   status?: ApprovalStatus;
+  riskLevel?: ApprovalRiskLevel;
+  requestedByType?: ApprovalRequesterType;
   workItemId?: string | null;
 };
 

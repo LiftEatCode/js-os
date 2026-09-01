@@ -95,11 +95,11 @@ Do not store JS OS record IDs in `sourceId`.
 
 ## BusinessEvent
 
-See [event system](event-system.md). Command Center Activity (2.5) is read-only. Consequential mutations that should appear in history belong on the atomic command boundary ([ADR-007](../decisions/ADR-007-atomic-business-mutation-and-event-recording.md)). Goal/Work services do not emit events today.
+See [event system](event-system.md). Command Center Activity (2.5) is read-only. Consequential mutations that should appear in history belong on the atomic command boundary ([ADR-007](../decisions/ADR-007-atomic-business-mutation-and-event-recording.md)). Approval Command Center mutations use that boundary. Goal/Work services do not emit events today.
 
 ## Approval
 
-See [approval system](approval-system.md).
+See [approval system](approval-system.md). Approval is authorization, not execution (`APPROVED ≠ EXECUTED`). Request fields are immutable after creation. `WAITING_APPROVAL` on a WorkItem is not an Approval record and is not auto-synchronized.
 
 ## AgentDefinition and AgentRun
 

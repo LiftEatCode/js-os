@@ -1,6 +1,6 @@
 # Command Center
 
-**Status:** In progress. Milestones 2.1–2.5 (shell, Overview, Goals, Work, Activity) are implemented. Later Command Center milestones are planned.
+**Status:** In progress. Milestones 2.1–2.6 (shell, Overview, Goals, Work, Activity, Approvals) are implemented. Later Command Center milestones are planned.
 
 The Command Center is the internal JS OS operating interface for JS Solutions.
 
@@ -34,11 +34,11 @@ Command Center
 | Goals | Strategic objectives and measurable progress | 2.3 Implemented |
 | Work | WorkItems across JS Solutions | 2.4 Implemented |
 | Activity | BusinessEvent operational history | 2.5 Implemented |
-| Approvals | Human decision / authorization queue | 2.6 Planned |
+| Approvals | Human decision / authorization queue | 2.6 Implemented |
 | Agents | Organizational AgentDefinitions and later activity | 2.7 Planned |
 | Knowledge | Internal documentation browser | 2.8 Planned |
 
-Routes and navigation exist for all seven areas. Approvals, Agents, and Knowledge remain placeholders until their milestones. Goals, Work, and Activity are implemented.
+Routes and navigation exist for all seven areas. Agents and Knowledge remain placeholders until their milestones. Goals, Work, Activity, and Approvals are implemented.
 
 ## Route structure
 
@@ -57,7 +57,9 @@ The Next.js App Router lives in `src/app/`. The Command Center URL `/app` is the
 /app/work/[workItemId]    WorkItem detail, edit, status, assignment
 /app/activity              BusinessEvent list (optional sourceType/eventType filters)
 /app/activity/[eventId]    BusinessEvent detail (read-only)
-/app/approvals
+/app/approvals             Approval list (optional status/riskLevel/requestedByType filters)
+/app/approvals/new         Request Approval (manual owner-created)
+/app/approvals/[approvalId] Approval detail and decisions
 /app/agents
 /app/knowledge
 ```
@@ -75,6 +77,8 @@ Desktop: persistent sidebar. Mobile: header Menu control opens a modal dialog us
 ```text
 Command Center UI
         ↓
+Server Actions (Approvals → business commands; Goals/Work → business-state)
+        ↓
 Business-State Services (`@/business-state`)
         ↓
 Prisma (`src/prisma/db.ts`)
@@ -82,7 +86,7 @@ Prisma (`src/prisma/db.ts`)
 Neon
 ```
 
-Pages and layouts must not query Prisma directly. Reads go through `@/business-state`. Goal mutations go through Command Center Server Actions, which call business-state services after a server-side write-access check. Organization identity comes from `getJsSolutionsOrganization()` — never from a hardcoded UUID or browser form field.
+Pages and layouts must not query Prisma directly. Reads go through `@/business-state`. Goal and Work mutations go through Command Center Server Actions, which call business-state services after a server-side write-access check. Approval mutations go through business commands so the Approval row and BusinessEvent commit together. Organization identity comes from `getJsSolutionsOrganization()` — never from a hardcoded UUID or browser form field.
 
 ## Overview (Milestone 2.2)
 
@@ -97,7 +101,7 @@ Pages and layouts must not query Prisma directly. Reads go through `@/business-s
 - Owner Attention (derived)
 - Active Goals preview
 - Current open WorkItems (up to 5)
-- Pending Approvals (up to 5, no approve/reject actions)
+- Pending Approvals (up to 5; rows link to `/app/approvals/[approvalId]`; no approve/reject on Overview)
 - Recent BusinessEvents (up to 8)
 - Configured organizational AgentDefinitions
 
@@ -287,7 +291,7 @@ The UI never writes these fields. There is no deletion; use `COMPLETED` or `CANC
 
 The owner may move among persisted statuses. No transition policy engine yet.
 
-`WAITING_APPROVAL` means the WorkItem is marked as waiting for authorization. It does **not** create an Approval record. Approval remains a separate model (Milestone 2.6).
+`WAITING_APPROVAL` means the WorkItem is marked as waiting for authorization. It does **not** create an Approval record. Approval is a separate model; Command Center Approvals (2.6) do not auto-synchronize this status.
 
 `BLOCKED` is a status only. No blocker entity or dependency graph.
 
@@ -317,7 +321,7 @@ Activity answers: what has happened inside JS OS. It is a read-only view of appe
 
 Filters are GET search params: `sourceType` (known enum) and `eventType` (exact string match — not a frontend enum). Unknown `eventType` values still render if they exist.
 
-Empty copy: “No business events have been recorded yet.” That is the expected current development state. Goal and Work mutations have not been migrated onto the atomic command boundary, so owner edits do not yet appear here.
+Empty copy: “No business events have been recorded yet.” That is a valid development state. Approval Command Center mutations now append events atomically. Goal and Work mutations have not been migrated onto the atomic command boundary, so those owner edits still do not appear here.
 
 Detail (`/app/activity/[eventId]`) shows title, description, eventType, sourceType, sourceId, occurredAt, createdAt, and metadata. Missing, invalid, or other-organization IDs are not found.
 
@@ -333,9 +337,49 @@ Metadata is pretty-printed JSON in a `<pre>` block. Null metadata shows “No me
 
 Recent Activity continues to use `listRecentBusinessEvents()`. Rows link to `/app/activity/[eventId]`. The section still links to `/app/activity`.
 
-### Command boundary (not yet used by Goal/Work)
+### Command boundary
 
-Prisma 8 PostgreSQL supports `db.transaction`. Consequential mutations that should appear in history must eventually go through `src/business-commands/` so the state write and BusinessEvent append commit together. See [ADR-007](../decisions/ADR-007-atomic-business-mutation-and-event-recording.md). Goal and Work Server Actions still call business-state services only.
+Prisma 8 PostgreSQL supports `db.transaction`. Consequential mutations that should appear in history go through `src/business-commands/` so the state write and BusinessEvent append commit together. See [ADR-007](../decisions/ADR-007-atomic-business-mutation-and-event-recording.md). Approval Server Actions use that boundary. Goal and Work Server Actions still call business-state services only.
+
+## Approvals (Milestone 2.6)
+
+**Status:** Implemented
+
+Approvals answer: what proposed actions need owner authorization, and what has already been decided. Approval is authorization, not execution (`APPROVED ≠ EXECUTED`). After approve/reject/cancel, only the Approval row and a BusinessEvent change.
+
+### Routes and mutations
+
+```text
+/app/approvals
+/app/approvals/new
+/app/approvals/[approvalId]
+```
+
+Reads through `@/business-state` with `getJsSolutionsOrganization()`. Mutations: Server Action → write-access check → parse → org and related-entity checks → business command (`tx.orm` Approval mutation + BusinessEvent) → revalidate `/app`, `/app/activity`, `/app/approvals`, `/app/approvals/[id]`. Create redirects to detail.
+
+The same `JS_OS_COMMAND_CENTER_WRITES` safeguard applies. There is no Approval-specific flag.
+
+Request fields are immutable after creation. There is no edit form and no deletion.
+
+### List
+
+Server-rendered. Pending first, then risk `CRITICAL` → `LOW`, then oldest `requestedAt`. Terminal records follow, most recently decided. Filters: `status`, `riskLevel`, `requestedByType` (GET, combinable; unknown values ignored). Risk is shown as text. Pending rows are labeled “Needs decision.” A pending request whose `expiresAt` is past shows “Past expiration time” without changing stored status.
+
+### Creation
+
+Manual owner form: required title, actionType (`lowercase.dot.notation`), risk. Optional description, WorkItem, expiration, JSON payload. `requestedByType` is fixed to `USER`; `requestedById` is null (no auth — no fabricated UUID). AgentRun is not selectable. Creating an Approval does not set a linked WorkItem to `WAITING_APPROVAL`.
+
+### Detail and decisions
+
+Full request, payload JSON, related WorkItem (link to `/app/work/[id]`), related AgentRun (read-only; no AgentRun route yet). PENDING + writes: Approve / Reject / Cancel POST forms. Rejection requires a reason. CRITICAL requires a confirmation checkbox (server-validated). Terminal rows have no decision controls.
+
+### Overview and Activity
+
+Pending Approval rows and Owner Attention link to `/app/approvals/[approvalId]`. Events `approval.requested` / `approval.approved` / `approval.rejected` / `approval.cancelled` appear on Activity. Overview pending count uses `listPendingApprovals()`.
+
+### Not in 2.6
+
+Tool execution, automatic Approval creation from `WAITING_APPROVAL`, approval chains, RBAC, expiration workers, notifications, queues, or fabricated Approvals.
 
 ## Knowledge / documentation
 
@@ -353,16 +397,17 @@ The Command Center is currently unauthenticated development functionality. Do no
 
 The sidebar System area shows `Development` or `Production` from `NODE_ENV`. It does not expose hosts, connection strings, or credentials. `next start` therefore labels Production even on a developer machine. That is a known Milestone 2.1 limitation; it is not inferred from the Neon hostname. Do not treat the label as write-access state — writes use the separate `JS_OS_COMMAND_CENTER_WRITES` check above.
 
-## What 2.1–2.5 do not include
+## What 2.1–2.6 do not include
 
-- Approval or agent *management* UIs
+- Agent *management* UIs
 - Approval or AgentRun actions from Overview
 - Documentation renderer / MDX
 - Auth
 - Tools, agents, orchestration, APIs created for their own sake
-- Goal or WorkItem deletion
+- Goal, WorkItem, or Approval deletion
 - Goal/Work mutation migration onto atomic BusinessEvent commands
 - Manual Activity event authoring
+- Approval execution after `APPROVED`
 
 ## Related
 

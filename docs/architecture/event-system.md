@@ -1,6 +1,6 @@
 # Event system
 
-**Status:** Implemented (model + append-only service + Command Center Activity). Emission from Goal/Work commands and integrations is future.
+**Status:** Implemented (model + append-only service + Command Center Activity). Approval Command Center mutations emit events atomically. Emission from Goal/Work commands and integrations is future.
 
 BusinessEvent is the operational timeline JS OS and future agents inspect. It is not chat history.
 
@@ -56,6 +56,7 @@ work.status_changed
 approval.requested
 approval.approved
 approval.rejected
+approval.cancelled
 
 agent.run.started
 agent.run.completed
@@ -105,7 +106,7 @@ An AgentRun may conceptually produce BusinessEvents. v0.1 does **not** include `
 
 Goal and Work Command Center mutations persist entity rows only. They do **not** write BusinessEvents. Sequential “mutate then record event” is rejected because partial success is misleading.
 
-The adopted boundary is `src/business-commands/`: one `db.transaction` that mutates state and appends the event via `tx.orm`. Existing Goal/Work Server Actions have **not** been migrated onto that boundary. Until they are, Activity may correctly be empty after owner Goal/Work edits.
+The adopted boundary is `src/business-commands/`: one `db.transaction` that mutates state and appends the event via `tx.orm`. Approval Command Center mutations use that boundary (`approval.requested` / `approved` / `rejected` / `cancelled`). Goal/Work Server Actions have **not** been migrated. Until they are, Activity may correctly omit Goal/Work edits.
 
 ## Related
 

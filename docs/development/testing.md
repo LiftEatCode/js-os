@@ -21,10 +21,14 @@ npm test
 - `src/command-center/goals/parse.test.ts` (form parsing, enums, decimal strings)
 - `src/business-state/work-item-lifecycle.test.ts` (`startedAt` / `completedAt`; CANCELLED is not completion)
 - `src/business-state/work-item-hierarchy.test.ts` (self-parent and descendant cycle rejection)
+- `src/business-state/approval-lifecycle.test.ts` (PENDING transitions, decidedAt, rejection reason, past expiration is not EXPIRED)
 - `src/command-center/work/ordering.test.ts` (WorkItem list ordering)
 - `src/command-center/work/parse.test.ts` (Work form parsing, enums, due dates)
 - `src/command-center/activity/format.test.ts` (event/source labels, filters, metadata JSON)
+- `src/command-center/approvals/ordering.test.ts` (pending/risk/requestedAt list ordering)
+- `src/command-center/approvals/parse.test.ts` (request/decision parsing, JSON payload, filters)
 - `src/business-commands/command.test.ts` (mutation+event commit/rollback pairing; no Neon)
+- `src/business-commands/approvals.test.ts` (atomic Approval+event commands, duplicate-decision protection; no Neon)
 
 These tests do not connect to a database. Do not mutate Neon from automated tests.
 

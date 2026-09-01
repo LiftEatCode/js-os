@@ -1,4 +1,5 @@
 import { db } from '../prisma/db.ts';
+import type { PersistenceOrm } from './persistence.ts';
 import type { BusinessEvent, BusinessEventListFilter, RecordBusinessEventInput } from './types.ts';
 import { clampListLimit, requireEventType, requireNonEmptyString } from './validation.ts';
 
@@ -35,13 +36,14 @@ export async function listRecentBusinessEvents(
   return listBusinessEvents({ organizationId, limit });
 }
 
-export async function recordBusinessEvent(
+export async function recordBusinessEventWithOrm(
+  orm: PersistenceOrm,
   input: RecordBusinessEventInput,
 ): Promise<BusinessEvent> {
   const eventType = requireEventType(input.eventType);
   const title = requireNonEmptyString(input.title, 'title');
 
-  return db.orm.public.BusinessEvent.create({
+  return orm.public.BusinessEvent.create({
     organizationId: input.organizationId,
     eventType,
     sourceType: input.sourceType,
@@ -51,4 +53,10 @@ export async function recordBusinessEvent(
     occurredAt: input.occurredAt ?? Temporal.Now.instant(),
     metadata: input.metadata ?? null,
   });
+}
+
+export async function recordBusinessEvent(
+  input: RecordBusinessEventInput,
+): Promise<BusinessEvent> {
+  return recordBusinessEventWithOrm(db.orm, input);
 }

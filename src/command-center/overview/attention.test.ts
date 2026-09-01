@@ -105,7 +105,7 @@ describe('buildOwnerAttention', () => {
     });
     assert.equal(items.length, 1);
     assert.equal(items[0]?.kind, 'pending_approval');
-    assert.equal(items[0]?.href, '/app/approvals');
+    assert.equal(items[0]?.href, '/app/approvals/a1');
   });
 
   it('surfaces critical open work', () => {

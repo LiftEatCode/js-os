@@ -16,13 +16,13 @@ Give humans a central view of running JS Solutions: what is happening, what need
 2.3 Goals                                 Implemented
 2.4 Work                                  Implemented
 2.5 Activity                              Implemented
-2.6 Approvals                             Planned
+2.6 Approvals                             Implemented
 2.7 Agents                                Planned
 2.8 Knowledge / documentation browser     Planned
 2.9 Integration + polish                  Planned
 ```
 
-Routes for 2.6–2.8 exist as placeholders. That is not feature completion.
+Routes for 2.7–2.8 exist as placeholders. That is not feature completion.
 
 ## Milestone 2.1 — Shell + navigation
 
@@ -84,23 +84,38 @@ Routes for 2.6–2.8 exist as placeholders. That is not feature completion.
 - Atomic command/event architecture adopted ([ADR-007](../decisions/ADR-007-atomic-business-mutation-and-event-recording.md)); Goal/Work mutations not migrated
 - No fake BusinessEvents created to populate the page
 
+## Milestone 2.6 — Approvals
+
+**Status:** Implemented
+
+- Server-rendered `/app/approvals`, `/app/approvals/new`, `/app/approvals/[approvalId]`
+- Reads through `@/business-state` with `getJsSolutionsOrganization()` scoping
+- Mutations via Server Actions → business commands (Approval + BusinessEvent in one transaction)
+- `APPROVED ≠ EXECUTED`: decisions do not call tools, APIs, complete WorkItems, or continue AgentRuns
+- Request fields immutable after creation; no deletion
+- Rejection requires `decisionReason`; approve/cancel reasons optional
+- `expiresAt` may be stored; no expiration worker; past expiration is derived UI copy only
+- Manual requester is `USER` with `requestedById` null (no auth)
+- Same write-access safeguard as Goals/Work
+- Overview pending rows and Owner Attention link to Approval detail; Activity shows the new events
+
 ## Remaining work
 
-- 2.6–2.7 feature screens for Approvals, Agents
+- 2.7 feature screens for Agents
 - 2.8 Knowledge browser over canonical `docs/` markdown
 - 2.9 polish, empty-state quality, and cross-page consistency
 - Authentication (replaces the Command Center write safeguard)
-- Migrate Goal/Work (and later Approvals/Agents) onto atomic BusinessEvent commands
+- Migrate Goal/Work onto atomic BusinessEvent commands
 
 Not in Phase 2: tools, agent reasoning, integrations, schema changes.
 
 ## Key safety boundary
 
-Read and coordinate. The Command Center does not execute external tools. UI must use `@/business-state`, not raw Prisma. Until auth exists, Command Center writes require explicit local opt-in and remain disabled by default.
+Read and coordinate. The Command Center does not execute external tools. UI must use `@/business-state`, not raw Prisma. Until auth exists, Command Center writes require explicit local opt-in and remain disabled by default. Approving an Approval is still not execution.
 
 ## Exit criteria
 
-Owner can see goals, work, approvals, and recent events from live business state. Partially met: Overview, Goals, Work, and Activity are implemented; dedicated Approvals/Agents screens remain. Activity may be empty until Goal/Work commands emit events.
+Owner can see goals, work, approvals, and recent events from live business state. Partially met: Overview, Goals, Work, Activity, and Approvals are implemented; dedicated Agents screens remain. Activity now records Approval commands; Goal/Work edits still do not emit events.
 
 ## Related
 
