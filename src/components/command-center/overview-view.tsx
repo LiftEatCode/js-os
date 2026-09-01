@@ -144,6 +144,7 @@ export function OverviewView({ data }: { data: OverviewData }) {
             rows={data.agents.map((agent) => ({
               title: agent.name,
               meta: `${agent.role} · ${agent.status} · ${agent.permissionLevel}`,
+              href: `/app/agents/${agent.id}`,
             }))}
           />
         )}

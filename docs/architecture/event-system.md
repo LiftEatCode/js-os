@@ -1,6 +1,6 @@
 # Event system
 
-**Status:** Implemented (model + append-only service + Command Center Activity). Approval Command Center mutations emit events atomically. Emission from Goal/Work commands and integrations is future.
+**Status:** Implemented (model + append-only service + Command Center Activity). Approval and Agent configuration Command Center mutations emit events atomically. Emission from Goal/Work commands and integrations is future.
 
 BusinessEvent is the operational timeline JS OS and future agents inspect. It is not chat history.
 
@@ -58,6 +58,9 @@ approval.approved
 approval.rejected
 approval.cancelled
 
+agent.status_changed
+agent.permission_changed
+
 agent.run.started
 agent.run.completed
 agent.run.failed
@@ -77,7 +80,27 @@ Use `metadata` for event-specific context only. Prefer IDs and small deltas:
 }
 ```
 
-Do not dump entire Goal/WorkItem rows, credentials, sensitive email bodies, raw LLM prompts, or hidden chain-of-thought.
+Agent configuration events use the same policy:
+
+```json
+{
+  "agentDefinitionId": "...",
+  "agentSlug": "marketing",
+  "previousStatus": "ACTIVE",
+  "newStatus": "PAUSED"
+}
+```
+
+```json
+{
+  "agentDefinitionId": "...",
+  "agentSlug": "sales",
+  "previousPermissionLevel": "RECOMMEND",
+  "newPermissionLevel": "PREPARE"
+}
+```
+
+Do not dump entire Goal/WorkItem/AgentDefinition rows, credentials, sensitive email bodies, raw LLM prompts, or hidden chain-of-thought.
 
 ## Operational history vs security audit
 
@@ -106,7 +129,7 @@ An AgentRun may conceptually produce BusinessEvents. v0.1 does **not** include `
 
 Goal and Work Command Center mutations persist entity rows only. They do **not** write BusinessEvents. Sequential “mutate then record event” is rejected because partial success is misleading.
 
-The adopted boundary is `src/business-commands/`: one `db.transaction` that mutates state and appends the event via `tx.orm`. Approval Command Center mutations use that boundary (`approval.requested` / `approved` / `rejected` / `cancelled`). Goal/Work Server Actions have **not** been migrated. Until they are, Activity may correctly omit Goal/Work edits.
+The adopted boundary is `src/business-commands/`: one `db.transaction` that mutates state and appends the event via `tx.orm`. Approval Command Center mutations use that boundary (`approval.requested` / `approved` / `rejected` / `cancelled`). Agent configuration mutations use it for `agent.status_changed` / `agent.permission_changed`. Goal/Work Server Actions have **not** been migrated. Until they are, Activity may correctly omit Goal/Work edits.
 
 ## Related
 

@@ -43,6 +43,7 @@ export type AttentionApproval = {
 
 export type AttentionAgentRun = {
   id: string;
+  agentDefinitionId: string;
   status: AgentRunStatus;
   error: string | null;
   completedAt: Temporal.Instant | null;
@@ -170,7 +171,7 @@ export function buildOwnerAttention(input: BuildOwnerAttentionInput): OwnerAtten
       kind: 'failed_agent_run',
       title: agent ? `${agent} run failed` : 'Agent run failed',
       description: run.error?.trim() || 'An AgentRun ended in FAILED.',
-      href: '/app/agents',
+      href: `/app/agents/${run.agentDefinitionId}`,
       severity: 'critical',
     });
   }

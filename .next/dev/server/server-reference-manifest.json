@@ -96,6 +96,28 @@
       },
       "filename": "src/command-center/approvals/actions.ts",
       "exportedName": "decideApprovalAction"
+    },
+    "60ac45d1124698154c05c06c41f8f2ae0e62eb98c8": {
+      "workers": {
+        "app/app/agents/[agentId]/page": {
+          "moduleId": "[project]/.next-internal/server/app/app/agents/[agentId]/page/actions.js { ACTIONS_MODULE0 => \"[project]/src/command-center/agents/actions.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
+          "async": true,
+          "codeHash": null
+        }
+      },
+      "filename": "src/command-center/agents/actions.ts",
+      "exportedName": "changeAgentStatusAction"
+    },
+    "609581f89e75101d800335a24562a11bf81ae5f9b8": {
+      "workers": {
+        "app/app/agents/[agentId]/page": {
+          "moduleId": "[project]/.next-internal/server/app/app/agents/[agentId]/page/actions.js { ACTIONS_MODULE0 => \"[project]/src/command-center/agents/actions.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
+          "async": true,
+          "codeHash": null
+        }
+      },
+      "filename": "src/command-center/agents/actions.ts",
+      "exportedName": "changeAgentPermissionAction"
     }
   },
   "edge": {},

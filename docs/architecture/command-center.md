@@ -1,6 +1,6 @@
 # Command Center
 
-**Status:** In progress. Milestones 2.1–2.6 (shell, Overview, Goals, Work, Activity, Approvals) are implemented. Later Command Center milestones are planned.
+**Status:** In progress. Milestones 2.1–2.7 (shell, Overview, Goals, Work, Activity, Approvals, Agents) are implemented. Later Command Center milestones are planned.
 
 The Command Center is the internal JS OS operating interface for JS Solutions.
 
@@ -35,10 +35,10 @@ Command Center
 | Work | WorkItems across JS Solutions | 2.4 Implemented |
 | Activity | BusinessEvent operational history | 2.5 Implemented |
 | Approvals | Human decision / authorization queue | 2.6 Implemented |
-| Agents | Organizational AgentDefinitions and later activity | 2.7 Planned |
+| Agents | Organizational AgentDefinitions and AgentRun history | 2.7 Implemented |
 | Knowledge | Internal documentation browser | 2.8 Planned |
 
-Routes and navigation exist for all seven areas. Agents and Knowledge remain placeholders until their milestones. Goals, Work, Activity, and Approvals are implemented.
+Routes and navigation exist for all seven areas. Knowledge remains a placeholder until its milestone. Goals, Work, Activity, Approvals, and Agents are implemented.
 
 ## Route structure
 
@@ -60,7 +60,8 @@ The Next.js App Router lives in `src/app/`. The Command Center URL `/app` is the
 /app/approvals             Approval list (optional status/riskLevel/requestedByType filters)
 /app/approvals/new         Request Approval (manual owner-created)
 /app/approvals/[approvalId] Approval detail and decisions
-/app/agents
+/app/agents                AgentDefinition list (optional status/role/permissionLevel filters)
+/app/agents/[agentId]      AgentDefinition detail, status/permission, recent AgentRuns
 /app/knowledge
 ```
 
@@ -77,7 +78,7 @@ Desktop: persistent sidebar. Mobile: header Menu control opens a modal dialog us
 ```text
 Command Center UI
         ↓
-Server Actions (Approvals → business commands; Goals/Work → business-state)
+Server Actions (Approvals/Agents → business commands; Goals/Work → business-state)
         ↓
 Business-State Services (`@/business-state`)
         ↓
@@ -86,7 +87,7 @@ Prisma (`src/prisma/db.ts`)
 Neon
 ```
 
-Pages and layouts must not query Prisma directly. Reads go through `@/business-state`. Goal and Work mutations go through Command Center Server Actions, which call business-state services after a server-side write-access check. Approval mutations go through business commands so the Approval row and BusinessEvent commit together. Organization identity comes from `getJsSolutionsOrganization()` — never from a hardcoded UUID or browser form field.
+Pages and layouts must not query Prisma directly. Reads go through `@/business-state`. Goal and Work mutations go through Command Center Server Actions, which call business-state services after a server-side write-access check. Approval and Agent configuration mutations go through business commands so the row and BusinessEvent commit together. Organization identity comes from `getJsSolutionsOrganization()` — never from a hardcoded UUID or browser form field.
 
 ## Overview (Milestone 2.2)
 
@@ -381,6 +382,47 @@ Pending Approval rows and Owner Attention link to `/app/approvals/[approvalId]`.
 
 Tool execution, automatic Approval creation from `WAITING_APPROVAL`, approval chains, RBAC, expiration workers, notifications, queues, or fabricated Approvals.
 
+## Agents (Milestone 2.7)
+
+**Status:** Implemented
+
+Agents answer: which JS OS roles exist, what they are allowed to do, what state they are in, and what they have done. An AgentDefinition is configuration. An AgentRun is historical audit. Neither activates autonomous AI, tools, schedules, or model invocation.
+
+### Routes and mutations
+
+```text
+/app/agents
+/app/agents/[agentId]
+```
+
+There is no create-agent route and no AgentRun route. Reads through `@/business-state` with `getJsSolutionsOrganization()`. Status and permission mutations: Server Action → write-access check → parse → org check → business command (`tx.orm` AgentDefinition mutation + BusinessEvent) → revalidate `/app`, `/app/activity`, `/app/agents`, `/app/agents/[id]`.
+
+The same `JS_OS_COMMAND_CENTER_WRITES` safeguard applies. There is no Agent-specific flag.
+
+Owner-editable: `status`, `permissionLevel`. Bootstrap-managed / read-only: `name`, `slug`, `role`, `description`, `instructions`. No deletion (`DISABLED` is the administrative shutdown).
+
+### List
+
+Server-rendered. Organizational role order (CEO → Finance → General), then name/slug. Filters: `status`, `role`, `permissionLevel`. Summary counts: configured, active, paused, disabled, recent failed runs. Paused/disabled agents are labeled in text, not color-only. Last run status/time is derived from a bounded scan of org AgentRuns (200).
+
+### Detail
+
+Name, slug, description, role, status (with meaning), permission ceiling (with meaning; EXECUTE ≠ unrestricted execution), instructions, created/updated timestamps, recent AgentRuns (up to 20).
+
+AgentRun rows show status, trigger, timestamps, and FAILED error text. `inputSnapshot` / `output` are not displayed. No Run / Retry / Start controls.
+
+### Commands and events
+
+`changeAgentStatusCommand` / `changeAgentPermissionLevelCommand`. Events: `agent.status_changed`, `agent.permission_changed`. Metadata is IDs and previous/new values only. Command Center source is `USER` / `sourceId` null. Same-value changes are rejected with no event. EXECUTE requires a confirmation checkbox (server-validated). Commands load the current AgentDefinition inside the transaction and verify organization. There is no row locking; concurrent edits can still last-write-win, but event metadata reflects the row loaded in that transaction.
+
+### Overview and Activity
+
+Active Agents still come from `listActiveAgentDefinitions()` and now link to `/app/agents/[id]`. Owner Attention failed AgentRuns link to `/app/agents/[agentDefinitionId]` when that id is present. Configuration events appear on Activity.
+
+### Not in 2.7
+
+Model invocation, tools, schedules, queues, workers, LangGraph, policy engines, AgentRun creation, LLM provider fields, or tool assignment.
+
 ## Knowledge / documentation
 
 Markdown files under `docs/` remain the canonical source of truth.
@@ -397,17 +439,17 @@ The Command Center is currently unauthenticated development functionality. Do no
 
 The sidebar System area shows `Development` or `Production` from `NODE_ENV`. It does not expose hosts, connection strings, or credentials. `next start` therefore labels Production even on a developer machine. That is a known Milestone 2.1 limitation; it is not inferred from the Neon hostname. Do not treat the label as write-access state — writes use the separate `JS_OS_COMMAND_CENTER_WRITES` check above.
 
-## What 2.1–2.6 do not include
+## What 2.1–2.7 do not include
 
-- Agent *management* UIs
-- Approval or AgentRun actions from Overview
-- Documentation renderer / MDX
+- Knowledge / documentation renderer
+- Approval or AgentRun actions from Overview (failed runs link to the AgentDefinition)
 - Auth
-- Tools, agents, orchestration, APIs created for their own sake
-- Goal, WorkItem, or Approval deletion
+- Tools, model invocation, schedules, orchestration
+- Goal, WorkItem, Approval, or AgentDefinition deletion
 - Goal/Work mutation migration onto atomic BusinessEvent commands
 - Manual Activity event authoring
 - Approval execution after `APPROVED`
+- AgentRun creation or retry UI
 
 ## Related
 

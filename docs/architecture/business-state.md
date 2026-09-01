@@ -105,6 +105,10 @@ See [approval system](approval-system.md). Approval is authorization, not execut
 
 See [agent architecture](agent-architecture.md).
 
+`AgentDefinition` is configured role identity and a permission ceiling. `AgentRun` is historical audit of one execution attempt. Neither means autonomous reasoning, tools, schedules, or model invocation are active.
+
+Command Center (Milestone 2.7) inspects AgentDefinitions and recent AgentRuns. The owner may change `status` and `permissionLevel` through atomic business commands. Identity fields remain bootstrap-managed. Public `updateAgentStatus` / `updateAgentPermissionLevel` helpers do not emit BusinessEvents.
+
 ## Locked v0.1 decisions
 
 - One Organization entity, not a singleton assumption

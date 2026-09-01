@@ -39,4 +39,4 @@ Receives department signals; does not own JS Growth records.
 
 **Implementation status:** planned (department operations)
 
-An AgentDefinition row exists in the development database (`slug: ceo`, `permissionLevel: RECOMMEND`). That is a persistent role definition, not an operational agent. No reasoning loop, tools, AgentRuns, or UI.
+An AgentDefinition row exists in the development database (`slug: ceo`, `permissionLevel: RECOMMEND`). That is a persistent role definition, not an operational agent. Command Center can inspect it at `/app/agents`. No reasoning loop, tools, or scheduled AgentRuns.

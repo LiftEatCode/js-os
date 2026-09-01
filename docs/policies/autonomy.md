@@ -22,7 +22,7 @@ EXECUTE
 | PREPARE | Draft artifacts (messages, PRs, plans) without sending or deploying. |
 | EXECUTE | May run tools that are separately permitted and, when required, approved. |
 
-`permissionLevel` is the **maximum autonomy ceiling** for that definition. It does not authorize arbitrary tools. A definition at `EXECUTE` still cannot run a tool that the future tool catalog forbids or that still needs approval.
+`permissionLevel` is the **maximum autonomy ceiling** for that definition. It does not authorize arbitrary tools. A definition at `EXECUTE` still cannot run a tool that the future tool catalog forbids or that still needs approval. Command Center (Milestone 2.7) can display and change this ceiling; that is configuration, not enforcement.
 
 ## Intended execution path
 

@@ -1,6 +1,6 @@
 # Architecture overview
 
-**Status:** Implemented through Phase 1. Command Center shell (2.1), Overview (2.2), Goals (2.3), Work (2.4), Activity (2.5), and Approvals (2.6) are implemented. Later Command Center milestones and later phases are planned.
+**Status:** Implemented through Phase 1. Command Center shell (2.1), Overview (2.2), Goals (2.3), Work (2.4), Activity (2.5), Approvals (2.6), and Agents (2.7) are implemented. Later Command Center milestones and later phases are planned.
 
 JS OS is the internal operating system for JS Solutions. It is the orchestration and command platform for business operations across sales, marketing, client operations, engineering, finance, and AI-assisted workflows.
 
@@ -39,12 +39,13 @@ What exists now:
 - Owner-managed Goals at `/app/goals` (Milestone 2.3), behind a development write safeguard
 - Owner-managed WorkItems at `/app/work` (Milestone 2.4), using the same write safeguard
 - Read-only Activity at `/app/activity` (Milestone 2.5)
-- Owner-managed Approvals at `/app/approvals` (Milestone 2.6), the first feature on the atomic command/event boundary
+- Owner-managed Approvals at `/app/approvals` (Milestone 2.6), using the atomic command/event boundary
+- AgentDefinition configuration and AgentRun history at `/app/agents` (Milestone 2.7)
 - Atomic command/event boundary (`src/business-commands/`, ADR-007); Goal/Work mutations not yet migrated
 
 What does not exist yet:
 
-- Command Center feature screens (Milestones 2.7–2.8)
+- Command Center feature screens (Milestone 2.8 Knowledge)
 - Goal rows (deferred operating-state population, not unfinished schema)
 - Tools, permissions enforcement, or tool execution
 - CEO review loop
@@ -98,7 +99,7 @@ Updated business state
 
 | Layer | Role | Status |
 |---|---|---|
-| Command Center | Internal operating UI | In progress (2.1–2.6 implemented) |
+| Command Center | Internal operating UI | In progress (2.1–2.7 implemented) |
 | Business state | Durable goals, work, events, approvals, agents | Implemented (contract + services) |
 | Reasoning | CEO/department review of state vs goals | Planned |
 | Tools | Explicit execution boundary | Future |

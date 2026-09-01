@@ -2,6 +2,7 @@
 import {
   getJsSolutionsOrganization,
   listActiveAgentDefinitions,
+  listAgentDefinitions,
   listActiveGoals,
   listAgentRuns,
   listPendingApprovals,
@@ -63,6 +64,7 @@ export type OverviewEventRow = {
 };
 
 export type OverviewAgentRow = {
+  id: string;
   name: string;
   role: AgentDefinition['role'];
   status: AgentDefinition['status'];
@@ -90,24 +92,27 @@ export async function loadOverview(): Promise<OverviewData> {
   const organizationId = organization.id;
   const timeZone = organization.timezone;
 
-  const [goals, workItems, pendingApprovals, events, agents, failedRuns] = await Promise.all([
-    listActiveGoals(organizationId),
-    listWorkItems({ organizationId }),
-    listPendingApprovals(organizationId),
-    listRecentBusinessEvents(organizationId, RECENT_ACTIVITY_LIMIT),
-    listActiveAgentDefinitions(organizationId),
-    listAgentRuns({ organizationId, status: 'FAILED' }),
-  ]);
+  const [goals, workItems, pendingApprovals, events, agents, configuredAgents, failedRuns] =
+    await Promise.all([
+      listActiveGoals(organizationId),
+      listWorkItems({ organizationId }),
+      listPendingApprovals(organizationId),
+      listRecentBusinessEvents(organizationId, RECENT_ACTIVITY_LIMIT),
+      listActiveAgentDefinitions(organizationId),
+      listAgentDefinitions({ organizationId }),
+      listAgentRuns({ organizationId, status: 'FAILED', limit: 50 }),
+    ]);
 
   const openWork = workItems.filter((item) => isOpenWorkItem(item.status));
   const now = Temporal.Now.instant();
-  const agentNameById = new Map(agents.map((agent) => [agent.id, agent.name]));
+  const agentNameById = new Map(configuredAgents.map((agent) => [agent.id, agent.name]));
 
   const attention = buildOwnerAttention({
     workItems,
     pendingApprovals,
     failedAgentRuns: failedRuns.map((run: AgentRun) => ({
       id: run.id,
+      agentDefinitionId: run.agentDefinitionId,
       status: run.status,
       error: run.error,
       completedAt: run.completedAt,
@@ -164,6 +169,7 @@ export async function loadOverview(): Promise<OverviewData> {
       description: event.description,
     })),
     agents: agents.map((agent) => ({
+      id: agent.id,
       name: agent.name,
       role: agent.role,
       status: agent.status,

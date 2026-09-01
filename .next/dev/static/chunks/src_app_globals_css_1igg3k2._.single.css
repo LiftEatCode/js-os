@@ -52,8 +52,10 @@
 
 @layer theme {
   :root, :host {
+    --color-red-50: #fef2f2;
     --color-red-300: #ffa3a3;
     --color-red-800: #9f0712;
+    --color-red-950: #460809;
     --color-amber-300: #ffd236;
     --color-amber-800: #953d00;
     --color-zinc-50: #fafafa;
@@ -76,6 +78,8 @@
     --text-xs--line-height: calc(1 / .75);
     --text-sm: .875rem;
     --text-sm--line-height: calc(1.25 / .875);
+    --text-lg: 1.125rem;
+    --text-lg--line-height: calc(1.75 / 1.125);
     --text-xl: 1.25rem;
     --text-xl--line-height: calc(1.75 / 1.25);
     --text-2xl: 1.5rem;
@@ -94,8 +98,10 @@
 
   @supports (color: lab(0% 0 0)) {
     :root, :host {
+      --color-red-50: lab(96.5005% 4.18508 1.52328);
       --color-red-300: lab(76.5514% 36.422 15.5335);
       --color-red-800: lab(33.7174% 55.8993 41.0293);
+      --color-red-950: lab(13.003% 29.04 16.7519);
       --color-amber-300: lab(86.4156% 6.13147 78.3961);
       --color-amber-800: lab(37.8822% 37.1699 52.2718);
       --color-zinc-50: lab(98.26% 0 0);
@@ -621,6 +627,10 @@
     gap: calc(var(--spacing) * 4);
   }
 
+  .gap-6 {
+    gap: calc(var(--spacing) * 6);
+  }
+
   :where(.space-y-0\.5 > :not(:last-child)) {
     --tw-space-y-reverse: 0;
     margin-block-start: calc(calc(var(--spacing) * .5) * var(--tw-space-y-reverse));
@@ -729,6 +739,10 @@
     background-color: var(--background);
   }
 
+  .bg-red-50 {
+    background-color: var(--color-red-50);
+  }
+
   .bg-white {
     background-color: var(--color-white);
   }
@@ -832,6 +846,11 @@
   .text-2xl {
     font-size: var(--text-2xl);
     line-height: var(--tw-leading, var(--text-2xl--line-height));
+  }
+
+  .text-lg {
+    font-size: var(--text-lg);
+    line-height: var(--tw-leading, var(--text-lg--line-height));
   }
 
   .text-sm {
@@ -1087,6 +1106,10 @@
       grid-template-columns: repeat(3, minmax(0, 1fr));
     }
 
+    .sm\:grid-cols-5 {
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+    }
+
     .sm\:flex-row {
       flex-direction: row;
     }
@@ -1115,6 +1138,10 @@
   }
 
   @media (min-width: 64rem) {
+    .lg\:grid-cols-2 {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
     .lg\:grid-cols-4 {
       grid-template-columns: repeat(4, minmax(0, 1fr));
     }
@@ -1135,6 +1162,16 @@
 
     .dark\:border-zinc-800 {
       border-color: var(--color-zinc-800);
+    }
+
+    .dark\:bg-red-950\/30 {
+      background-color: #4608094d;
+    }
+
+    @supports (color: color-mix(in lab, red, red)) {
+      .dark\:bg-red-950\/30 {
+        background-color: color-mix(in oklab, var(--color-red-950) 30%, transparent);
+      }
     }
 
     .dark\:bg-zinc-50 {

@@ -1,6 +1,7 @@
 import { db } from '../prisma/db.ts';
 import { BusinessStateNotFoundError, InvalidBusinessStateInputError } from './errors.ts';
 import type { AgentRun, AgentRunListFilter, CreateAgentRunInput } from './types.ts';
+import { clampListLimit } from './validation.ts';
 import {
   assertAgentRunCanCancel,
   assertAgentRunCanFinish,
@@ -25,9 +26,11 @@ export async function listAgentRuns(filter: AgentRunListFilter): Promise<AgentRu
     where.status = filter.status;
   }
 
-  return db.orm.public.AgentRun.where(where)
-    .orderBy((run) => run.createdAt.desc())
-    .all();
+  const query = db.orm.public.AgentRun.where(where).orderBy((run) => run.createdAt.desc());
+  if (filter.limit !== undefined) {
+    return query.limit(clampListLimit(filter.limit)).all();
+  }
+  return query.all();
 }
 
 export async function createAgentRun(input: CreateAgentRunInput): Promise<AgentRun> {

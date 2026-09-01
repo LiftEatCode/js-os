@@ -2,6 +2,8 @@
   "/_not-found/page": "app/_not-found/page.js",
   "/app/activity/[eventId]/page": "app/app/activity/[eventId]/page.js",
   "/app/activity/page": "app/app/activity/page.js",
+  "/app/agents/[agentId]/page": "app/app/agents/[agentId]/page.js",
+  "/app/agents/page": "app/app/agents/page.js",
   "/app/approvals/[approvalId]/page": "app/app/approvals/[approvalId]/page.js",
   "/app/approvals/new/page": "app/app/approvals/new/page.js",
   "/app/approvals/page": "app/app/approvals/page.js",

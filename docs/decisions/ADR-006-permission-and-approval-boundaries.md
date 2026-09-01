@@ -30,6 +30,7 @@ Agent → Tool Request → Permission Check → Approval Policy → Tool Executi
 - Product work can proceed on business state without pretending agents can act
 - Later tool work must not bypass Approval
 - Policy documents describe direction until enforcement exists
+- Command Center (Milestone 2.7) can display and change the permission ceiling; that is configuration, not tool/policy enforcement. EXECUTE still does not bypass tools, policy, or approvals.
 
 ## Alternatives considered
 

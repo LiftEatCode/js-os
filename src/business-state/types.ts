@@ -152,6 +152,7 @@ export type AgentDefinitionListFilter = {
   organizationId: string;
   status?: AgentDefinitionStatus;
   role?: AgentRole;
+  permissionLevel?: AgentPermissionLevel;
 };
 
 export type CreateAgentRunInput = {
@@ -166,4 +167,5 @@ export type AgentRunListFilter = {
   organizationId: string;
   agentDefinitionId?: string;
   status?: AgentRunStatus;
+  limit?: number;
 };

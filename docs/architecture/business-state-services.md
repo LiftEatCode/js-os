@@ -7,7 +7,7 @@ Typed application functions over the Phase 1 Prisma 8 contract. Future UI, agent
 ```text
 UI / future agents / future tools
                ↓
-       Business commands (`src/business-commands/`) for consequential Approval writes
+       Business commands (`src/business-commands/`) for consequential Approval and Agent writes
                ↓
        Business-State Services (`@/business-state`)
                ↓
@@ -133,18 +133,32 @@ Decisions are allowed only from `PENDING`.
 Role configuration, not an operational agent.
 
 ```text
+getAgentDefinitionById
+getAgentDefinitionBySlug
+listAgentDefinitions           optional status / role / permissionLevel; slug asc
+listActiveAgentDefinitions     status ACTIVE
+updateAgentStatus
+updateAgentPermissionLevel
+```
+
+```text
 AgentDefinition exists
 ≠
 operational autonomous agent exists
 ```
 
-`permissionLevel` is a ceiling. These services do not enforce tool permissions.
+`permissionLevel` is a ceiling. These services do not enforce tool permissions and do not emit BusinessEvents. Shared persistence lives in `src/business-state/agent-definition-persistence.ts` (`db.orm` or `tx.orm`). Command Center uses `changeAgentStatusCommand` / `changeAgentPermissionLevelCommand` so the row and event commit together. Same-value updates are rejected by those commands (no false `*_changed` events). Public helpers remain callable without events.
 
 ## AgentRun
 
 Audit/lifecycle records only. Methods persist `QUEUED` → `RUNNING` → `COMPLETED` / `FAILED`, or cancel from `QUEUED`/`RUNNING`. They do not invoke a model.
 
-The v0.1 contract requires `startedAt` on create, so `createAgentRun` sets it when the run is queued. `markAgentRunRunning` refreshes `startedAt` at actual start.
+```text
+getAgentRunById
+listAgentRuns     optional agentDefinitionId / status / limit; createdAt desc
+```
+
+The v0.1 contract requires `startedAt` on create, so `createAgentRun` sets it when the run is queued. `markAgentRunRunning` refreshes `startedAt` at actual start. `limit` is optional so Command Center can bound history without changing unbounded service callers.
 
 ## Temporal
 
@@ -162,7 +176,7 @@ Prisma integrity errors are not swallowed.
 
 ## Tests and verification
 
-Unit tests cover validation, Goal `completedAt` lifecycle, Approval lifecycle, WorkItem lifecycle and parent-cycle checks, command-layer rollback pairing, Approval command atomicity/duplicate-decision protection, Command Center write-access, Goal/Work/Approval list ordering, Activity formatting/filters, and form parsing (`npm test`). There is no isolated mutating test database yet, so services are not integration-tested against Neon in CI.
+Unit tests cover validation, Goal `completedAt` lifecycle, Approval lifecycle, AgentDefinition no-op/status/permission rules, WorkItem lifecycle and parent-cycle checks, command-layer rollback pairing, Approval and Agent command atomicity, Command Center write-access, Goal/Work/Approval/Agent list ordering, Activity formatting/filters, and form parsing (`npm test`). There is no isolated mutating test database yet, so services are not integration-tested against Neon in CI.
 
 Read-only development check:
 

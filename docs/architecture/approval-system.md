@@ -121,7 +121,7 @@ means an authorization request exists.
 
 They are related concepts and are **not** synchronized in Phase 2. Future commands may atomically create an Approval and move a WorkItem to `WAITING_APPROVAL`. That is outside this milestone.
 
-Optional `agentRunId` is displayed on detail when present. The manual owner form does **not** select an AgentRun (that would invent provenance). Future agent commands should set it truthfully. There is no AgentRun detail route yet (Milestone 2.7).
+Optional `agentRunId` is displayed on detail when present. The manual owner form does **not** select an AgentRun (that would invent provenance). Future agent commands should set it truthfully. There is no `/app/agent-runs/[id]` route; AgentRun history is inline on Agent detail (Milestone 2.7).
 
 ## Requester (unauthenticated Command Center)
 

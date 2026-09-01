@@ -17,12 +17,12 @@ Give humans a central view of running JS Solutions: what is happening, what need
 2.4 Work                                  Implemented
 2.5 Activity                              Implemented
 2.6 Approvals                             Implemented
-2.7 Agents                                Planned
+2.7 Agents                                Implemented
 2.8 Knowledge / documentation browser     Planned
 2.9 Integration + polish                  Planned
 ```
 
-Routes for 2.7–2.8 exist as placeholders. That is not feature completion.
+Routes for 2.8 exist as a placeholder. That is not feature completion.
 
 ## Milestone 2.1 — Shell + navigation
 
@@ -99,9 +99,21 @@ Routes for 2.7–2.8 exist as placeholders. That is not feature completion.
 - Same write-access safeguard as Goals/Work
 - Overview pending rows and Owner Attention link to Approval detail; Activity shows the new events
 
+## Milestone 2.7 — Agents
+
+**Status:** Implemented
+
+- Server-rendered `/app/agents` and `/app/agents/[agentId]`
+- Reads through `@/business-state` with `getJsSolutionsOrganization()` scoping
+- Owner may change `status` and `permissionLevel` via business commands (AgentDefinition + BusinessEvent in one transaction)
+- Identity fields remain bootstrap-managed; no create/delete Agent UI; no AgentRun creation
+- `permissionLevel` is a ceiling; EXECUTE does not bypass tools, policy, or approvals
+- AgentRun history is inline, bounded, and does not dump `inputSnapshot` / `output`
+- Same write-access safeguard as Goals/Work/Approvals
+- Overview Active Agents and failed-run attention link to Agent detail; Activity shows configuration events
+
 ## Remaining work
 
-- 2.7 feature screens for Agents
 - 2.8 Knowledge browser over canonical `docs/` markdown
 - 2.9 polish, empty-state quality, and cross-page consistency
 - Authentication (replaces the Command Center write safeguard)
@@ -111,11 +123,11 @@ Not in Phase 2: tools, agent reasoning, integrations, schema changes.
 
 ## Key safety boundary
 
-Read and coordinate. The Command Center does not execute external tools. UI must use `@/business-state`, not raw Prisma. Until auth exists, Command Center writes require explicit local opt-in and remain disabled by default. Approving an Approval is still not execution.
+Read and coordinate. The Command Center does not execute external tools. UI must use `@/business-state`, not raw Prisma. Until auth exists, Command Center writes require explicit local opt-in and remain disabled by default. Approving an Approval is still not execution. Changing an AgentDefinition does not invoke a model.
 
 ## Exit criteria
 
-Owner can see goals, work, approvals, and recent events from live business state. Partially met: Overview, Goals, Work, Activity, and Approvals are implemented; dedicated Agents screens remain. Activity now records Approval commands; Goal/Work edits still do not emit events.
+Owner can see goals, work, approvals, agents, and recent events from live business state. Partially met: Overview, Goals, Work, Activity, Approvals, and Agents are implemented; Knowledge remains. Activity records Approval and Agent configuration commands; Goal/Work edits still do not emit events.
 
 ## Related
 

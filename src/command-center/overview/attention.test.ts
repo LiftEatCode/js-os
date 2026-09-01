@@ -43,6 +43,7 @@ function run(
     completedAt: Temporal.Instant.from('2026-08-30T12:00:00Z'),
     createdAt: Temporal.Instant.from('2026-08-30T11:00:00Z'),
     agentName: 'JS OS CEO',
+    agentDefinitionId: 'agent-ceo',
     ...overrides,
   };
 }
@@ -190,6 +191,7 @@ describe('buildOwnerAttention', () => {
     });
     assert.equal(items[0]?.kind, 'failed_agent_run');
     assert.equal(items[0]?.title, 'JS OS CEO run failed');
+    assert.equal(items[0]?.href, '/app/agents/agent-ceo');
   });
 
   it('orders groups deterministically and dedupes work items', () => {

@@ -25,6 +25,7 @@ Agents will eventually create work and request approvals. Chat history is a poor
 - Audit linkage is durable
 - Deleting runs requires an explicit data procedure
 - Event-to-run tracing is incomplete until a later decision
+- Command Center (Milestone 2.7) displays AgentRun history inline on AgentDefinition detail and does not add `BusinessEvent.agentRunId` or an AgentRun route
 
 ## Alternatives considered
 

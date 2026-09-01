@@ -64,6 +64,11 @@ export {
 } from './agents.ts';
 
 export {
+  assertAgentPermissionChange,
+  assertAgentStatusChange,
+} from './agent-definition-lifecycle.ts';
+
+export {
   cancelAgentRun,
   completeAgentRun,
   createAgentRun,
