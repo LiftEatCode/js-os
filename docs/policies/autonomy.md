@@ -1,6 +1,6 @@
 # Autonomy policy
 
-**Status:** Designed, not implemented. Tool execution infrastructure is future.
+**Status:** Designed, not implemented. Tool execution infrastructure is planned for Phase 3; not implemented.
 
 This policy describes how much an agent may do. It is not a grant of specific tools.
 
@@ -22,27 +22,29 @@ EXECUTE
 | PREPARE | Draft artifacts (messages, PRs, plans) without sending or deploying. |
 | EXECUTE | May run tools that are separately permitted and, when required, approved. |
 
-`permissionLevel` is the **maximum autonomy ceiling** for that definition. It does not authorize arbitrary tools. A definition at `EXECUTE` still cannot run a tool that the future tool catalog forbids or that still needs approval. Command Center (Milestone 2.7) can display and change this ceiling; that is configuration, not enforcement.
+`permissionLevel` is the **maximum autonomy ceiling** for that definition. It does not authorize arbitrary tools. A definition at `EXECUTE` still cannot run a tool that the tool catalog forbids or that still needs approval. Command Center (Milestone 2.7) can display and change this ceiling; that is configuration, not enforcement.
 
 ## Intended execution path
 
-**Status:** Future
+**Status:** Planned (Phase 3 design). Not implemented.
 
 ```text
-Agent
+Actor
   ↓
 Tool Request
   ↓
 Permission Check
   ↓
-Approval Policy
+Approval evaluation
+  ↓
+explicit execution continuation
   ↓
 Tool Execution
   ↓
 BusinessEvent
 ```
 
-Until tools exist, no agent may execute side effects. Models and `permissionLevel` values only constrain future design.
+Until tools exist, no agent may execute side effects. Models and `permissionLevel` values only constrain future design. Details: [tool architecture](../architecture/tool-architecture.md) and [ADR-008](../decisions/ADR-008-controlled-tool-execution-boundary.md).
 
 ## Long-term maturity (future)
 

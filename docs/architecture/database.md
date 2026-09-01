@@ -14,7 +14,7 @@ JS OS has its own database. JS Growth also uses PostgreSQL/Neon. The databases a
 
 ## Why this stack
 
-- PostgreSQL fits relational business state: organizations, goals, work, approvals, events, agent runs.
+- PostgreSQL fits relational business state: organizations, goals, work, approvals, events, agent runs, tool requests.
 - Prisma 8 is the current Prisma ORM line and requires Node 24, which JS OS is pinned to.
 - There is no legacy Prisma 7 implementation to preserve.
 - Neon provides managed PostgreSQL for serverless Next.js on Vercel.
@@ -57,6 +57,7 @@ Authoritative domain decisions: [business state](business-state.md).
 - Isolated Neon production and development branches
 - Development database connected
 - Initial business-state migration planned and applied to development
+- Phase 3.1 tool history migration planned and applied to development (`20260901T1638_add_tool_request_execution`)
 - CLI loads `.env.local` and uses `DIRECT_URL`
 - Runtime client uses `DATABASE_URL` and loads `.env.local`
 - Development bootstrap of Organization `js-solutions` and six AgentDefinitions
@@ -69,6 +70,7 @@ Authoritative domain decisions: [business state](business-state.md).
 - Preview/staging database
 - Isolated mutating test database
 - Goal row population (deliberate later operating-state step)
+- Production application of the Phase 3.1 tool migration
 
 ## Connection split
 
@@ -103,14 +105,18 @@ See [environments](../development/environments.md) and [database workflow](../de
 
 ## JSON
 
-Only these v0.1 fields are JSON (`Jsonb`):
+Only these fields are JSON (`Jsonb`) in the implemented contract:
 
 ```text
 BusinessEvent.metadata
 Approval.payload
 AgentRun.inputSnapshot
 AgentRun.output
+ToolRequest.input
+ToolExecution.output
 ```
+
+`ToolRequest.input` is required validated-argument JSON (registry Zod validation is later). `ToolExecution.output` is optional normalized success JSON. Do not add generic metadata JSON on those models. See [tool architecture](tool-architecture.md).
 
 ## Audit retention
 
@@ -118,6 +124,8 @@ AgentRun.output
 - BusinessEvents are append-oriented (no `updatedAt`).
 - AgentRuns preserve input/output/error.
 - Approval records preserve request and decision.
+- ToolRequests snapshot tool identity/contract fields and validated input.
+- ToolExecutions preserve attempt status, output, and error.
 - No Cascade in v0.1. See [business state](business-state.md) for Restrict vs SetNull.
 
 ## Operational rules
@@ -138,3 +146,4 @@ AgentRun.output
 - [ADR-003](../decisions/ADR-003-prisma-8-contract-architecture.md)
 - [ADR-004](../decisions/ADR-004-neon-environment-isolation.md)
 - [Business-state services](business-state-services.md)
+- [Tool architecture](tool-architecture.md)

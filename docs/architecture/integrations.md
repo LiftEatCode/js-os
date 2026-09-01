@@ -25,6 +25,6 @@ No cross-database joins. No shared tables with JS Growth.
 
 WorkItem external source types already reserved: `JS_GROWTH` | `GITHUB` | `EMAIL` | `CALENDAR` | `PAYMENTS` | `OTHER`.
 
-Consequential outbound actions from any integration will require tools plus approvals. That enforcement is future.
+Consequential outbound actions from any integration will require tools plus approvals. Phase 3 designs that boundary ([tool architecture](tool-architecture.md)); adapters for these systems are not a Phase 3 deliverable.
 
 See [system boundaries](system-boundaries.md).

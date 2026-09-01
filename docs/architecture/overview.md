@@ -1,6 +1,6 @@
 # Architecture overview
 
-**Status:** Implemented through Phase 2. Phase 3 (Tools + Permissions) is next.
+**Status:** Implemented through Phase 2. Phase 3 (Tools + Permissions) is in progress; milestone 3.1 is implemented.
 
 JS OS is the internal operating system for JS Solutions. It is the orchestration and command platform for business operations across sales, marketing, client operations, engineering, finance, and AI-assisted workflows.
 
@@ -48,7 +48,7 @@ What exists now:
 What does not exist yet:
 
 - Goal rows (deferred operating-state population, not unfinished schema)
-- Tools, permissions enforcement, or tool execution
+- Tools, permissions enforcement, or tool execution runtime (tables exist; registry/coordinator do not)
 - CEO review loop
 - Integrations
 - Auth / organization membership
@@ -103,10 +103,10 @@ Updated business state
 | Command Center | Internal operating UI | Implemented (Phase 2) |
 | Business state | Durable goals, work, events, approvals, agents | Implemented (contract + services) |
 | Reasoning | CEO/department review of state vs goals | Planned |
-| Tools | Explicit execution boundary | Future |
-| Permissions | Autonomy ceiling plus per-tool checks | Designed, not enforced |
+| Tools | Explicit execution boundary | In progress (3.1 model implemented; runtime planned) |
+| Permissions | Autonomy ceiling plus per-tool checks | Planned (Phase 3 design; not enforced) |
 | Approvals | Authorization for proposed actions | Implemented (Command Center + atomic commands; execution future) |
-| Execution | Performing an approved action | Future |
+| Execution | Performing an authorized tool attempt | Planned (model exists; coordinator does not) |
 | Events | Append-oriented timeline | Implemented (model + append API) |
 
 ## Principles
@@ -115,7 +115,7 @@ Updated business state
 2. **Tools are the execution boundary.** Agents do not get unrestricted access to services or mutations.
 3. **Permission-aware actions.** Observe, recommend, prepare, execute. `AgentDefinition.permissionLevel` is a ceiling, not a blanket grant.
 4. **Human approval where appropriate.** External communications, publishing, spend, production deploys, and refunds require approval.
-5. **Auditability.** Agent runs record trigger, input snapshot, result, errors, and timestamps. Tool request/execution history is future.
+5. **Auditability.** Agent runs record trigger, input snapshot, result, errors, and timestamps. Tool request/execution tables exist as of 3.1; no runtime writes them yet ([tool architecture](tool-architecture.md)).
 6. **Incremental autonomy.** Start as decision-support. Increase autonomy only after workflows are reliable.
 
 ## Core control principle
@@ -132,4 +132,5 @@ All future integrations and autonomous actions must pass through explicit tools 
 - [Command Center](command-center.md)
 - [Knowledge system](knowledge-system.md)
 - [Database](database.md)
+- [Tool architecture](tool-architecture.md)
 - [Roadmap](../roadmap.md)

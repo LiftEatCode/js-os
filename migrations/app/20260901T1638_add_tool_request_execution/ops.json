@@ -1,0 +1,887 @@
+[
+  {
+    "id": "table.toolExecution",
+    "label": "Create table \"toolExecution\"",
+    "summary": "Creates table \"toolExecution\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "toolExecution"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"toolExecution\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"toolExecution\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"toolExecution\"",
+        "sql": "CREATE TABLE \"public\".\"toolExecution\" (\n  \"attemptNumber\" int4 NOT NULL,\n  \"completedAt\" timestamptz,\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"error\" text,\n  \"id\" uuid NOT NULL,\n  \"organizationId\" uuid NOT NULL,\n  \"output\" jsonb,\n  \"startedAt\" timestamptz,\n  \"status\" text NOT NULL,\n  \"toolRequestId\" uuid NOT NULL,\n  PRIMARY KEY (\"id\"),\n  CONSTRAINT \"toolExecution_status_check_ec07928c\" CHECK (\"status\" IN ('QUEUED', 'RUNNING', 'SUCCEEDED', 'FAILED', 'CANCELLED'))\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"toolExecution\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"toolExecution\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "table.toolRequest",
+    "label": "Create table \"toolRequest\"",
+    "summary": "Creates table \"toolRequest\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "toolRequest"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"toolRequest\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"toolRequest\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"toolRequest\"",
+        "sql": "CREATE TABLE \"public\".\"toolRequest\" (\n  \"agentDefinitionId\" uuid,\n  \"agentRunId\" uuid,\n  \"approvalId\" uuid,\n  \"approvalRequirement\" text NOT NULL,\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"id\" uuid NOT NULL,\n  \"idempotencyKey\" text,\n  \"input\" jsonb NOT NULL,\n  \"organizationId\" uuid NOT NULL,\n  \"requestedAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"requestedById\" text,\n  \"requestedByType\" text NOT NULL,\n  \"requiredPermission\" text NOT NULL,\n  \"riskLevel\" text NOT NULL,\n  \"status\" text NOT NULL,\n  \"toolName\" text NOT NULL,\n  \"toolSlug\" text NOT NULL,\n  \"toolVersion\" int4 NOT NULL,\n  \"updatedAt\" timestamptz NOT NULL,\n  \"workItemId\" uuid,\n  PRIMARY KEY (\"id\"),\n  CONSTRAINT \"toolRequest_approvalRequirement_check_ba5f8288\" CHECK (\"approvalRequirement\" IN ('NEVER', 'ALWAYS')),\n  CONSTRAINT \"toolRequest_requestedByType_check_1048f7e2\" CHECK (\"requestedByType\" IN ('USER', 'AGENT', 'SYSTEM')),\n  CONSTRAINT \"toolRequest_requiredPermission_check_56b6fa72\" CHECK (\"requiredPermission\" IN ('OBSERVE', 'RECOMMEND', 'PREPARE', 'EXECUTE')),\n  CONSTRAINT \"toolRequest_riskLevel_check_a114ba6a\" CHECK (\"riskLevel\" IN ('LOW', 'MEDIUM', 'HIGH', 'CRITICAL')),\n  CONSTRAINT \"toolRequest_status_check_5185bc5a\" CHECK (\"status\" IN ('REQUESTED', 'WAITING_APPROVAL', 'READY', 'FULFILLED', 'FAILED', 'CANCELLED', 'DENIED'))\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"toolRequest\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"toolRequest\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "unique.toolExecution.toolExecution_toolRequestId_attemptNumber_key",
+    "label": "Add unique constraint on \"toolExecution\" (toolRequestId, attemptNumber)",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "unique",
+        "name": "toolExecution_toolRequestId_attemptNumber_key",
+        "table": "toolExecution"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"toolExecution_toolRequestId_attemptNumber_key\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "toolExecution_toolRequestId_attemptNumber_key",
+          "public",
+          "\"public\".\"toolExecution\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add unique constraint \"toolExecution_toolRequestId_attemptNumber_key\"",
+        "sql": "ALTER TABLE \"public\".\"toolExecution\" ADD CONSTRAINT \"toolExecution_toolRequestId_attemptNumber_key\" UNIQUE (\"toolRequestId\", \"attemptNumber\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"toolExecution_toolRequestId_attemptNumber_key\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "toolExecution_toolRequestId_attemptNumber_key",
+          "public",
+          "\"public\".\"toolExecution\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "unique.toolRequest.toolRequest_organizationId_toolSlug_idempotencyKey_key",
+    "label": "Add unique constraint on \"toolRequest\" (organizationId, toolSlug, idempotencyKey)",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "unique",
+        "name": "toolRequest_organizationId_toolSlug_idempotencyKey_key",
+        "table": "toolRequest"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"toolRequest_organizationId_toolSlug_idempotencyKey_key\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "toolRequest_organizationId_toolSlug_idempotencyKey_key",
+          "public",
+          "\"public\".\"toolRequest\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add unique constraint \"toolRequest_organizationId_toolSlug_idempotencyKey_key\"",
+        "sql": "ALTER TABLE \"public\".\"toolRequest\" ADD CONSTRAINT \"toolRequest_organizationId_toolSlug_idempotencyKey_key\" UNIQUE (\"organizationId\", \"toolSlug\", \"idempotencyKey\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"toolRequest_organizationId_toolSlug_idempotencyKey_key\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "toolRequest_organizationId_toolSlug_idempotencyKey_key",
+          "public",
+          "\"public\".\"toolRequest\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.toolExecution.toolExecution_organizationId_createdAt_idx_c52d1cc3",
+    "label": "Create index \"toolExecution_organizationId_createdAt_idx_c52d1cc3\" on \"toolExecution\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "toolExecution_organizationId_createdAt_idx_c52d1cc3",
+        "table": "toolExecution"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"toolExecution_organizationId_createdAt_idx_c52d1cc3\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"toolExecution_organizationId_createdAt_idx_c52d1cc3\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"toolExecution_organizationId_createdAt_idx_c52d1cc3\"",
+        "sql": "CREATE INDEX \"toolExecution_organizationId_createdAt_idx_c52d1cc3\" ON \"public\".\"toolExecution\" (\"organizationId\", \"createdAt\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"toolExecution_organizationId_createdAt_idx_c52d1cc3\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"toolExecution_organizationId_createdAt_idx_c52d1cc3\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.toolExecution.toolExecution_organizationId_idx_2e17ef41",
+    "label": "Create index \"toolExecution_organizationId_idx_2e17ef41\" on \"toolExecution\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "toolExecution_organizationId_idx_2e17ef41",
+        "table": "toolExecution"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"toolExecution_organizationId_idx_2e17ef41\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"toolExecution_organizationId_idx_2e17ef41\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"toolExecution_organizationId_idx_2e17ef41\"",
+        "sql": "CREATE INDEX \"toolExecution_organizationId_idx_2e17ef41\" ON \"public\".\"toolExecution\" (\"organizationId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"toolExecution_organizationId_idx_2e17ef41\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"toolExecution_organizationId_idx_2e17ef41\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.toolExecution.toolExecution_organizationId_status_idx_21af5e82",
+    "label": "Create index \"toolExecution_organizationId_status_idx_21af5e82\" on \"toolExecution\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "toolExecution_organizationId_status_idx_21af5e82",
+        "table": "toolExecution"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"toolExecution_organizationId_status_idx_21af5e82\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"toolExecution_organizationId_status_idx_21af5e82\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"toolExecution_organizationId_status_idx_21af5e82\"",
+        "sql": "CREATE INDEX \"toolExecution_organizationId_status_idx_21af5e82\" ON \"public\".\"toolExecution\" (\"organizationId\", \"status\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"toolExecution_organizationId_status_idx_21af5e82\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"toolExecution_organizationId_status_idx_21af5e82\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.toolExecution.toolExecution_toolRequestId_idx_8258479f",
+    "label": "Create index \"toolExecution_toolRequestId_idx_8258479f\" on \"toolExecution\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "toolExecution_toolRequestId_idx_8258479f",
+        "table": "toolExecution"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"toolExecution_toolRequestId_idx_8258479f\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"toolExecution_toolRequestId_idx_8258479f\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"toolExecution_toolRequestId_idx_8258479f\"",
+        "sql": "CREATE INDEX \"toolExecution_toolRequestId_idx_8258479f\" ON \"public\".\"toolExecution\" (\"toolRequestId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"toolExecution_toolRequestId_idx_8258479f\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"toolExecution_toolRequestId_idx_8258479f\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.toolRequest.toolRequest_agentDefinitionId_idx_3b61897d",
+    "label": "Create index \"toolRequest_agentDefinitionId_idx_3b61897d\" on \"toolRequest\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "toolRequest_agentDefinitionId_idx_3b61897d",
+        "table": "toolRequest"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"toolRequest_agentDefinitionId_idx_3b61897d\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"toolRequest_agentDefinitionId_idx_3b61897d\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"toolRequest_agentDefinitionId_idx_3b61897d\"",
+        "sql": "CREATE INDEX \"toolRequest_agentDefinitionId_idx_3b61897d\" ON \"public\".\"toolRequest\" (\"agentDefinitionId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"toolRequest_agentDefinitionId_idx_3b61897d\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"toolRequest_agentDefinitionId_idx_3b61897d\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.toolRequest.toolRequest_agentRunId_idx_1f80425e",
+    "label": "Create index \"toolRequest_agentRunId_idx_1f80425e\" on \"toolRequest\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "toolRequest_agentRunId_idx_1f80425e",
+        "table": "toolRequest"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"toolRequest_agentRunId_idx_1f80425e\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"toolRequest_agentRunId_idx_1f80425e\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"toolRequest_agentRunId_idx_1f80425e\"",
+        "sql": "CREATE INDEX \"toolRequest_agentRunId_idx_1f80425e\" ON \"public\".\"toolRequest\" (\"agentRunId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"toolRequest_agentRunId_idx_1f80425e\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"toolRequest_agentRunId_idx_1f80425e\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.toolRequest.toolRequest_approvalId_idx_23d09a03",
+    "label": "Create index \"toolRequest_approvalId_idx_23d09a03\" on \"toolRequest\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "toolRequest_approvalId_idx_23d09a03",
+        "table": "toolRequest"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"toolRequest_approvalId_idx_23d09a03\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"toolRequest_approvalId_idx_23d09a03\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"toolRequest_approvalId_idx_23d09a03\"",
+        "sql": "CREATE INDEX \"toolRequest_approvalId_idx_23d09a03\" ON \"public\".\"toolRequest\" (\"approvalId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"toolRequest_approvalId_idx_23d09a03\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"toolRequest_approvalId_idx_23d09a03\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.toolRequest.toolRequest_organizationId_idx_2e17ef41",
+    "label": "Create index \"toolRequest_organizationId_idx_2e17ef41\" on \"toolRequest\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "toolRequest_organizationId_idx_2e17ef41",
+        "table": "toolRequest"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"toolRequest_organizationId_idx_2e17ef41\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"toolRequest_organizationId_idx_2e17ef41\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"toolRequest_organizationId_idx_2e17ef41\"",
+        "sql": "CREATE INDEX \"toolRequest_organizationId_idx_2e17ef41\" ON \"public\".\"toolRequest\" (\"organizationId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"toolRequest_organizationId_idx_2e17ef41\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"toolRequest_organizationId_idx_2e17ef41\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.toolRequest.toolRequest_organizationId_status_requestedAt_idx_9c16cf28",
+    "label": "Create index \"toolRequest_organizationId_status_requestedAt_idx_9c16cf28\" on \"toolRequest\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "toolRequest_organizationId_status_requestedAt_idx_9c16cf28",
+        "table": "toolRequest"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"toolRequest_organizationId_status_requestedAt_idx_9c16cf28\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"toolRequest_organizationId_status_requestedAt_idx_9c16cf28\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"toolRequest_organizationId_status_requestedAt_idx_9c16cf28\"",
+        "sql": "CREATE INDEX \"toolRequest_organizationId_status_requestedAt_idx_9c16cf28\" ON \"public\".\"toolRequest\" (\"organizationId\", \"status\", \"requestedAt\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"toolRequest_organizationId_status_requestedAt_idx_9c16cf28\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"toolRequest_organizationId_status_requestedAt_idx_9c16cf28\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.toolRequest.toolRequest_organizationId_toolSlug_requestedAt_idx_9d4efc96",
+    "label": "Create index \"toolRequest_organizationId_toolSlug_requestedAt_idx_9d4efc96\" on \"toolRequest\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "toolRequest_organizationId_toolSlug_requestedAt_idx_9d4efc96",
+        "table": "toolRequest"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"toolRequest_organizationId_toolSlug_requestedAt_idx_9d4efc96\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"toolRequest_organizationId_toolSlug_requestedAt_idx_9d4efc96\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"toolRequest_organizationId_toolSlug_requestedAt_idx_9d4efc96\"",
+        "sql": "CREATE INDEX \"toolRequest_organizationId_toolSlug_requestedAt_idx_9d4efc96\" ON \"public\".\"toolRequest\" (\"organizationId\", \"toolSlug\", \"requestedAt\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"toolRequest_organizationId_toolSlug_requestedAt_idx_9d4efc96\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"toolRequest_organizationId_toolSlug_requestedAt_idx_9d4efc96\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.toolRequest.toolRequest_workItemId_idx_2fd4a055",
+    "label": "Create index \"toolRequest_workItemId_idx_2fd4a055\" on \"toolRequest\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "toolRequest_workItemId_idx_2fd4a055",
+        "table": "toolRequest"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"toolRequest_workItemId_idx_2fd4a055\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"toolRequest_workItemId_idx_2fd4a055\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"toolRequest_workItemId_idx_2fd4a055\"",
+        "sql": "CREATE INDEX \"toolRequest_workItemId_idx_2fd4a055\" ON \"public\".\"toolRequest\" (\"workItemId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"toolRequest_workItemId_idx_2fd4a055\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"toolRequest_workItemId_idx_2fd4a055\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.toolExecution.toolExecution_organizationId_fkey",
+    "label": "Add foreign key \"toolExecution_organizationId_fkey\" on \"toolExecution\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "toolExecution_organizationId_fkey",
+        "table": "toolExecution"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"toolExecution_organizationId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "toolExecution_organizationId_fkey",
+          "public",
+          "\"public\".\"toolExecution\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"toolExecution_organizationId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"toolExecution\"\nADD CONSTRAINT \"toolExecution_organizationId_fkey\"\nFOREIGN KEY (\"organizationId\")\nREFERENCES \"public\".\"organization\" (\"id\")\nON DELETE RESTRICT"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"toolExecution_organizationId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "toolExecution_organizationId_fkey",
+          "public",
+          "\"public\".\"toolExecution\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.toolExecution.toolExecution_toolRequestId_fkey",
+    "label": "Add foreign key \"toolExecution_toolRequestId_fkey\" on \"toolExecution\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "toolExecution_toolRequestId_fkey",
+        "table": "toolExecution"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"toolExecution_toolRequestId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "toolExecution_toolRequestId_fkey",
+          "public",
+          "\"public\".\"toolExecution\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"toolExecution_toolRequestId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"toolExecution\"\nADD CONSTRAINT \"toolExecution_toolRequestId_fkey\"\nFOREIGN KEY (\"toolRequestId\")\nREFERENCES \"public\".\"toolRequest\" (\"id\")\nON DELETE RESTRICT"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"toolExecution_toolRequestId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "toolExecution_toolRequestId_fkey",
+          "public",
+          "\"public\".\"toolExecution\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.toolRequest.toolRequest_organizationId_fkey",
+    "label": "Add foreign key \"toolRequest_organizationId_fkey\" on \"toolRequest\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "toolRequest_organizationId_fkey",
+        "table": "toolRequest"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"toolRequest_organizationId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "toolRequest_organizationId_fkey",
+          "public",
+          "\"public\".\"toolRequest\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"toolRequest_organizationId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"toolRequest\"\nADD CONSTRAINT \"toolRequest_organizationId_fkey\"\nFOREIGN KEY (\"organizationId\")\nREFERENCES \"public\".\"organization\" (\"id\")\nON DELETE RESTRICT"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"toolRequest_organizationId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "toolRequest_organizationId_fkey",
+          "public",
+          "\"public\".\"toolRequest\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.toolRequest.toolRequest_agentDefinitionId_fkey",
+    "label": "Add foreign key \"toolRequest_agentDefinitionId_fkey\" on \"toolRequest\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "toolRequest_agentDefinitionId_fkey",
+        "table": "toolRequest"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"toolRequest_agentDefinitionId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "toolRequest_agentDefinitionId_fkey",
+          "public",
+          "\"public\".\"toolRequest\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"toolRequest_agentDefinitionId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"toolRequest\"\nADD CONSTRAINT \"toolRequest_agentDefinitionId_fkey\"\nFOREIGN KEY (\"agentDefinitionId\")\nREFERENCES \"public\".\"agentDefinition\" (\"id\")\nON DELETE RESTRICT"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"toolRequest_agentDefinitionId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "toolRequest_agentDefinitionId_fkey",
+          "public",
+          "\"public\".\"toolRequest\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.toolRequest.toolRequest_agentRunId_fkey",
+    "label": "Add foreign key \"toolRequest_agentRunId_fkey\" on \"toolRequest\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "toolRequest_agentRunId_fkey",
+        "table": "toolRequest"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"toolRequest_agentRunId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "toolRequest_agentRunId_fkey",
+          "public",
+          "\"public\".\"toolRequest\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"toolRequest_agentRunId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"toolRequest\"\nADD CONSTRAINT \"toolRequest_agentRunId_fkey\"\nFOREIGN KEY (\"agentRunId\")\nREFERENCES \"public\".\"agentRun\" (\"id\")\nON DELETE RESTRICT"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"toolRequest_agentRunId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "toolRequest_agentRunId_fkey",
+          "public",
+          "\"public\".\"toolRequest\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.toolRequest.toolRequest_workItemId_fkey",
+    "label": "Add foreign key \"toolRequest_workItemId_fkey\" on \"toolRequest\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "toolRequest_workItemId_fkey",
+        "table": "toolRequest"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"toolRequest_workItemId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "toolRequest_workItemId_fkey",
+          "public",
+          "\"public\".\"toolRequest\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"toolRequest_workItemId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"toolRequest\"\nADD CONSTRAINT \"toolRequest_workItemId_fkey\"\nFOREIGN KEY (\"workItemId\")\nREFERENCES \"public\".\"workItem\" (\"id\")\nON DELETE SET NULL"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"toolRequest_workItemId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "toolRequest_workItemId_fkey",
+          "public",
+          "\"public\".\"toolRequest\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.toolRequest.toolRequest_approvalId_fkey",
+    "label": "Add foreign key \"toolRequest_approvalId_fkey\" on \"toolRequest\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "toolRequest_approvalId_fkey",
+        "table": "toolRequest"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"toolRequest_approvalId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "toolRequest_approvalId_fkey",
+          "public",
+          "\"public\".\"toolRequest\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"toolRequest_approvalId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"toolRequest\"\nADD CONSTRAINT \"toolRequest_approvalId_fkey\"\nFOREIGN KEY (\"approvalId\")\nREFERENCES \"public\".\"approval\" (\"id\")\nON DELETE RESTRICT"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"toolRequest_approvalId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "toolRequest_approvalId_fkey",
+          "public",
+          "\"public\".\"toolRequest\""
+        ]
+      }
+    ]
+  }
+]

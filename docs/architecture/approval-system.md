@@ -1,6 +1,6 @@
 # Approval system
 
-**Status:** Implemented (model, persistence, Command Center, atomic commands). Tool execution, expiration workers, and automatic WorkItem coupling are future.
+**Status:** Implemented (model, persistence, Command Center, atomic commands). Tool execution, expiration workers, and automatic WorkItem coupling are future. `ToolRequest.approvalId` exists as of 3.1; approval evaluation is not.
 
 An Approval is authorization for a proposed action. It is not the action itself.
 
@@ -10,7 +10,7 @@ APPROVED ≠ EXECUTED
 
 Approving records that the owner authorized the proposal. It does **not** mean a tool ran, an API was called, email was sent, content was published, an AgentRun continued, or a WorkItem completed.
 
-Future phases decide whether and how approved actions are executed.
+Phase 3 designs how tool-linked Approvals authorize a ToolRequest. Approving still does not execute. See [tool architecture](tool-architecture.md).
 
 ## Why it exists
 
@@ -97,7 +97,9 @@ Request fields are immutable after creation. Only decision state changes afterwa
 
 ## Payload
 
-`payload` describes the proposed action. Command Center renders it as pretty-printed JSON in a `<pre>` block. HTML is never interpreted. Null shows “No action payload recorded.”
+`payload` describes the proposed action for standalone Approvals. Command Center renders it as pretty-printed JSON in a `<pre>` block. HTML is never interpreted. Null shows “No action payload recorded.”
+
+Phase 3 tool-linked Approvals should store a small pointer (`toolRequestId`, `toolSlug`) rather than duplicating `ToolRequest.input`. The ToolRequest owns validated execution input. That split is designed, not implemented.
 
 Manual creation accepts a textarea: empty → `null`; valid JSON → stored value; invalid JSON → form error. JSON only. Nothing is evaluated.
 
@@ -209,8 +211,25 @@ Intentional tightenings vs the original Phase 1 helpers:
 - `actionType` must be `lowercase.dot.notation`
 - rejection requires `decisionReason`
 
+## Phase 3 tool linkage (schema implemented; behavior not)
+
+```text
+ToolRequest.approvalId → Approval.id
+```
+
+The FK exists as of 3.1 (`Restrict`). Coordinators must not auto-create Approvals, auto-transition requests, or execute on `APPROVED`. That is milestone 3.5.
+
+The ToolRequest owns the logical action. Approval remains authorization only.
+
+- `ALWAYS` tools create a `PENDING` Approval; the request becomes `WAITING_APPROVAL`
+- `APPROVED` moves the request to `READY`; it does not start `ToolExecution`
+- `REJECTED` moves the request to `DENIED`; no execution
+- Past `expiresAt` must refuse execution even if status is still `PENDING` (no expiration worker)
+
+Do not add an unbounded execution payload onto Approval when ToolRequest already holds input.
+
 ## Not in 2.6
 
 Tool execution, external API calls, agent continuation, automatic WorkItem completion, automatic Approval creation from `WAITING_APPROVAL`, approval chains, multiple approvers, RBAC, delegated approval, scheduled expiration, notifications, queues, background jobs, deletion, or editing a proposal after creation.
 
-See [approval policy](../policies/approvals.md), [risk policy](../policies/risk.md), [event system](event-system.md), [ADR-007](../decisions/ADR-007-atomic-business-mutation-and-event-recording.md), and [business-state services](business-state-services.md).
+See [approval policy](../policies/approvals.md), [risk policy](../policies/risk.md), [event system](event-system.md), [tool architecture](tool-architecture.md), [ADR-007](../decisions/ADR-007-atomic-business-mutation-and-event-recording.md), [ADR-008](../decisions/ADR-008-controlled-tool-execution-boundary.md), and [business-state services](business-state-services.md).

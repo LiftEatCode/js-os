@@ -55,7 +55,7 @@ Creates missing rows only:
   ceo, sales, marketing, client-operations, engineering, finance
 ```
 
-Does not create Goals, WorkItems, Approvals, AgentRuns, or BusinessEvents. Does not delete or truncate.
+Does not create Goals, WorkItems, Approvals, AgentRuns, BusinessEvents, ToolRequests, or ToolExecutions. Does not delete or truncate.
 
 > Bootstrap establishes missing foundational records. It does not continuously enforce mutable operating configuration.
 
@@ -83,6 +83,12 @@ Application access after bootstrap: [business-state services](../architecture/bu
 npm run business-state:verify
 ```
 
+Tool table constraint check (creates rows only inside rolled-back transactions):
+
+```bash
+npm run tool-schema:verify
+```
+
 ## Source of truth
 
 ```text
@@ -95,5 +101,6 @@ migrations/                   (committed)
 Do not hand-edit generated contract artifacts.
 
 Initial development migration: `migrations/app/20260831T1616_initial_business_state`.
+Phase 3.1 development migration: `migrations/app/20260901T1638_add_tool_request_execution`.
 
 Details: [database architecture](../architecture/database.md).

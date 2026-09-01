@@ -28,6 +28,14 @@
       "model": "Organization",
       "namespace": "public"
     },
+    "toolExecution": {
+      "model": "ToolExecution",
+      "namespace": "public"
+    },
+    "toolRequest": {
+      "model": "ToolRequest",
+      "namespace": "public"
+    },
     "workItem": {
       "model": "WorkItem",
       "namespace": "public"
@@ -342,6 +350,136 @@
               }
             ]
           },
+          "ToolActorType": {
+            "codecId": "pg/text@1",
+            "members": [
+              {
+                "name": "USER",
+                "value": "USER"
+              },
+              {
+                "name": "AGENT",
+                "value": "AGENT"
+              },
+              {
+                "name": "SYSTEM",
+                "value": "SYSTEM"
+              }
+            ]
+          },
+          "ToolApprovalRequirement": {
+            "codecId": "pg/text@1",
+            "members": [
+              {
+                "name": "NEVER",
+                "value": "NEVER"
+              },
+              {
+                "name": "ALWAYS",
+                "value": "ALWAYS"
+              }
+            ]
+          },
+          "ToolExecutionStatus": {
+            "codecId": "pg/text@1",
+            "members": [
+              {
+                "name": "QUEUED",
+                "value": "QUEUED"
+              },
+              {
+                "name": "RUNNING",
+                "value": "RUNNING"
+              },
+              {
+                "name": "SUCCEEDED",
+                "value": "SUCCEEDED"
+              },
+              {
+                "name": "FAILED",
+                "value": "FAILED"
+              },
+              {
+                "name": "CANCELLED",
+                "value": "CANCELLED"
+              }
+            ]
+          },
+          "ToolRequestStatus": {
+            "codecId": "pg/text@1",
+            "members": [
+              {
+                "name": "REQUESTED",
+                "value": "REQUESTED"
+              },
+              {
+                "name": "WAITING_APPROVAL",
+                "value": "WAITING_APPROVAL"
+              },
+              {
+                "name": "READY",
+                "value": "READY"
+              },
+              {
+                "name": "FULFILLED",
+                "value": "FULFILLED"
+              },
+              {
+                "name": "FAILED",
+                "value": "FAILED"
+              },
+              {
+                "name": "CANCELLED",
+                "value": "CANCELLED"
+              },
+              {
+                "name": "DENIED",
+                "value": "DENIED"
+              }
+            ]
+          },
+          "ToolRequiredPermission": {
+            "codecId": "pg/text@1",
+            "members": [
+              {
+                "name": "OBSERVE",
+                "value": "OBSERVE"
+              },
+              {
+                "name": "RECOMMEND",
+                "value": "RECOMMEND"
+              },
+              {
+                "name": "PREPARE",
+                "value": "PREPARE"
+              },
+              {
+                "name": "EXECUTE",
+                "value": "EXECUTE"
+              }
+            ]
+          },
+          "ToolRiskLevel": {
+            "codecId": "pg/text@1",
+            "members": [
+              {
+                "name": "LOW",
+                "value": "LOW"
+              },
+              {
+                "name": "MEDIUM",
+                "value": "MEDIUM"
+              },
+              {
+                "name": "HIGH",
+                "value": "HIGH"
+              },
+              {
+                "name": "CRITICAL",
+                "value": "CRITICAL"
+              }
+            ]
+          },
           "WorkItemPriority": {
             "codecId": "pg/text@1",
             "members": [
@@ -611,6 +749,21 @@
                   "model": "Organization",
                   "namespace": "public"
                 }
+              },
+              "toolRequests": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "agentDefinitionId"
+                  ]
+                },
+                "to": {
+                  "model": "ToolRequest",
+                  "namespace": "public"
+                }
               }
             },
             "storage": {
@@ -810,6 +963,21 @@
                 },
                 "to": {
                   "model": "Organization",
+                  "namespace": "public"
+                }
+              },
+              "toolRequests": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "agentRunId"
+                  ]
+                },
+                "to": {
+                  "model": "ToolRequest",
                   "namespace": "public"
                 }
               }
@@ -1032,6 +1200,21 @@
                 },
                 "to": {
                   "model": "Organization",
+                  "namespace": "public"
+                }
+              },
+              "toolRequests": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "approvalId"
+                  ]
+                },
+                "to": {
+                  "model": "ToolRequest",
                   "namespace": "public"
                 }
               },
@@ -1596,6 +1779,36 @@
                   "namespace": "public"
                 }
               },
+              "toolExecutions": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "organizationId"
+                  ]
+                },
+                "to": {
+                  "model": "ToolExecution",
+                  "namespace": "public"
+                }
+              },
+              "toolRequests": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "organizationId"
+                  ]
+                },
+                "to": {
+                  "model": "ToolRequest",
+                  "namespace": "public"
+                }
+              },
               "workItems": {
                 "cardinality": "1:N",
                 "on": {
@@ -1641,6 +1854,486 @@
               },
               "namespaceId": "public",
               "table": "organization"
+            }
+          },
+          "ToolExecution": {
+            "fields": {
+              "attemptNumber": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "completedAt": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "kind": "scalar"
+                }
+              },
+              "createdAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "kind": "scalar"
+                }
+              },
+              "error": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "id": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/uuid@1",
+                  "kind": "scalar"
+                }
+              },
+              "organizationId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/uuid@1",
+                  "kind": "scalar"
+                }
+              },
+              "output": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/jsonb@1",
+                  "kind": "scalar"
+                }
+              },
+              "startedAt": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "kind": "scalar"
+                }
+              },
+              "status": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                },
+                "valueSet": {
+                  "entityKind": "enum",
+                  "entityName": "ToolExecutionStatus",
+                  "namespaceId": "public",
+                  "plane": "domain"
+                }
+              },
+              "toolRequestId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/uuid@1",
+                  "kind": "scalar"
+                }
+              }
+            },
+            "relations": {
+              "organization": {
+                "cardinality": "N:1",
+                "on": {
+                  "localFields": [
+                    "organizationId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "Organization",
+                  "namespace": "public"
+                }
+              },
+              "toolRequest": {
+                "cardinality": "N:1",
+                "on": {
+                  "localFields": [
+                    "toolRequestId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "ToolRequest",
+                  "namespace": "public"
+                }
+              }
+            },
+            "storage": {
+              "fields": {
+                "attemptNumber": {
+                  "column": "attemptNumber"
+                },
+                "completedAt": {
+                  "column": "completedAt"
+                },
+                "createdAt": {
+                  "column": "createdAt"
+                },
+                "error": {
+                  "column": "error"
+                },
+                "id": {
+                  "column": "id"
+                },
+                "organizationId": {
+                  "column": "organizationId"
+                },
+                "output": {
+                  "column": "output"
+                },
+                "startedAt": {
+                  "column": "startedAt"
+                },
+                "status": {
+                  "column": "status"
+                },
+                "toolRequestId": {
+                  "column": "toolRequestId"
+                }
+              },
+              "namespaceId": "public",
+              "table": "toolExecution"
+            }
+          },
+          "ToolRequest": {
+            "fields": {
+              "agentDefinitionId": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/uuid@1",
+                  "kind": "scalar"
+                }
+              },
+              "agentRunId": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/uuid@1",
+                  "kind": "scalar"
+                }
+              },
+              "approvalId": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/uuid@1",
+                  "kind": "scalar"
+                }
+              },
+              "approvalRequirement": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                },
+                "valueSet": {
+                  "entityKind": "enum",
+                  "entityName": "ToolApprovalRequirement",
+                  "namespaceId": "public",
+                  "plane": "domain"
+                }
+              },
+              "createdAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "kind": "scalar"
+                }
+              },
+              "id": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/uuid@1",
+                  "kind": "scalar"
+                }
+              },
+              "idempotencyKey": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "input": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/jsonb@1",
+                  "kind": "scalar"
+                }
+              },
+              "organizationId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/uuid@1",
+                  "kind": "scalar"
+                }
+              },
+              "requestedAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "kind": "scalar"
+                }
+              },
+              "requestedById": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "requestedByType": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                },
+                "valueSet": {
+                  "entityKind": "enum",
+                  "entityName": "ToolActorType",
+                  "namespaceId": "public",
+                  "plane": "domain"
+                }
+              },
+              "requiredPermission": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                },
+                "valueSet": {
+                  "entityKind": "enum",
+                  "entityName": "ToolRequiredPermission",
+                  "namespaceId": "public",
+                  "plane": "domain"
+                }
+              },
+              "riskLevel": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                },
+                "valueSet": {
+                  "entityKind": "enum",
+                  "entityName": "ToolRiskLevel",
+                  "namespaceId": "public",
+                  "plane": "domain"
+                }
+              },
+              "status": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                },
+                "valueSet": {
+                  "entityKind": "enum",
+                  "entityName": "ToolRequestStatus",
+                  "namespaceId": "public",
+                  "plane": "domain"
+                }
+              },
+              "toolName": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "toolSlug": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "toolVersion": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "updatedAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "kind": "scalar"
+                }
+              },
+              "workItemId": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/uuid@1",
+                  "kind": "scalar"
+                }
+              }
+            },
+            "relations": {
+              "agentDefinition": {
+                "cardinality": "N:1",
+                "on": {
+                  "localFields": [
+                    "agentDefinitionId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "AgentDefinition",
+                  "namespace": "public"
+                }
+              },
+              "agentRun": {
+                "cardinality": "N:1",
+                "on": {
+                  "localFields": [
+                    "agentRunId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "AgentRun",
+                  "namespace": "public"
+                }
+              },
+              "approval": {
+                "cardinality": "N:1",
+                "on": {
+                  "localFields": [
+                    "approvalId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "Approval",
+                  "namespace": "public"
+                }
+              },
+              "executions": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "toolRequestId"
+                  ]
+                },
+                "to": {
+                  "model": "ToolExecution",
+                  "namespace": "public"
+                }
+              },
+              "organization": {
+                "cardinality": "N:1",
+                "on": {
+                  "localFields": [
+                    "organizationId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "Organization",
+                  "namespace": "public"
+                }
+              },
+              "workItem": {
+                "cardinality": "N:1",
+                "on": {
+                  "localFields": [
+                    "workItemId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "WorkItem",
+                  "namespace": "public"
+                }
+              }
+            },
+            "storage": {
+              "fields": {
+                "agentDefinitionId": {
+                  "column": "agentDefinitionId"
+                },
+                "agentRunId": {
+                  "column": "agentRunId"
+                },
+                "approvalId": {
+                  "column": "approvalId"
+                },
+                "approvalRequirement": {
+                  "column": "approvalRequirement"
+                },
+                "createdAt": {
+                  "column": "createdAt"
+                },
+                "id": {
+                  "column": "id"
+                },
+                "idempotencyKey": {
+                  "column": "idempotencyKey"
+                },
+                "input": {
+                  "column": "input"
+                },
+                "organizationId": {
+                  "column": "organizationId"
+                },
+                "requestedAt": {
+                  "column": "requestedAt"
+                },
+                "requestedById": {
+                  "column": "requestedById"
+                },
+                "requestedByType": {
+                  "column": "requestedByType"
+                },
+                "requiredPermission": {
+                  "column": "requiredPermission"
+                },
+                "riskLevel": {
+                  "column": "riskLevel"
+                },
+                "status": {
+                  "column": "status"
+                },
+                "toolName": {
+                  "column": "toolName"
+                },
+                "toolSlug": {
+                  "column": "toolSlug"
+                },
+                "toolVersion": {
+                  "column": "toolVersion"
+                },
+                "updatedAt": {
+                  "column": "updatedAt"
+                },
+                "workItemId": {
+                  "column": "workItemId"
+                }
+              },
+              "namespaceId": "public",
+              "table": "toolRequest"
             }
           },
           "WorkItem": {
@@ -1899,6 +2592,21 @@
                 },
                 "to": {
                   "model": "WorkItem",
+                  "namespace": "public"
+                }
+              },
+              "toolRequests": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "workItemId"
+                  ]
+                },
+                "to": {
+                  "model": "ToolRequest",
                   "namespace": "public"
                 }
               }
@@ -2936,6 +3644,494 @@
                 }
               ]
             },
+            "toolExecution": {
+              "checks": [
+                {
+                  "expression": "\"status\" IN ('QUEUED', 'RUNNING', 'SUCCEEDED', 'FAILED', 'CANCELLED')",
+                  "name": "toolExecution_status_check_ec07928c",
+                  "prefix": "toolExecution_status_check"
+                }
+              ],
+              "columns": {
+                "attemptNumber": {
+                  "codecId": "pg/int4@1",
+                  "nativeType": "int4",
+                  "nullable": false
+                },
+                "completedAt": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "nativeType": "timestamptz",
+                  "nullable": true
+                },
+                "createdAt": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "default": {
+                    "expression": "now()",
+                    "kind": "function"
+                  },
+                  "nativeType": "timestamptz",
+                  "nullable": false
+                },
+                "error": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
+                },
+                "id": {
+                  "codecId": "pg/uuid@1",
+                  "nativeType": "uuid",
+                  "nullable": false
+                },
+                "organizationId": {
+                  "codecId": "pg/uuid@1",
+                  "nativeType": "uuid",
+                  "nullable": false
+                },
+                "output": {
+                  "codecId": "pg/jsonb@1",
+                  "nativeType": "jsonb",
+                  "nullable": true
+                },
+                "startedAt": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "nativeType": "timestamptz",
+                  "nullable": true
+                },
+                "status": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false,
+                  "valueSet": {
+                    "entityKind": "valueSet",
+                    "entityName": "ToolExecutionStatus",
+                    "namespaceId": "public",
+                    "plane": "storage"
+                  }
+                },
+                "toolRequestId": {
+                  "codecId": "pg/uuid@1",
+                  "nativeType": "uuid",
+                  "nullable": false
+                }
+              },
+              "foreignKeys": [
+                {
+                  "onDelete": "restrict",
+                  "source": {
+                    "columns": [
+                      "organizationId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "toolExecution"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "organization"
+                  }
+                },
+                {
+                  "onDelete": "restrict",
+                  "source": {
+                    "columns": [
+                      "toolRequestId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "toolExecution"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "toolRequest"
+                  }
+                }
+              ],
+              "indexes": [
+                {
+                  "columns": [
+                    "organizationId",
+                    "createdAt"
+                  ],
+                  "name": "toolExecution_organizationId_createdAt_idx_c52d1cc3",
+                  "prefix": "toolExecution_organizationId_createdAt_idx",
+                  "unique": false
+                },
+                {
+                  "columns": [
+                    "organizationId"
+                  ],
+                  "name": "toolExecution_organizationId_idx_2e17ef41",
+                  "prefix": "toolExecution_organizationId_idx",
+                  "unique": false
+                },
+                {
+                  "columns": [
+                    "organizationId",
+                    "status"
+                  ],
+                  "name": "toolExecution_organizationId_status_idx_21af5e82",
+                  "prefix": "toolExecution_organizationId_status_idx",
+                  "unique": false
+                },
+                {
+                  "columns": [
+                    "toolRequestId"
+                  ],
+                  "name": "toolExecution_toolRequestId_idx_8258479f",
+                  "prefix": "toolExecution_toolRequestId_idx",
+                  "unique": false
+                }
+              ],
+              "primaryKey": {
+                "columns": [
+                  "id"
+                ]
+              },
+              "uniques": [
+                {
+                  "columns": [
+                    "toolRequestId",
+                    "attemptNumber"
+                  ]
+                }
+              ]
+            },
+            "toolRequest": {
+              "checks": [
+                {
+                  "expression": "\"approvalRequirement\" IN ('NEVER', 'ALWAYS')",
+                  "name": "toolRequest_approvalRequirement_check_ba5f8288",
+                  "prefix": "toolRequest_approvalRequirement_check"
+                },
+                {
+                  "expression": "\"requestedByType\" IN ('USER', 'AGENT', 'SYSTEM')",
+                  "name": "toolRequest_requestedByType_check_1048f7e2",
+                  "prefix": "toolRequest_requestedByType_check"
+                },
+                {
+                  "expression": "\"requiredPermission\" IN ('OBSERVE', 'RECOMMEND', 'PREPARE', 'EXECUTE')",
+                  "name": "toolRequest_requiredPermission_check_56b6fa72",
+                  "prefix": "toolRequest_requiredPermission_check"
+                },
+                {
+                  "expression": "\"riskLevel\" IN ('LOW', 'MEDIUM', 'HIGH', 'CRITICAL')",
+                  "name": "toolRequest_riskLevel_check_a114ba6a",
+                  "prefix": "toolRequest_riskLevel_check"
+                },
+                {
+                  "expression": "\"status\" IN ('REQUESTED', 'WAITING_APPROVAL', 'READY', 'FULFILLED', 'FAILED', 'CANCELLED', 'DENIED')",
+                  "name": "toolRequest_status_check_5185bc5a",
+                  "prefix": "toolRequest_status_check"
+                }
+              ],
+              "columns": {
+                "agentDefinitionId": {
+                  "codecId": "pg/uuid@1",
+                  "nativeType": "uuid",
+                  "nullable": true
+                },
+                "agentRunId": {
+                  "codecId": "pg/uuid@1",
+                  "nativeType": "uuid",
+                  "nullable": true
+                },
+                "approvalId": {
+                  "codecId": "pg/uuid@1",
+                  "nativeType": "uuid",
+                  "nullable": true
+                },
+                "approvalRequirement": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false,
+                  "valueSet": {
+                    "entityKind": "valueSet",
+                    "entityName": "ToolApprovalRequirement",
+                    "namespaceId": "public",
+                    "plane": "storage"
+                  }
+                },
+                "createdAt": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "default": {
+                    "expression": "now()",
+                    "kind": "function"
+                  },
+                  "nativeType": "timestamptz",
+                  "nullable": false
+                },
+                "id": {
+                  "codecId": "pg/uuid@1",
+                  "nativeType": "uuid",
+                  "nullable": false
+                },
+                "idempotencyKey": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
+                },
+                "input": {
+                  "codecId": "pg/jsonb@1",
+                  "nativeType": "jsonb",
+                  "nullable": false
+                },
+                "organizationId": {
+                  "codecId": "pg/uuid@1",
+                  "nativeType": "uuid",
+                  "nullable": false
+                },
+                "requestedAt": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "default": {
+                    "expression": "now()",
+                    "kind": "function"
+                  },
+                  "nativeType": "timestamptz",
+                  "nullable": false
+                },
+                "requestedById": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
+                },
+                "requestedByType": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false,
+                  "valueSet": {
+                    "entityKind": "valueSet",
+                    "entityName": "ToolActorType",
+                    "namespaceId": "public",
+                    "plane": "storage"
+                  }
+                },
+                "requiredPermission": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false,
+                  "valueSet": {
+                    "entityKind": "valueSet",
+                    "entityName": "ToolRequiredPermission",
+                    "namespaceId": "public",
+                    "plane": "storage"
+                  }
+                },
+                "riskLevel": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false,
+                  "valueSet": {
+                    "entityKind": "valueSet",
+                    "entityName": "ToolRiskLevel",
+                    "namespaceId": "public",
+                    "plane": "storage"
+                  }
+                },
+                "status": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false,
+                  "valueSet": {
+                    "entityKind": "valueSet",
+                    "entityName": "ToolRequestStatus",
+                    "namespaceId": "public",
+                    "plane": "storage"
+                  }
+                },
+                "toolName": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "toolSlug": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "toolVersion": {
+                  "codecId": "pg/int4@1",
+                  "nativeType": "int4",
+                  "nullable": false
+                },
+                "updatedAt": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "nativeType": "timestamptz",
+                  "nullable": false
+                },
+                "workItemId": {
+                  "codecId": "pg/uuid@1",
+                  "nativeType": "uuid",
+                  "nullable": true
+                }
+              },
+              "foreignKeys": [
+                {
+                  "onDelete": "restrict",
+                  "source": {
+                    "columns": [
+                      "organizationId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "toolRequest"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "organization"
+                  }
+                },
+                {
+                  "onDelete": "restrict",
+                  "source": {
+                    "columns": [
+                      "agentDefinitionId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "toolRequest"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "agentDefinition"
+                  }
+                },
+                {
+                  "onDelete": "restrict",
+                  "source": {
+                    "columns": [
+                      "agentRunId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "toolRequest"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "agentRun"
+                  }
+                },
+                {
+                  "onDelete": "setNull",
+                  "source": {
+                    "columns": [
+                      "workItemId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "toolRequest"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "workItem"
+                  }
+                },
+                {
+                  "onDelete": "restrict",
+                  "source": {
+                    "columns": [
+                      "approvalId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "toolRequest"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "approval"
+                  }
+                }
+              ],
+              "indexes": [
+                {
+                  "columns": [
+                    "agentDefinitionId"
+                  ],
+                  "name": "toolRequest_agentDefinitionId_idx_3b61897d",
+                  "prefix": "toolRequest_agentDefinitionId_idx",
+                  "unique": false
+                },
+                {
+                  "columns": [
+                    "agentRunId"
+                  ],
+                  "name": "toolRequest_agentRunId_idx_1f80425e",
+                  "prefix": "toolRequest_agentRunId_idx",
+                  "unique": false
+                },
+                {
+                  "columns": [
+                    "approvalId"
+                  ],
+                  "name": "toolRequest_approvalId_idx_23d09a03",
+                  "prefix": "toolRequest_approvalId_idx",
+                  "unique": false
+                },
+                {
+                  "columns": [
+                    "organizationId"
+                  ],
+                  "name": "toolRequest_organizationId_idx_2e17ef41",
+                  "prefix": "toolRequest_organizationId_idx",
+                  "unique": false
+                },
+                {
+                  "columns": [
+                    "organizationId",
+                    "status",
+                    "requestedAt"
+                  ],
+                  "name": "toolRequest_organizationId_status_requestedAt_idx_9c16cf28",
+                  "prefix": "toolRequest_organizationId_status_requestedAt_idx",
+                  "unique": false
+                },
+                {
+                  "columns": [
+                    "organizationId",
+                    "toolSlug",
+                    "requestedAt"
+                  ],
+                  "name": "toolRequest_organizationId_toolSlug_requestedAt_idx_9d4efc96",
+                  "prefix": "toolRequest_organizationId_toolSlug_requestedAt_idx",
+                  "unique": false
+                },
+                {
+                  "columns": [
+                    "workItemId"
+                  ],
+                  "name": "toolRequest_workItemId_idx_2fd4a055",
+                  "prefix": "toolRequest_workItemId_idx",
+                  "unique": false
+                }
+              ],
+              "primaryKey": {
+                "columns": [
+                  "id"
+                ]
+              },
+              "uniques": [
+                {
+                  "columns": [
+                    "organizationId",
+                    "toolSlug",
+                    "idempotencyKey"
+                  ]
+                }
+              ]
+            },
             "workItem": {
               "checks": [
                 {
@@ -3369,6 +4565,61 @@
                 "INACTIVE"
               ]
             },
+            "ToolActorType": {
+              "kind": "valueSet",
+              "values": [
+                "USER",
+                "AGENT",
+                "SYSTEM"
+              ]
+            },
+            "ToolApprovalRequirement": {
+              "kind": "valueSet",
+              "values": [
+                "NEVER",
+                "ALWAYS"
+              ]
+            },
+            "ToolExecutionStatus": {
+              "kind": "valueSet",
+              "values": [
+                "QUEUED",
+                "RUNNING",
+                "SUCCEEDED",
+                "FAILED",
+                "CANCELLED"
+              ]
+            },
+            "ToolRequestStatus": {
+              "kind": "valueSet",
+              "values": [
+                "REQUESTED",
+                "WAITING_APPROVAL",
+                "READY",
+                "FULFILLED",
+                "FAILED",
+                "CANCELLED",
+                "DENIED"
+              ]
+            },
+            "ToolRequiredPermission": {
+              "kind": "valueSet",
+              "values": [
+                "OBSERVE",
+                "RECOMMEND",
+                "PREPARE",
+                "EXECUTE"
+              ]
+            },
+            "ToolRiskLevel": {
+              "kind": "valueSet",
+              "values": [
+                "LOW",
+                "MEDIUM",
+                "HIGH",
+                "CRITICAL"
+              ]
+            },
             "WorkItemPriority": {
               "kind": "valueSet",
               "values": [
@@ -3421,10 +4672,10 @@
         "kind": "postgres-schema"
       }
     },
-    "storageHash": "421e1ef51dc9a2b37d73857a0cb776c76c724254e980dfd12461c5ac531c9e4c"
+    "storageHash": "1c08a4d841c264c7a2ce49e0757ae40d524acd1a13a2ff72b86532dfc4deaef5"
   },
   "execution": {
-    "executionHash": "ccec27dcff02aaffbb1becec7a001d9d4a1e1fe49c536b5136c30fbf72fa61cf",
+    "executionHash": "d2f06e2f8d012f574c98b36d54aa3f0551b2c7a5d95d7b63c3b2974b0c57bc6b",
     "mutations": {
       "defaults": [
         {
@@ -3551,6 +4802,43 @@
             "column": "updatedAt",
             "namespace": "public",
             "table": "organization"
+          }
+        },
+        {
+          "onCreate": {
+            "id": "uuidv4",
+            "kind": "generator"
+          },
+          "ref": {
+            "column": "id",
+            "namespace": "public",
+            "table": "toolExecution"
+          }
+        },
+        {
+          "onCreate": {
+            "id": "uuidv4",
+            "kind": "generator"
+          },
+          "ref": {
+            "column": "id",
+            "namespace": "public",
+            "table": "toolRequest"
+          }
+        },
+        {
+          "onCreate": {
+            "id": "instantNow",
+            "kind": "generator"
+          },
+          "onUpdate": {
+            "id": "instantNow",
+            "kind": "generator"
+          },
+          "ref": {
+            "column": "updatedAt",
+            "namespace": "public",
+            "table": "toolRequest"
           }
         },
         {

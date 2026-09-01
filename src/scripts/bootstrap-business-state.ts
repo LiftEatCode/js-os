@@ -15,7 +15,8 @@
  * Existing rows are left as-is except identity drift (unexpected Organization
  * name or AgentDefinition role) which fails loudly.
  *
- * Does not create Goals, WorkItems, Approvals, AgentRuns, or BusinessEvents.
+ * Does not create Goals, WorkItems, Approvals, AgentRuns, BusinessEvents,
+ * ToolRequests, or ToolExecutions.
  * Does not delete, truncate, or reset any tables.
  */
 

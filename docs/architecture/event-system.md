@@ -64,7 +64,15 @@ agent.permission_changed
 agent.run.started
 agent.run.completed
 agent.run.failed
+
+tool.requested
+tool.denied
+tool.executed
+tool.failed
+tool.cancelled
 ```
+
+`tool.*` names are reserved for Phase 3. They are not emitted yet (3.1 creates no BusinessEvents). Do not also emit `tool.waiting_approval` or `tool.execution_started`. Approval activity stays on `approval.*`.
 
 Do not turn `eventType` into a schema enum.
 
@@ -106,7 +114,7 @@ Do not dump entire Goal/WorkItem/AgentDefinition rows, credentials, sensitive em
 
 BusinessEvent is **operational event history**. It is not a complete security audit log. Future high-assurance audit needs may require additional provenance or a dedicated mechanism. v0.1 does not claim that coverage.
 
-For normal business-state mutation history, atomic state+event recording is the preferred architecture ([ADR-007](../decisions/ADR-007-atomic-business-mutation-and-event-recording.md)).
+For normal business-state mutation history, atomic state+event recording is the preferred architecture ([ADR-007](../decisions/ADR-007-atomic-business-mutation-and-event-recording.md)). External tool side effects cannot use that single-database transaction; Phase 3 documents persist-intent → effect → persist-result instead ([tool architecture](tool-architecture.md), [ADR-008](../decisions/ADR-008-controlled-tool-execution-boundary.md)).
 
 ## AgentRun provenance
 
@@ -166,6 +174,8 @@ Goal/Work Server Actions call business commands. They do not call a public mutat
 ## Related
 
 - [ADR-007](../decisions/ADR-007-atomic-business-mutation-and-event-recording.md)
+- [ADR-008](../decisions/ADR-008-controlled-tool-execution-boundary.md)
+- [Tool architecture](tool-architecture.md)
 - [Business-state services](business-state-services.md)
 - [Business state](business-state.md)
 - [Command Center](command-center.md)

@@ -19,6 +19,6 @@ These are `ApprovalRiskLevel` values. They are not a shared type with Goal or Wo
 - A complete map of `actionType` → risk
 - Automatic escalation rules
 
-Concrete action-risk mappings will be added alongside tools. Until then, treat outbound communications, publishing, spend, production deploys, and refunds as high-consequence and approval-gated by policy direction.
+Concrete action-risk mappings will be added alongside tools. Phase 3 snapshots `ToolRiskLevel` on each ToolRequest from the registry. Until then, treat outbound communications, publishing, spend, production deploys, and refunds as high-consequence and approval-gated by policy direction.
 
 See [approval policy](approvals.md) and [production changes](production-changes.md).

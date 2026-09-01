@@ -1,6 +1,6 @@
 # Approval policy
 
-**Status:** Designed (model and Command Center implemented). Tool evaluation, execution, and enforcement are future.
+**Status:** Designed (model and Command Center implemented). Tool evaluation, execution, and enforcement are planned for Phase 3; not implemented.
 
 An Approval authorizes a proposed action. It does not perform the action.
 
@@ -24,7 +24,7 @@ Details: [approval system](../architecture/approval-system.md).
    - spending money
    - production deployments
    - refunds
-3. Future tooling will evaluate whether a tool request needs an Approval. That evaluator does not exist yet.
+3. Future tooling will evaluate whether a tool request needs an Approval. The Phase 3 design is static `NEVER` / `ALWAYS` on the tool definition ([tool architecture](../architecture/tool-architecture.md)). That evaluator is not implemented.
 4. An `EXECUTE` permission level does not skip this policy.
 
 Do not invent numeric spend thresholds or a complete `actionType` catalog here. Those belong with tools.

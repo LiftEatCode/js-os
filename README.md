@@ -6,13 +6,13 @@ JS OS is a separate application from **JS Growth**. JS Solutions is the company.
 
 ## Current status
 
-**Phase 1 (Business State) is complete.** Foundation (Phase 0) is complete. **Phase 2 (Command Center) is complete:** `/app` shell (2.1), live Overview (2.2), owner-managed Goals (2.3), owner-managed Work (2.4), read-only Activity (2.5), owner-managed Approvals (2.6), AgentDefinition configuration (2.7), the Knowledge browser over `docs/` (2.8), and integration polish (2.9). Consequential Goal, Work, Approval, and Agent owner mutations record BusinessEvents through business commands. Company Goal, WorkItem, Approval, and BusinessEvent rows have not been populated yet. Command Center writes are disabled unless local development explicitly sets `JS_OS_COMMAND_CENTER_WRITES=true`. The Command Center is currently unauthenticated development functionality.
+**Phase 1 (Business State) is complete.** Foundation (Phase 0) is complete. **Phase 2 (Command Center) is complete.** **Phase 3 (Tools + Permissions) is in progress:** milestone 3.1 added `ToolRequest` / `ToolExecution` persistence. There is no tool registry, permission evaluator, or `/app/tools` UI yet. Command Center writes are disabled unless local development explicitly sets `JS_OS_COMMAND_CENTER_WRITES=true`. The Command Center is currently unauthenticated development functionality.
 
 Stack in use: Next.js 16, React 19, TypeScript, Tailwind, Prisma 8, PostgreSQL on Neon (isolated development and production branches).
 
 ## Core principle
 
-AI may recommend and prepare actions. JS OS controls what is permitted to execute. Integrations and autonomous actions must pass through explicit tools, permission rules, and approvals. Tool execution is **not implemented**.
+AI may recommend and prepare actions. JS OS controls what is permitted to execute. Integrations and autonomous actions must pass through explicit tools, permission rules, and approvals. Tool execution runtime is **not implemented**; request/attempt tables exist as of Phase 3.1.
 
 ## Documentation
 

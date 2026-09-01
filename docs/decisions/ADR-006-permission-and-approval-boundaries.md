@@ -4,7 +4,7 @@
 
 Accepted (architectural intent)
 
-**Enforcement is not implemented.** There is no tool catalog, permission checker, or execution runner.
+**Enforcement is not implemented.** There is no tool catalog, permission checker, or execution runner. Phase 3 records the execution-boundary design in [ADR-008](ADR-008-controlled-tool-execution-boundary.md); that ADR is also architectural intent until implementation lands.
 
 ## Context
 
@@ -29,6 +29,7 @@ Agent → Tool Request → Permission Check → Approval Policy → Tool Executi
 
 - Product work can proceed on business state without pretending agents can act
 - Later tool work must not bypass Approval
+- Phase 3 persistence is ToolRequest + ToolExecution with a code registry, not execution-inside-Approval ([ADR-008](ADR-008-controlled-tool-execution-boundary.md))
 - Policy documents describe direction until enforcement exists
 - Command Center (Milestone 2.7) can display and change the permission ceiling; that is configuration, not tool/policy enforcement. EXECUTE still does not bypass tools, policy, or approvals.
 

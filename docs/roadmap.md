@@ -70,15 +70,30 @@ See [phase-02-command-center.md](phases/phase-02-command-center.md).
 
 ## Phase 3 — Tools + Permissions
 
-**Status:** Planned
+**Status:** In progress
 
 **Objective:** Make execution an explicit, permissioned tool boundary.
 
-**Major capabilities:** Tool catalog, permission checks against `AgentDefinition.permissionLevel` as a ceiling plus per-tool rules, request records.
+**Major capabilities:** Code tool registry; `ToolRequest` + `ToolExecution` persistence; permission ceiling vs required-permission evaluation; static `NEVER` / `ALWAYS` approval requirements; internal safe tools that call business commands; Command Center Tools visibility.
 
-**Key safety boundary:** No unrestricted model access to email, GitHub, payments, or production. Tools do not run consequential actions without approval policy.
+**Key safety boundary:** No unrestricted model access to email, GitHub, payments, or production. Actors never call integration clients directly. `AgentDefinition.permissionLevel` is a ceiling, not a grant. `APPROVED ≠ EXECUTED`. No generic shell/HTTP/SQL/eval tools.
 
-**Exit criteria:** At least one non-production tool can be requested and denied/allowed according to documented permission rules. Enforcement exists (today it does not).
+**Exit criteria:** At least one internal non-production tool can be requested and denied/allowed according to documented permission rules. An approval-required path can wait, be authorized, and only then execute via explicit continuation. Enforcement exists (today it does not).
+
+**Milestones:**
+
+```text
+3.1 Tool domain model + architecture     Implemented
+3.2 Tool registry                        Planned
+3.3 Permission evaluation                Planned
+3.4 Tool request/execution lifecycle     Planned
+3.5 Approval integration                 Planned
+3.6 Internal safe tools                  Planned
+3.7 Tools Command Center                 Planned
+3.8 Phase 3 integration + validation     Planned
+```
+
+See [phase-03-tools-permissions.md](phases/phase-03-tools-permissions.md) and [ADR-008](decisions/ADR-008-controlled-tool-execution-boundary.md).
 
 ---
 

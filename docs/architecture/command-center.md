@@ -12,7 +12,7 @@ It is an internal business operating system, not a marketing analytics dashboard
 
 ## Purpose
 
-Give humans a persistent place to see business state, work, approvals, activity, agents, and operating knowledge.
+Give humans a persistent place to see business state, work, approvals, activity, agents, operating knowledge, and later tool requests.
 
 ## Information architecture
 
@@ -37,8 +37,9 @@ Command Center
 | Approvals | Human decision / authorization queue | 2.6 Implemented |
 | Agents | Organizational AgentDefinitions and AgentRun history | 2.7 Implemented |
 | Knowledge | Internal documentation browser over `docs/` | 2.8 Implemented |
+| Tools | Registry, requests, and execution history | Phase 3 Planned |
 
-Routes and navigation exist for all seven areas. Knowledge renders canonical `docs/` Markdown. Goals, Work, Activity, Approvals, Agents, and Knowledge are implemented. Milestone 2.9 closed the Goal/Work BusinessEvent gap and polished cross-links, labels, and empty states.
+Routes and navigation exist for the seven Phase 2 areas. Tools is a planned Phase 3 area and is not in current navigation. Knowledge renders canonical `docs/` Markdown. Goals, Work, Activity, Approvals, Agents, and Knowledge are implemented. Milestone 2.9 closed the Goal/Work BusinessEvent gap and polished cross-links, labels, and empty states.
 
 ## Route structure
 
@@ -459,6 +460,20 @@ These are accepted Phase 2 limits, not blockers:
 - No tools, policy engine, or runtime
 - Knowledge has substring search only (no semantic search, embeddings, or RAG)
 
+## Phase 3 Command Center (planned)
+
+Not implemented. Milestone 3.7 intends one nav item **Tools**:
+
+```text
+/app/tools
+/app/tools/[toolSlug]
+/app/tools/requests/[requestId]
+```
+
+Owner may invoke internal safe tools from that surface. Agent permission ceilings do not apply to USER. Tool enablement, validation, approval when `ALWAYS`, lifecycle, and audit still apply. Do not add these routes until the domain model in 3.1–3.6 exists.
+
+Details: [tool architecture](tool-architecture.md), [Phase 3](../phases/phase-03-tools-permissions.md).
+
 ## What Phase 2 does not include
 
 - Approval or AgentRun actions from Overview (failed runs link to the AgentDefinition)
@@ -474,6 +489,8 @@ These are accepted Phase 2 limits, not blockers:
 ## Related
 
 - [Phase 2](../phases/phase-02-command-center.md)
+- [Phase 3](../phases/phase-03-tools-permissions.md)
+- [Tool architecture](tool-architecture.md)
 - [Business-state services](business-state-services.md)
 - [Architecture overview](overview.md)
 - [Knowledge system](knowledge-system.md)

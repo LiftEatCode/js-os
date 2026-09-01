@@ -1,37 +1,827 @@
 # Tool architecture
 
-**Status:** Future
+**Status:** Milestone 3.1 implemented (domain model + persistence). Runtime registry, permission/approval evaluators, coordinator, tool adapters, and Command Center Tools are still planned.
 
-Tools are the execution boundary. Agents must not receive unrestricted access to external services or important state mutations.
+```text
+Future actor
+    ↓
+ToolRequest        ← implemented persistent model
+    ↓
+Authorization      ← planned (3.3 / 3.5)
+    ↓
+ToolExecution      ← implemented persistent model
+    ↓
+Adapter            ← planned (3.6)
+```
 
-This layer is not implemented. There is no tool catalog, no tool-execution table, and no permission-enforcement runtime.
+There is no tool registry runtime, no permission evaluator, and no Command Center Tools area. Do not treat later Phase 3 milestones as shipped.
 
-## Intended flow
+Tools are the controlled execution boundary. Actors must not receive unrestricted access to external services, credentials, or important state mutations.
+
+```text
+Agent / USER / SYSTEM
+  ↓
+Tool Request
+  ↓
+JS OS execution boundary
+  ↓
+permission / risk / approval checks
+  ↓
+Tool adapter
+  ↓
+Business command or external system
+```
+
+Not:
 
 ```text
 Agent
   ↓
-Tool Request
+raw API client / Prisma / shell
   ↓
-Permission Check
-  ↓
-Approval Policy
-  ↓
-Tool Execution
-  ↓
-BusinessEvent
+External system or database
 ```
 
-1. An agent proposes a tool call.
-2. JS OS checks `AgentDefinition.permissionLevel` as a ceiling, then the tool’s own permission rules.
-3. If the action is consequential, an Approval is required. Approval authorizes; it does not execute.
-4. Only then may execution tooling run.
-5. The result is recorded as a BusinessEvent (and on the AgentRun).
+See [ADR-008](../decisions/ADR-008-controlled-tool-execution-boundary.md) and [ADR-006](../decisions/ADR-006-permission-and-approval-boundaries.md).
 
-## Rules
+## Vocabulary
 
-- `OBSERVE` / `RECOMMEND` / `PREPARE` / `EXECUTE` describe autonomy, not a blank check.
-- Future tool request/execution history belongs on AgentRun-related records, not as a replacement for AgentRun.
-- Do not select an orchestration framework in this document.
+| Term | Meaning |
+|---|---|
+| Tool | A controlled capability JS OS knows how to execute |
+| Tool definition | Immutable capability contract in the code registry |
+| Tool request | One logical action: who asked, which tool, validated input, authorization state |
+| Tool execution | One attempt to carry out a request |
+| Permission ceiling | Maximum autonomy on an AgentDefinition (`OBSERVE` < `RECOMMEND` < `PREPARE` < `EXECUTE`) |
+| Required permission | Minimum ceiling a tool needs from an agent actor |
+| Risk | Consequence of successful execution (`LOW` \| `MEDIUM` \| `HIGH` \| `CRITICAL`) |
+| Approval requirement | Whether an Approval must exist before execution (`NEVER` \| `ALWAYS` in v0.1) |
 
-See [ADR-006](../decisions/ADR-006-permission-and-approval-boundaries.md) and [autonomy policy](../policies/autonomy.md).
+Business commands and tools are different:
+
+```text
+Business command
+= application-level atomic mutation inside JS OS (ADR-007)
+
+Tool
+= controlled capability exposed to actors
+
+Internal tool implementations may invoke business commands.
+They must not call Prisma directly.
+```
+
+Do not call tools “agents”, “actions”, “skills”, or “commands” interchangeably.
+
+## Actors
+
+```text
+USER
+AGENT
+SYSTEM
+```
+
+Phase 3 does not implement autonomous agent behavior, model invocation, scheduled SYSTEM calls, or CEO loops. The model reserves those actors.
+
+- **USER** is not limited by an AgentDefinition permission ceiling. Owner invocation still requires the tool to be enabled, input validation, approval when the tool says `ALWAYS`, organization scoping, execution lifecycle, and audit.
+- **AGENT** is limited by the referenced AgentDefinition’s `permissionLevel` and `ACTIVE` status.
+- **SYSTEM** is reserved for future scheduled operations. Do not implement schedules in Phase 3.
+
+## Permission ceiling vs required permission
+
+`AgentDefinition.permissionLevel` is a **ceiling**, not a blanket grant.
+
+Ordering (deterministic ranks, no extra enum values):
+
+```text
+OBSERVE < RECOMMEND < PREPARE < EXECUTE
+```
+
+The permission layer answers:
+
+```text
+actor permission ceiling >= tool required permission?
+```
+
+Examples:
+
+```text
+Agent ceiling: PREPARE
+Tool required permission: PREPARE
+→ permission layer may allow
+
+Agent ceiling: PREPARE
+Tool required permission: EXECUTE
+→ deny (INSUFFICIENT_PERMISSION)
+```
+
+Passing the ceiling is not execution permission:
+
+```text
+Agent ceiling: EXECUTE
+Tool: issue_refund
+required permission: EXECUTE
+risk: HIGH
+approval: ALWAYS
+
+→ permission ceiling passes
+→ approval requirement still applies
+→ APPROVED still does not execute
+```
+
+Phase 4 operating policy is a later additional gate, not a Phase 3 evaluator.
+
+## Tool definition source of truth
+
+**Code registry** for implementation and immutable capability contract.
+
+**Database** only for operational records (ToolRequest, ToolExecution) and, later if needed, org-scoped enablement.
+
+Rejected:
+
+- Database rows as the executable contract
+- Storing code, HTTP templates, or scripts in PostgreSQL
+- A giant Prisma enum of every tool slug
+
+Phase 3 v0.1 enablement is a boolean on the registry entry (`enabled`). A future `ToolConfiguration` table (`organizationId` + `toolSlug` + enabled) can disable a dangerous integration without deleting code. Do not add that table in milestone 3.1 unless implementation proves a code flag is insufficient.
+
+## Identity and naming
+
+Stable, machine-friendly slugs. `lowercase.dot.notation`. Last segment uses `snake_case`.
+
+```text
+<namespace>.<verb>_<object>
+```
+
+Examples (not all Phase 3):
+
+```text
+internal.create_work_item
+internal.update_work_status
+business.read_summary
+work.create
+email.send
+github.read_issue
+github.create_issue
+js_growth.find_prospects
+```
+
+Rules:
+
+- Namespace is the category. A string prefix is enough; do not add a `ToolCategory` enum unless a concrete UI/filter need appears.
+- Slugs are stable. Renames require a new slug or an explicit alias; historical rows keep the original slug snapshot.
+- Do not put organization IDs, versions, or actor IDs in the slug.
+- Maximum length should match existing `actionType` discipline (120).
+
+Suggested namespaces: `internal`, `business`, `work`, `approval`, `email`, `calendar`, `github`, `payments`, `js_growth`.
+
+## Versioning
+
+Integer `version` on the registry definition, starting at `1`.
+
+Bump when the input contract, output contract, or execution semantics change in a way that would mis-interpret old rows.
+
+Persist on every ToolRequest:
+
+```text
+toolSlug
+toolName
+toolVersion
+```
+
+Historical UI must not resolve only the live registry. A removed tool remains displayable from snapshots.
+
+## Registry shape (conceptual)
+
+Not implemented. Intended module layout:
+
+```text
+src/tools/registry.ts
+src/tools/definitions/*.ts
+src/tools/evaluate-permission.ts
+src/tools/evaluate-approval.ts
+src/tools/coordinator.ts
+```
+
+Conceptual TypeScript (exact API is open at implementation):
+
+```ts
+type ToolDefinition = {
+  slug: string
+  name: string
+  description: string
+  enabled: boolean
+  requiredPermission: 'OBSERVE' | 'RECOMMEND' | 'PREPARE' | 'EXECUTE'
+  riskLevel: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL'
+  approvalRequirement: 'NEVER' | 'ALWAYS'
+  version: number
+  persistExecution: boolean
+  inputSchema: unknown // Zod schema
+  outputSchema?: unknown
+}
+
+type Tool<TInput, TOutput> = {
+  definition: ToolDefinition
+  inputSchema: /* ZodType<TInput> */
+  outputSchema?: /* ZodType<TOutput> */
+  execute(context: ToolExecutionContext, input: TInput): Promise<ToolResult<TOutput>>
+}
+```
+
+The adapter **must not** decide permission or approval. The coordinator calls `execute` only after those checks pass and the request is `READY`.
+
+## Database models
+
+Implemented in the Prisma contract and applied to the Neon development branch (`migrations/app/20260901T1638_add_tool_request_execution`). There is no `ToolDefinition` table.
+
+### ToolRequest
+
+One logical action.
+
+```text
+id
+organizationId
+toolSlug              String
+toolName              String          // snapshot
+toolVersion           Int             // snapshot
+requiredPermission    ToolRequiredPermission  // snapshot
+riskLevel             ToolRiskLevel           // snapshot
+approvalRequirement   ToolApprovalRequirement // snapshot
+status                ToolRequestStatus
+input                 Jsonb           // validated input only
+requestedByType       ToolActorType
+requestedById         String?         // opaque until auth
+agentDefinitionId     Uuid?
+agentRunId            Uuid?
+workItemId            Uuid?
+approvalId            Uuid?
+idempotencyKey        String?
+requestedAt           Timestamptz
+createdAt
+updatedAt
+```
+
+### ToolExecution
+
+One attempt.
+
+```text
+id
+organizationId
+toolRequestId
+attemptNumber         Int             // 1-based
+status                ToolExecutionStatus
+output                Jsonb?
+error                 String?
+startedAt             Timestamptz?
+completedAt           Timestamptz?
+createdAt
+```
+
+`ToolExecution.id` is the stable attempt identifier for future integration idempotency keys.
+
+`organizationId` is duplicated on ToolExecution even though it can be inferred from ToolRequest. That is intentional: org-scoped queries, dashboards, and authorization checks should not require a join. Application code must keep `ToolExecution.organizationId` equal to `ToolRequest.organizationId`. PostgreSQL does not enforce that cross-row rule.
+
+ToolExecution has no `updatedAt`. Attempts are append-oriented; later status changes (milestone 3.4) update `status` / timestamps only.
+
+## Enums
+
+Entity-specific, even when labels match existing types.
+
+```text
+ToolRequestStatus
+  REQUESTED
+  WAITING_APPROVAL
+  READY
+  FULFILLED
+  FAILED
+  CANCELLED
+  DENIED
+
+ToolExecutionStatus
+  QUEUED
+  RUNNING
+  SUCCEEDED
+  FAILED
+  CANCELLED
+
+ToolRequiredPermission
+  OBSERVE
+  RECOMMEND
+  PREPARE
+  EXECUTE
+
+ToolRiskLevel
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+
+ToolApprovalRequirement
+  NEVER
+  ALWAYS
+
+ToolActorType
+  USER
+  AGENT
+  SYSTEM
+```
+
+`CONDITIONAL` approval is **not** in the v0.1 enum. It would be a fake policy engine. Phase 4 may add it.
+
+## Lifecycle
+
+### ToolRequest
+
+```text
+REQUESTED
+  ├── WAITING_APPROVAL
+  ├── READY
+  ├── DENIED
+  └── CANCELLED
+
+WAITING_APPROVAL
+  ├── READY          (linked Approval becomes APPROVED)
+  ├── DENIED         (linked Approval REJECTED, or derived-expired refuse)
+  └── CANCELLED
+
+READY
+  ├── FULFILLED      (an attempt SUCCEEDED)
+  ├── FAILED         (latest attempt FAILED; v0.1 does not auto-retry)
+  └── CANCELLED
+
+FULFILLED, FAILED, CANCELLED, DENIED are terminal in v0.1.
+```
+
+Future retries may reopen `FAILED` → `READY` without a schema change. Do not implement retry workers in Phase 3.
+
+`ToolRequest.status = FAILED` means at least one actual execution attempt ran and the logical action did not succeed. Do **not** use `FAILED` for invalid input, disabled tools, insufficient permission, unsupported actors, or approval required/rejected/expired. Those either prevent request creation or result in `DENIED`, `WAITING_APPROVAL`, or `CANCELLED`.
+
+Pure transition helpers live in `src/tools/lifecycle.ts`. Persistence transitions are milestone 3.4.
+
+`REQUESTED` is the insert state before permission/approval evaluation finishes. Ordinary denials that happen before persistence may produce no row (typed evaluator result only). If a request is persisted and then denied, status is `DENIED` and `tool.denied` is recorded.
+
+### ToolExecution
+
+```text
+QUEUED
+  ├── RUNNING
+  └── CANCELLED
+
+RUNNING
+  ├── SUCCEEDED
+  └── FAILED
+```
+
+v0.1: at most one execution per request. `RUNNING` cancellation is unsupported. `SUCCEEDED` / `FAILED` cannot become `CANCELLED`.
+
+## JSON
+
+The contract now has six intentional JSON columns:
+
+```text
+BusinessEvent.metadata
+Approval.payload
+AgentRun.inputSnapshot
+AgentRun.output
+ToolRequest.input
+ToolExecution.output
+```
+
+| Field | Why JSON | What it is not |
+|---|---|---|
+| `ToolRequest.input` | Tool args vary by slug; future Zod validation before persist | Generic metadata bag; credentials; unvalidated actor JSON |
+| `ToolExecution.output` | Normalized success payload; small structured result | Raw third-party dumps; secrets; full HTTP transcripts |
+
+Do not add generic `metadata` JSON on these models. Request identity, status, risk, and provenance stay typed. Milestone 3.1 does not validate `input` against a registry schema yet.
+
+`Approval.payload` for a tool-linked Approval is a **small pointer**, not a copy of `input`:
+
+```json
+{
+  "toolRequestId": "...",
+  "toolSlug": "internal.create_work_item"
+}
+```
+
+## Relations and referential actions
+
+No Cascade.
+
+| Relation | Action | Why |
+|---|---|---|
+| ToolRequest.organizationId | Restrict | Org-scoped; orgs are not deleted |
+| ToolExecution.organizationId | Restrict | Same |
+| ToolRequest.agentDefinitionId | Restrict | Definitions are not deleted (`DISABLED` only) |
+| ToolRequest.agentRunId | Restrict | Audit provenance; AgentRuns are not deleted |
+| ToolRequest.approvalId | Restrict | Approvals are not deleted |
+| ToolRequest.workItemId | SetNull | Optional operational link; matches Approval → WorkItem |
+| ToolExecution.toolRequestId | Restrict | Attempts cannot outlive the logical request |
+
+`agentDefinitionId` is required when `requestedByType = AGENT`. That is an **application** invariant for a later persistence layer, not a PostgreSQL CHECK. `agentRunId` is optional even for agents (USER and future SYSTEM never require it). `workItemId` is optional.
+
+Uniques:
+
+```text
+ToolRequest   (organizationId, toolSlug, idempotencyKey)
+ToolExecution (toolRequestId, attemptNumber)
+```
+
+PostgreSQL `UNIQUE` treats NULL as distinct (`NULLS DISTINCT`). Multiple ToolRequest rows may share the same organization and slug with `idempotencyKey IS NULL`. A non-null key must be unique per organization + slug. The same key may be reused for a different slug or a different organization. Verified against the development database with rolled-back inserts (`npm run tool-schema:verify`).
+
+Indexes (query-oriented plus Prisma FK indexes):
+
+```text
+ToolRequest
+  (organizationId, status, requestedAt)
+  (organizationId, toolSlug, requestedAt)
+  organizationId
+  agentDefinitionId
+  agentRunId
+  workItemId
+  approvalId
+
+ToolExecution
+  (organizationId, status)
+  (organizationId, createdAt)
+  organizationId
+  toolRequestId
+```
+
+## Database vs application responsibilities
+
+Enforced by PostgreSQL:
+
+- org FKs, provenance FKs, unique attempt numbers, unique non-null idempotency keys, enum CHECKs
+
+Enforced later by application code (helpers exist in `src/tools/validation.ts`; persistence in 3.4):
+
+- `requestedByType = AGENT` → `agentDefinitionId` required
+- `ToolExecution.organizationId` equals `ToolRequest.organizationId`
+- tool slug format, `toolVersion >= 1`, `attemptNumber >= 1`
+- valid status transitions (`src/tools/lifecycle.ts`)
+
+## Domain helpers (3.1)
+
+```text
+src/tools/types.ts
+src/tools/lifecycle.ts
+src/tools/validation.ts
+src/tools/index.ts
+```
+
+No `registry.ts`, coordinator, or `execute`. Transition helpers do not persist.
+
+## Input and output validation
+
+```text
+registry definition
+  ↓
+Zod (or equivalent) input schema
+  ↓
+validated typed input persisted on ToolRequest
+  ↓
+execute(context, input)
+  ↓
+normalize / optionally parse output schema
+  ↓
+persist ToolExecution.output
+```
+
+Never pass unvalidated JSON to `execute`. Implementations return a small result object. Coordinator persists only the normalized form. Failures store `error` as a short string, not a stack dump of internals or upstream bodies.
+
+Read tools with `persistExecution: false` still validate input in memory. They do not write ToolRequest rows in v0.1.
+
+## Execution context
+
+Constrained. No raw Prisma, no env object, no unbounded HTTP.
+
+Conceptual contents:
+
+```text
+organizationId
+actorType
+actorId?
+agentDefinitionId?
+approvalId?
+toolRequestId
+toolExecutionId
+credential accessor   // server-side only; never serializable to models
+logger / event recorder
+```
+
+## Credential boundary
+
+```text
+LLMs never receive raw credentials.
+Tool requests never contain credentials.
+```
+
+Future adapters:
+
+```text
+Tool implementation
+  ↓
+credential provider
+  ↓
+environment / secret store / OAuth connection
+```
+
+Agents and UI may see “GitHub connection available”, never `GITHUB_TOKEN=...`.
+
+## Permission evaluation
+
+Deterministic service `evaluateToolPermission`. Ordinary denials return a typed result; they do not throw.
+
+Inputs:
+
+```text
+actorType
+agentPermissionLevel?   // required for AGENT
+agentStatus?            // required for AGENT
+toolEnabled
+toolRequiredPermission
+```
+
+Algorithm:
+
+1. If the tool is not enabled → `TOOL_DISABLED`.
+2. If `actorType` is unknown or unsupported in this phase → `ACTOR_NOT_ALLOWED`.
+3. If `actorType = AGENT` and definition is missing or not `ACTIVE` → `ACTOR_NOT_ALLOWED`.
+4. If `actorType = AGENT` and `rank(ceiling) < rank(required)` → `INSUFFICIENT_PERMISSION`.
+5. If `actorType = USER` or `SYSTEM`, skip the agent ceiling (USER/SYSTEM are not AgentDefinitions).
+6. Otherwise `allowed: true`.
+
+`SYSTEM` is reserved; Phase 3 should not invoke it except in tests.
+
+## Approval evaluation
+
+Separate service `evaluateToolApproval`.
+
+v0.1:
+
+```text
+NEVER  → no Approval required
+ALWAYS → an in-org Approval must exist, reference this request, be APPROVED,
+         and not be past expiresAt
+```
+
+Do not invent CONDITIONAL rules in Phase 3.
+
+## Permission and approval result shape
+
+Keep the two evaluations distinct even if a coordinator wraps them.
+
+```text
+{
+  allowed: boolean
+  permission: { allowed: boolean, code?: ToolPermissionDenialCode }
+  approval: { allowed: boolean, code?: ToolApprovalDenialCode, approvalId?: string }
+}
+
+ToolPermissionDenialCode
+  TOOL_DISABLED
+  INSUFFICIENT_PERMISSION
+  ACTOR_NOT_ALLOWED
+
+ToolApprovalDenialCode
+  APPROVAL_REQUIRED
+  APPROVAL_NOT_APPROVED
+  APPROVAL_EXPIRED
+```
+
+`APPROVAL_REQUIRED` means create or wait for an Approval; it is not a permission-ceiling failure.
+
+## Approval integration
+
+Preserve:
+
+```text
+APPROVED ≠ EXECUTED
+```
+
+```text
+Tool Request
+  ↓
+ALWAYS? → create Approval (PENDING), request WAITING_APPROVAL
+  ↓
+owner decides
+  ↓
+APPROVED → request READY (still not executed)
+  ↓
+explicit continuation
+  ↓
+Tool Execution
+```
+
+Linkage: `ToolRequest.approvalId → Approval.id`. Do not add a required `toolRequestId` on Approval in v0.1; reverse lookup is `ToolRequest` where `approvalId` matches. `Approval.actionType` should equal `toolSlug`. Copy `workItemId` / `agentRunId` / requester fields when present so the existing Approvals UI remains coherent.
+
+Standalone owner-created Approvals (Phase 2 forms) remain valid. They are not ToolRequests until a coordinator consumes them. Phase 3 should not reinterpret every Approval as a tool call.
+
+## Approval rejection
+
+Linked Approval `REJECTED` → ToolRequest `DENIED`. Do not execute. This is not `CANCELLED` (withdrawal) and not `FAILED` (an attempt ran).
+
+## Approval expiration
+
+Phase 2 has no expiration worker. Past `expiresAt` may still be `PENDING`.
+
+Execution and approval evaluation must **refuse** if `expiresAt` is in the past, even when persisted status is still `PENDING`. That matches existing derived-expiration semantics. Do not assume a row has been moved to `EXPIRED`.
+
+## Risk
+
+Reuse the existing four-level vocabulary. Risk describes consequences of execution. It does not imply actor permission.
+
+| Example | Typical risk | Typical approval (v0.1) |
+|---|---|---|
+| Read internal business state | LOW | NEVER (and usually not persisted) |
+| Create internal WorkItem | LOW | NEVER |
+| Prepare email draft | LOW / MEDIUM | NEVER until an outbound send tool exists |
+| Send external email | MEDIUM | ALWAYS initially |
+| Publish public content | MEDIUM | ALWAYS |
+| Issue refund | HIGH / CRITICAL | ALWAYS |
+| Delete production resource | CRITICAL | ALWAYS |
+
+Numeric spend thresholds stay out of Phase 3 (Phase 4 / finance policy).
+
+## Organization scope
+
+Every ToolRequest and ToolExecution belongs to one Organization. No cross-organization execution. Referenced WorkItem, Goal (via command input), Approval, AgentDefinition, and AgentRun must be the same organization. Coordinators re-check org on every transition, matching existing command practice.
+
+## Provenance
+
+```text
+requestedByType + requestedById
+agentDefinitionId?   when AGENT
+agentRunId?          optional future parent of a request
+```
+
+Do not duplicate contradictory actor fields. USER Command Center writes follow Approval: `requestedByType = USER`, `requestedById` null until auth exists. Do not fabricate user UUIDs.
+
+## AgentRun
+
+Optional. Future path:
+
+```text
+AgentRun → ToolRequest → ToolExecution
+```
+
+USER invocation must not require an AgentRun. Phase 3 should not create AgentRuns in order to run internal tools.
+
+## WorkItem
+
+Optional `workItemId` on the request.
+
+- `internal.update_work_status`: required in input; copied onto the request after org validation.
+- `internal.create_work_item`: null at request time; coordinator may set it from the command result after success so history can link.
+
+Do not auto-set WorkItem `WAITING_APPROVAL` when a tool needs approval. That Phase 2 independence stays unless a later milestone explicitly couples them.
+
+## BusinessEvent taxonomy
+
+Minimal tool events:
+
+```text
+tool.requested
+tool.denied
+tool.executed
+tool.failed
+tool.cancelled
+```
+
+Do not emit `tool.waiting_approval` or `tool.execution_started`. Approval activity remains:
+
+```text
+approval.requested
+approval.approved
+approval.rejected
+approval.cancelled
+```
+
+Internal tools that call business commands will also emit domain events (`work.created`, `work.status_changed`). That is two layers, not duplication of Approval events. Tool metadata is IDs only: `toolRequestId`, `toolExecutionId`, `toolSlug`, status. No input dump, no credentials.
+
+Activity (`/app/activity`) already formats arbitrary `lowercase.dot` names. Do not redesign Activity.
+
+## External side-effect consistency
+
+ADR-007 applies to **internal database mutations**. External HTTP/API effects cannot be in that transaction.
+
+```text
+1. Persist ToolRequest + ToolExecution (QUEUED / RUNNING)
+2. Commit
+3. Perform external effect (idempotency key = ToolExecution.id when the vendor supports it)
+4. Persist result + tool.executed or tool.failed (+ domain events if any)
+```
+
+Partial-failure windows:
+
+- Intent persisted, effect never sent (crash before call)
+- Effect sent, result persist fails (unknown outcome; retry must be idempotent)
+- Effect succeeded, event write fails (state true, Activity incomplete)
+
+Do not pretend a distributed transaction exists. Recovery/workers are future. v0.1 internal tools should compose ToolExecution status + business command + events in **one PostgreSQL transaction** when there is no external I/O.
+
+## Idempotency
+
+- Request-level: optional `idempotencyKey` unique per organization + tool slug.
+- Attempt-level: `ToolExecution.id` is the key adapters pass to vendors later.
+
+Do not implement vendor idempotency in Phase 3. Do not design a model that overwrites a succeeded attempt in place.
+
+## Retry
+
+v0.1: one attempt. Failed requests stay `FAILED`. Schema allows `attemptNumber` 2..N later. No queues.
+
+## Cancellation
+
+Valid on ToolRequest: `REQUESTED`, `WAITING_APPROVAL`, `READY` → `CANCELLED`.
+
+If `WAITING_APPROVAL`, cancel the linked Approval via the existing cancel command when that Approval is still `PENDING`.
+
+Not valid: `FULFILLED`, `FAILED`, `DENIED`, or after an execution `SUCCEEDED` / `FAILED`.
+
+QUEUED executions become `CANCELLED` with the request. RUNNING cancel is unsupported in v0.1.
+
+## Read tools
+
+Registry capabilities may exist for observation (`business.read_summary`, list goals/work) so a future agent catalog is consistent.
+
+v0.1: `persistExecution: false` for those reads. Do not write a ToolRequest per page load or per OBSERVE call. Permission still applies in-process when a coordinator is asked.
+
+Persisting every read would drown Activity and execution history.
+
+## First executable tools
+
+Prove the boundary with internal, non-external tools that call existing commands:
+
+```text
+internal.create_work_item     required PREPARE   risk LOW   approval NEVER
+internal.update_work_status   required PREPARE   risk LOW   approval NEVER
+```
+
+Do not add email, GitHub, calendar, payments, or JS Growth adapters in Phase 3.
+
+Do not add `internal.create_approval_request` in the first set: it blurs Approval-as-authorization with tools-as-execution. Owner Approval forms already exist.
+
+Do not add a tool that bypasses WorkItem command rules (org scope, status transitions, assignment constraints).
+
+## Owner invocation
+
+Phase 3 Command Center should allow the owner to invoke the first internal tools so the boundary can be validated without autonomous agents. Same lifecycle, no agent ceiling, still no unsafe generic tools.
+
+## Command Center (planned UI; do not implement in this design pass)
+
+Add one nav item **Tools** when milestone 3.7 lands.
+
+```text
+/app/tools                         registry + recent requests
+/app/tools/[toolSlug]              definition snapshot + invoke (if allowed)
+/app/tools/requests/[requestId]    request + attempts + approval link
+```
+
+A separate `/app/tool-executions` index is unnecessary if requests list attempts.
+
+Show: tool, actor, status, risk, requested/started/completed times, approval if any, result summary, error. Never secrets. Never dominant raw JSON.
+
+## Security prohibitions
+
+Actor-facing tools must not include:
+
+```text
+shell.execute
+http.request
+sql.execute
+database.raw_query
+javascript.eval
+filesystem.write_anywhere
+arbitrary Prisma access
+arbitrary URL fetch unless a specific tool validates a closed URL set
+```
+
+Capabilities are business-purpose-specific.
+
+## Phase handoffs
+
+**Phase 4 — policy:** Phase 3 answers “can this actor technically use this tool?” Phase 4 answers “should this action be allowed under operating policy?” Future formula: ceiling + required permission + enabled + policy + approval state. Do not implement policy evaluation now. `CONDITIONAL` waits for Phase 4.
+
+**Phase 5 — CEO loop:** CEO AgentRun selects a registered capability and creates a ToolRequest. The CEO must not receive a bypass around this boundary.
+
+**Phase 6 — JS Growth:** Register adapters such as `js_growth.find_prospects`. JS Growth remains canonical. Tools call JS Growth; they do not duplicate its tables.
+
+**Phase 7 — Sales composition:** Same authorization. Sales workflows chain registered tools (find, audit, prepare, approve, send). No new permission model.
+
+High autonomy later: `EXECUTE` + policy allow + enabled + risk within threshold + approval not required → execute without intervention. CRITICAL / financial / destructive tools may remain `ALWAYS`. Phase 3 must not make that impossible.
+
+## What Phase 3 excludes
+
+Policy engine, CEO reasoning, model invocation, autonomous agents, JS Growth / email / GitHub / calendar / payments integrations, scheduling, workers, queues, cross-department coordination, generic HTTP/SQL/shell tools.
+
+## Related
+
+- [ADR-008](../decisions/ADR-008-controlled-tool-execution-boundary.md)
+- [ADR-006](../decisions/ADR-006-permission-and-approval-boundaries.md)
+- [ADR-007](../decisions/ADR-007-atomic-business-mutation-and-event-recording.md)
+- [Approval system](approval-system.md)
+- [Agent architecture](agent-architecture.md)
+- [Event system](event-system.md)
+- [Phase 3](../phases/phase-03-tools-permissions.md)
+- [Autonomy policy](../policies/autonomy.md)

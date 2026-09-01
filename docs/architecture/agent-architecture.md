@@ -35,7 +35,7 @@ EXECUTE     May execute only when tools + policy + approval rules also allow it.
 EXECUTE ≠ unrestricted execution
 ```
 
-Phase 3 tools and Phase 4 policies still apply. There is no tool catalog, permission checker, or execution runner yet.
+Phase 3 tools and Phase 4 policies still apply. `ToolRequest.agentDefinitionId` is an optional Restrict relation as of 3.1. There is no tool catalog, permission checker, or execution runner yet. The intended comparison is documented in [tool architecture](tool-architecture.md): `rank(agent ceiling) >= rank(tool required permission)` is necessary and not sufficient. `EXECUTE` still requires the tool to be enabled and, when the tool says `ALWAYS`, a separate `APPROVED` Approval plus explicit execution continuation ([ADR-008](../decisions/ADR-008-controlled-tool-execution-boundary.md)).
 
 Status is configuration only:
 
@@ -142,3 +142,4 @@ Department operating definitions: [departments](../departments/ceo.md).
 - [ADR-005](../decisions/ADR-005-agent-run-audit-provenance.md)
 - [ADR-006](../decisions/ADR-006-permission-and-approval-boundaries.md)
 - [ADR-007](../decisions/ADR-007-atomic-business-mutation-and-event-recording.md)
+- [ADR-008](../decisions/ADR-008-controlled-tool-execution-boundary.md)

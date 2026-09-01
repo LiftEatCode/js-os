@@ -1,8 +1,9 @@
-// JS OS Phase 1 business-state contract.
+// JS OS business-state contract.
 // Prisma 8 PSL — not Prisma 7 schema.prisma.
-// Domain source of truth: docs/data-model.md
+// Domain source of truth: docs/architecture/business-state.md
 //
-// No database has been initialized, verified, signed, or migrated yet.
+// Phase 3 stores operational ToolRequest / ToolExecution rows only.
+// There is no ToolDefinition, ToolConfiguration, or executable-code table.
 
 // ---------------------------------------------------------------------------
 // Enums (entity-specific even when member names overlap)
@@ -163,6 +164,55 @@ enum AgentRunStatus {
   CANCELLED  = "CANCELLED"
 }
 
+enum ToolRequiredPermission {
+  @@type("pg/text@1")
+  OBSERVE    = "OBSERVE"
+  RECOMMEND  = "RECOMMEND"
+  PREPARE    = "PREPARE"
+  EXECUTE    = "EXECUTE"
+}
+
+enum ToolRiskLevel {
+  @@type("pg/text@1")
+  LOW      = "LOW"
+  MEDIUM   = "MEDIUM"
+  HIGH     = "HIGH"
+  CRITICAL = "CRITICAL"
+}
+
+enum ToolApprovalRequirement {
+  @@type("pg/text@1")
+  NEVER  = "NEVER"
+  ALWAYS = "ALWAYS"
+}
+
+enum ToolActorType {
+  @@type("pg/text@1")
+  USER   = "USER"
+  AGENT  = "AGENT"
+  SYSTEM = "SYSTEM"
+}
+
+enum ToolRequestStatus {
+  @@type("pg/text@1")
+  REQUESTED          = "REQUESTED"
+  WAITING_APPROVAL   = "WAITING_APPROVAL"
+  READY              = "READY"
+  FULFILLED          = "FULFILLED"
+  FAILED             = "FAILED"
+  CANCELLED          = "CANCELLED"
+  DENIED             = "DENIED"
+}
+
+enum ToolExecutionStatus {
+  @@type("pg/text@1")
+  QUEUED     = "QUEUED"
+  RUNNING    = "RUNNING"
+  SUCCEEDED  = "SUCCEEDED"
+  FAILED     = "FAILED"
+  CANCELLED  = "CANCELLED"
+}
+
 // ---------------------------------------------------------------------------
 // Models
 // ---------------------------------------------------------------------------
@@ -183,6 +233,8 @@ model Organization {
   approvals         Approval[]
   agentDefinitions  AgentDefinition[]
   agentRuns         AgentRun[]
+  toolRequests      ToolRequest[]
+  toolExecutions    ToolExecution[]
 }
 
 model Goal {
@@ -237,6 +289,7 @@ model WorkItem {
   creatingRun   AgentRun?        @relation("AgentRunCreatedWorkItems", fields: [agentRunId], references: [id], onDelete: Restrict)
   assignedAgent AgentDefinition? @relation("AssignedWorkItems", fields: [assignedAgentId], references: [id], onDelete: SetNull)
   approvals     Approval[]
+  toolRequests  ToolRequest[]
 
   @@index([organizationId, status])
   @@index([organizationId, priority])
@@ -289,6 +342,7 @@ model Approval {
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
   workItem     WorkItem?    @relation(fields: [workItemId], references: [id], onDelete: SetNull)
   agentRun     AgentRun?    @relation(fields: [agentRunId], references: [id], onDelete: Restrict)
+  toolRequests ToolRequest[]
 
   @@index([organizationId, status])
   @@index([workItemId])
@@ -312,6 +366,7 @@ model AgentDefinition {
   organization      Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
   agentRuns         AgentRun[]
   assignedWorkItems WorkItem[]   @relation("AssignedWorkItems")
+  toolRequests      ToolRequest[]
 
   @@unique([organizationId, slug])
   @@index([organizationId, status])
@@ -336,8 +391,69 @@ model AgentRun {
   agentDefinition    AgentDefinition  @relation(fields: [agentDefinitionId], references: [id], onDelete: Restrict)
   createdWorkItems   WorkItem[]       @relation("AgentRunCreatedWorkItems")
   approvals          Approval[]
+  toolRequests       ToolRequest[]
 
   @@index([organizationId, status])
   @@index([agentDefinitionId, createdAt])
+  @@index([organizationId, createdAt])
+}
+
+// Logical requested action. Historical snapshots stay on the row; there is no ToolDefinition table.
+model ToolRequest {
+  id                   Uuid                     @id @default(uuid())
+  organizationId       Uuid
+  toolSlug             String
+  toolName             String
+  toolVersion          Int
+  requiredPermission   ToolRequiredPermission
+  riskLevel            ToolRiskLevel
+  approvalRequirement  ToolApprovalRequirement
+  status               ToolRequestStatus
+  input                Jsonb
+  requestedByType      ToolActorType
+  requestedById        String?
+  agentDefinitionId    Uuid?
+  agentRunId           Uuid?
+  workItemId           Uuid?
+  approvalId           Uuid?
+  idempotencyKey       String?
+  requestedAt          Timestamptz              @default(now())
+  createdAt            Timestamptz              @default(now())
+  updatedAt            temporal.updatedAt()
+
+  organization    Organization     @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  agentDefinition AgentDefinition? @relation(fields: [agentDefinitionId], references: [id], onDelete: Restrict)
+  agentRun        AgentRun?        @relation(fields: [agentRunId], references: [id], onDelete: Restrict)
+  workItem        WorkItem?        @relation(fields: [workItemId], references: [id], onDelete: SetNull)
+  approval        Approval?        @relation(fields: [approvalId], references: [id], onDelete: Restrict)
+  executions      ToolExecution[]
+
+  @@unique([organizationId, toolSlug, idempotencyKey])
+  @@index([organizationId, status, requestedAt])
+  @@index([organizationId, toolSlug, requestedAt])
+  @@index([agentDefinitionId])
+  @@index([agentRunId])
+  @@index([workItemId])
+  @@index([approvalId])
+}
+
+// One execution attempt. organizationId is duplicated for org-scoped queries; it must match ToolRequest.organizationId in application code.
+model ToolExecution {
+  id             Uuid                 @id @default(uuid())
+  organizationId Uuid
+  toolRequestId  Uuid
+  attemptNumber  Int
+  status         ToolExecutionStatus
+  output         Jsonb?
+  error          String?
+  startedAt      Timestamptz?
+  completedAt    Timestamptz?
+  createdAt      Timestamptz          @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  toolRequest  ToolRequest  @relation(fields: [toolRequestId], references: [id], onDelete: Restrict)
+
+  @@unique([toolRequestId, attemptNumber])
+  @@index([organizationId, status])
   @@index([organizationId, createdAt])
 }

@@ -2,7 +2,7 @@
 
 **Status:** Implemented (Prisma 8 contract, development bootstrap, service layer). Company Goal *rows* are not populated yet; that is operating-state configuration, not unfinished infrastructure.
 
-JS OS reasons from durable business state, not from chat history. The Phase 1 model is intentionally small.
+JS OS reasons from durable business state, not from chat history. The Phase 1 model is intentionally small. Phase 3 adds operational tool history (`ToolRequest` / `ToolExecution`) without a `ToolDefinition` table.
 
 Canonical authoring file: `src/prisma/contract.prisma`.
 
@@ -17,6 +17,8 @@ Canonical authoring file: `src/prisma/contract.prisma`.
 | Approval | Authorization for a proposed action, not execution. |
 | AgentDefinition | Configured AI role. Not a run. |
 | AgentRun | Audit record of one execution. |
+| ToolRequest | One logical requested tool action (Phase 3). |
+| ToolExecution | One execution attempt of a ToolRequest (Phase 3). |
 
 JS Growth product records are not modeled here. Point at them with `sourceType` / `sourceId`.
 
@@ -109,6 +111,28 @@ See [agent architecture](agent-architecture.md).
 
 Command Center (Milestone 2.7) inspects AgentDefinitions and recent AgentRuns. The owner may change `status` and `permissionLevel` through atomic business commands. Identity fields remain bootstrap-managed. Public `updateAgentStatus` / `updateAgentPermissionLevel` helpers do not emit BusinessEvents.
 
+## ToolRequest and ToolExecution
+
+See [tool architecture](tool-architecture.md).
+
+```text
+Organization
+   │
+   ├── ToolRequest          one logical requested action
+   │      │
+   │      └── 0..N ToolExecution   one attempt each
+   │
+   └── ToolExecution        org-scoped copy of organizationId
+
+ToolRequest optional provenance
+ ├── AgentDefinition?
+ ├── AgentRun?
+ ├── WorkItem?
+ └── Approval?
+```
+
+There is no `ToolDefinition` table. Snapshot fields on ToolRequest keep history readable after the future code registry changes. Persistence services, commands, and `tool.*` events are not in 3.1.
+
 ## Locked v0.1 decisions
 
 - One Organization entity, not a singleton assumption
@@ -118,7 +142,7 @@ Command Center (Milestone 2.7) inspects AgentDefinitions and recent AgentRuns. T
 - `AgentDefinition.permissionLevel` is a ceiling
 - AgentRun is an audit record, not chat history
 - BusinessEvent is append-only in concept; `eventType` is a string
-- JSON limited to four fields: `BusinessEvent.metadata`, `Approval.payload`, `AgentRun.inputSnapshot`, `AgentRun.output`
+- JSON limited to six implemented fields: `BusinessEvent.metadata`, `Approval.payload`, `AgentRun.inputSnapshot`, `AgentRun.output`, `ToolRequest.input`, `ToolExecution.output`
 - Internal provenance uses FKs
 - WorkItem `sourceType` / `sourceId` are external only
 - No Goal hierarchy
@@ -126,6 +150,7 @@ Command Center (Milestone 2.7) inspects AgentDefinitions and recent AgentRuns. T
 - Entity-specific enums even when labels match
 - UUID primary keys (`Uuid @default(uuid())`)
 - No BusinessEvent `agentRunId` in v0.1
+- No ToolDefinition / ToolConfiguration table; operational tool history only
 
 ## Referential integrity
 
@@ -137,6 +162,10 @@ No Cascade in v0.1.
 - `AgentRun.agentDefinitionId`
 - `WorkItem.agentRunId` (creating run)
 - `Approval.agentRunId`
+- `ToolRequest.agentDefinitionId`
+- `ToolRequest.agentRunId`
+- `ToolRequest.approvalId`
+- `ToolExecution.toolRequestId`
 
 If an AgentRun is referenced as creator/source of a WorkItem or Approval, it cannot be deleted until that relationship is explicitly handled. The FK fields remain optional because records may originate without a run.
 
@@ -146,6 +175,7 @@ If an AgentRun is referenced as creator/source of a WorkItem or Approval, it can
 - `WorkItem.parentId`
 - `WorkItem.assignedAgentId`
 - `Approval.workItemId`
+- `ToolRequest.workItemId`
 
 ## JSON and naming
 
@@ -156,6 +186,7 @@ Application access: [business-state services](business-state-services.md).
 ## Remaining work after Phase 1
 
 - Deliberate Goal rows (operating-state population, not schema). The Command Center can create them when writes are explicitly enabled in local development.
+- Tool request/execution persistence services and runtime (milestones 3.2–3.8).
 
 ## Related
 
