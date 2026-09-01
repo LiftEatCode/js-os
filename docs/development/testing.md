@@ -33,8 +33,10 @@ npm test
 - `src/business-commands/agents.test.ts` (atomic AgentDefinition status/permission + event; no-ops; other-org; rollback; no Neon)
 - `src/command-center/agents/ordering.test.ts` (role and permission hierarchy; AgentRun recency)
 - `src/command-center/agents/parse.test.ts` (filters, status/permission forms, EXECUTE confirmation)
+- `src/knowledge/source.test.ts` (discovery, slugs, titles, ordering, exclusions, path safety, links, search)
+- `src/knowledge/markdown-render.test.ts` (headings, lists, code, tables; no raw HTML execution)
 
-These tests do not connect to a database. Do not mutate Neon from automated tests.
+These tests do not connect to a database. Knowledge tests use fixture Markdown under `src/knowledge/fixtures/`. Do not mutate Neon from automated tests.
 
 ## Development verification
 

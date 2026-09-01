@@ -18,11 +18,11 @@ Give humans a central view of running JS Solutions: what is happening, what need
 2.5 Activity                              Implemented
 2.6 Approvals                             Implemented
 2.7 Agents                                Implemented
-2.8 Knowledge / documentation browser     Planned
+2.8 Knowledge / documentation browser     Implemented
 2.9 Integration + polish                  Planned
 ```
 
-Routes for 2.8 exist as a placeholder. That is not feature completion.
+Routes for 2.9 polish remain. That is not feature completion.
 
 ## Milestone 2.1 — Shell + navigation
 
@@ -112,9 +112,18 @@ Routes for 2.8 exist as a placeholder. That is not feature completion.
 - Same write-access safeguard as Goals/Work/Approvals
 - Overview Active Agents and failed-run attention link to Agent detail; Activity shows configuration events
 
+## Milestone 2.8 — Knowledge
+
+**Status:** Implemented
+
+- Read-only `/app/knowledge` and `/app/knowledge/[...slug]` over canonical `docs/` Markdown
+- `src/knowledge/` loader indexes documents for the Command Center and future reuse
+- No database, editor, embeddings, or RAG
+- Internal `.md` links rewrite to Knowledge routes; unknown slugs 404
+- Optional `?q=` substring search over title, section, path, and Markdown text
+
 ## Remaining work
 
-- 2.8 Knowledge browser over canonical `docs/` markdown
 - 2.9 polish, empty-state quality, and cross-page consistency
 - Authentication (replaces the Command Center write safeguard)
 - Migrate Goal/Work onto atomic BusinessEvent commands
@@ -127,7 +136,7 @@ Read and coordinate. The Command Center does not execute external tools. UI must
 
 ## Exit criteria
 
-Owner can see goals, work, approvals, agents, and recent events from live business state. Partially met: Overview, Goals, Work, Activity, Approvals, and Agents are implemented; Knowledge remains. Activity records Approval and Agent configuration commands; Goal/Work edits still do not emit events.
+Owner can see goals, work, approvals, agents, knowledge, and recent events. Partially met: Overview, Goals, Work, Activity, Approvals, Agents, and Knowledge are implemented; Command Center polish remains. Activity records Approval and Agent configuration commands; Goal/Work edits still do not emit events.
 
 ## Related
 

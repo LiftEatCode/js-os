@@ -1,6 +1,6 @@
 # Command Center
 
-**Status:** In progress. Milestones 2.1–2.7 (shell, Overview, Goals, Work, Activity, Approvals, Agents) are implemented. Later Command Center milestones are planned.
+**Status:** In progress. Milestones 2.1–2.8 (shell, Overview, Goals, Work, Activity, Approvals, Agents, Knowledge) are implemented. Later Command Center milestones are planned.
 
 The Command Center is the internal JS OS operating interface for JS Solutions.
 
@@ -36,9 +36,9 @@ Command Center
 | Activity | BusinessEvent operational history | 2.5 Implemented |
 | Approvals | Human decision / authorization queue | 2.6 Implemented |
 | Agents | Organizational AgentDefinitions and AgentRun history | 2.7 Implemented |
-| Knowledge | Internal documentation browser | 2.8 Planned |
+| Knowledge | Internal documentation browser over `docs/` | 2.8 Implemented |
 
-Routes and navigation exist for all seven areas. Knowledge remains a placeholder until its milestone. Goals, Work, Activity, Approvals, and Agents are implemented.
+Routes and navigation exist for all seven areas. Knowledge renders canonical `docs/` Markdown. Goals, Work, Activity, Approvals, Agents, and Knowledge are implemented.
 
 ## Route structure
 
@@ -62,7 +62,8 @@ The Next.js App Router lives in `src/app/`. The Command Center URL `/app` is the
 /app/approvals/[approvalId] Approval detail and decisions
 /app/agents                AgentDefinition list (optional status/role/permissionLevel filters)
 /app/agents/[agentId]      AgentDefinition detail, status/permission, recent AgentRuns
-/app/knowledge
+/app/knowledge             Documentation index and search (`?q=`)
+/app/knowledge/[...slug]   Read-only Markdown document from `docs/`
 ```
 
 Do not use `/admin`. This is the operating interface, not a narrow administration panel.
@@ -423,11 +424,19 @@ Active Agents still come from `listActiveAgentDefinitions()` and now link to `/a
 
 Model invocation, tools, schedules, queues, workers, LangGraph, policy engines, AgentRun creation, LLM provider fields, or tool assignment.
 
-## Knowledge / documentation
+## Knowledge (Milestone 2.8)
 
-Markdown files under `docs/` remain the canonical source of truth.
+**Status:** Implemented
 
-The future Knowledge UI renders and navigates that source. It does not create a second documentation database. Milestone 2.1 only establishes the `/app/knowledge` destination.
+Knowledge answers what JS Solutions knows about itself: architecture, departments, policies, operations, decisions, development, integrations, phases, and the roadmap.
+
+Markdown under `docs/` remains canonical. The Command Center renders it through `src/knowledge/`. There is no documentation database, editor, embeddings, or RAG.
+
+`docs/README.md` maps to the Knowledge landing page rather than a duplicate document. Compatibility pointers (`architecture.md`, `database.md`, `data-model.md`) stay on disk and remain directly reachable, but they are omitted from primary navigation. Details: [Knowledge system](knowledge-system.md).
+
+### Not in 2.8
+
+Editing, CMS, Prisma/Neon, search services, embeddings, LLM Q&A, or a source-code browser.
 
 ## Authentication
 
@@ -439,9 +448,8 @@ The Command Center is currently unauthenticated development functionality. Do no
 
 The sidebar System area shows `Development` or `Production` from `NODE_ENV`. It does not expose hosts, connection strings, or credentials. `next start` therefore labels Production even on a developer machine. That is a known Milestone 2.1 limitation; it is not inferred from the Neon hostname. Do not treat the label as write-access state — writes use the separate `JS_OS_COMMAND_CENTER_WRITES` check above.
 
-## What 2.1–2.7 do not include
+## What 2.1–2.8 do not include
 
-- Knowledge / documentation renderer
 - Approval or AgentRun actions from Overview (failed runs link to the AgentDefinition)
 - Auth
 - Tools, model invocation, schedules, orchestration
@@ -450,9 +458,11 @@ The sidebar System area shows `Development` or `Production` from `NODE_ENV`. It 
 - Manual Activity event authoring
 - Approval execution after `APPROVED`
 - AgentRun creation or retry UI
+- Knowledge editing, embeddings, or RAG
 
 ## Related
 
 - [Phase 2](../phases/phase-02-command-center.md)
 - [Business-state services](business-state-services.md)
 - [Architecture overview](overview.md)
+- [Knowledge system](knowledge-system.md)
