@@ -48,7 +48,7 @@ What exists now:
 What does not exist yet:
 
 - Goal rows (deferred operating-state population, not unfinished schema)
-- Tools, permissions enforcement, or tool execution runtime (tables exist; registry/coordinator do not)
+- Tools, permissions enforcement, or tool execution runtime (tables and code registry exist; coordinator does not)
 - CEO review loop
 - Integrations
 - Auth / organization membership
@@ -103,7 +103,7 @@ Updated business state
 | Command Center | Internal operating UI | Implemented (Phase 2) |
 | Business state | Durable goals, work, events, approvals, agents | Implemented (contract + services) |
 | Reasoning | CEO/department review of state vs goals | Planned |
-| Tools | Explicit execution boundary | In progress (3.1 model implemented; runtime planned) |
+| Tools | Explicit execution boundary | In progress (3.1–3.2 implemented; runtime planned) |
 | Permissions | Autonomy ceiling plus per-tool checks | Planned (Phase 3 design; not enforced) |
 | Approvals | Authorization for proposed actions | Implemented (Command Center + atomic commands; execution future) |
 | Execution | Performing an authorized tool attempt | Planned (model exists; coordinator does not) |

@@ -33,4 +33,4 @@ Number sequentially. Filename: `ADR-NNN-short-slug.md`.
 | [ADR-005](ADR-005-agent-run-audit-provenance.md) | AgentRun is audit; provenance FKs Restrict |
 | [ADR-006](ADR-006-permission-and-approval-boundaries.md) | Tools + permission ceiling + approvals (intent; Phase 3 design in ADR-008) |
 | [ADR-007](ADR-007-atomic-business-mutation-and-event-recording.md) | Atomic command boundary for state + BusinessEvent |
-| [ADR-008](ADR-008-controlled-tool-execution-boundary.md) | Actors execute only through registered tools (3.1 persistence; runtime not implemented) |
+| [ADR-008](ADR-008-controlled-tool-execution-boundary.md) | Actors execute only through registered tools (3.1–3.2 persistence + registry; runtime not implemented) |

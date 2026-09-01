@@ -13,7 +13,7 @@
     "db:bootstrap": "JS_OS_BOOTSTRAP_TARGET=development node --env-file=.env.local src/scripts/bootstrap-business-state.ts",
     "business-state:verify": "node --env-file=.env.local src/scripts/verify-business-state.ts",
     "tool-schema:verify": "node --env-file=.env.local src/scripts/verify-tool-schema.ts",
-    "test": "node --test src/business-state/validation.test.ts src/business-state/goal-lifecycle.test.ts src/business-state/approval-lifecycle.test.ts src/business-state/agent-definition-lifecycle.test.ts src/business-state/work-item-lifecycle.test.ts src/business-state/work-item-hierarchy.test.ts src/business-commands/command.test.ts src/business-commands/approvals.test.ts src/business-commands/agents.test.ts src/business-commands/goals.test.ts src/business-commands/work-items.test.ts src/command-center/overview/attention.test.ts src/command-center/write-access.test.ts src/command-center/goals/ordering.test.ts src/command-center/goals/parse.test.ts src/command-center/work/ordering.test.ts src/command-center/work/parse.test.ts src/command-center/activity/format.test.ts src/command-center/format.test.ts src/command-center/approvals/ordering.test.ts src/command-center/approvals/parse.test.ts src/command-center/agents/ordering.test.ts src/command-center/agents/parse.test.ts src/knowledge/source.test.ts src/knowledge/markdown-render.test.ts src/tools/lifecycle.test.ts src/tools/validation.test.ts"
+    "test": "node --test src/business-state/validation.test.ts src/business-state/goal-lifecycle.test.ts src/business-state/approval-lifecycle.test.ts src/business-state/agent-definition-lifecycle.test.ts src/business-state/work-item-lifecycle.test.ts src/business-state/work-item-hierarchy.test.ts src/business-commands/command.test.ts src/business-commands/approvals.test.ts src/business-commands/agents.test.ts src/business-commands/goals.test.ts src/business-commands/work-items.test.ts src/command-center/overview/attention.test.ts src/command-center/write-access.test.ts src/command-center/goals/ordering.test.ts src/command-center/goals/parse.test.ts src/command-center/work/ordering.test.ts src/command-center/work/parse.test.ts src/command-center/activity/format.test.ts src/command-center/format.test.ts src/command-center/approvals/ordering.test.ts src/command-center/approvals/parse.test.ts src/command-center/agents/ordering.test.ts src/command-center/agents/parse.test.ts src/knowledge/source.test.ts src/knowledge/markdown-render.test.ts src/tools/lifecycle.test.ts src/tools/validation.test.ts src/tools/definition.test.ts src/tools/registry.test.ts"
   },
   "dependencies": {
     "@prisma/orm-postgres": "^8.0.0-rc.8",
@@ -24,7 +24,8 @@
     "react-markdown": "^10.1.0",
     "rehype-slug": "^6.0.0",
     "remark-gfm": "^4.0.1",
-    "temporal-polyfill": "^1.0.4"
+    "temporal-polyfill": "^1.0.4",
+    "zod": "^4.5.4"
   },
   "devDependencies": {
     "@prisma/cli-engine": "^0.2.3",

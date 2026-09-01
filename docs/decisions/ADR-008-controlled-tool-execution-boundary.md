@@ -6,7 +6,9 @@ Accepted
 
 **Implemented in 3.1:** database/domain representation (`ToolRequest`, `ToolExecution`, enums, lifecycle helpers).
 
-**Still planned:** registry, permission evaluator, approval evaluator, coordinator, tool implementations, execution runtime, Command Center Tools.
+**Implemented in 3.2:** `ToolDefinition` contract and in-memory code registry (`defineTool`, `ToolRegistry`).
+
+**Still planned:** permission evaluator, approval evaluator, execution coordinator, real tools, external adapters, Command Center Tools.
 
 Enforcement of the execution boundary is not implemented. This ADR records the Phase 3 design so later milestones do not invent a second boundary.
 

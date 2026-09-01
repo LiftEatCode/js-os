@@ -1,4 +1,15 @@
-export { InvalidToolInputError, InvalidToolTransitionError } from './errors.ts';
+export {
+  DuplicateToolSlugError,
+  InvalidToolDefinitionError,
+  InvalidToolInputError,
+  InvalidToolTransitionError,
+  ToolNotFoundError,
+} from './errors.ts';
+
+export { defineTool, getToolDefinitionSnapshot } from './definition.ts';
+export type { DefineToolInput, ToolDefinition } from './definition.ts';
+
+export { ToolRegistry, createToolRegistry } from './registry.ts';
 
 export {
   assertToolExecutionTransition,

@@ -1,10 +1,10 @@
 # Phase 3 — Tools + Permissions
 
-**Status:** In progress. Milestone 3.1 is implemented. Runtime registry, evaluators, execution, and Command Center Tools are not.
+**Status:** In progress. Milestones 3.1 and 3.2 are implemented. Evaluators, execution, and Command Center Tools are not.
 
 Phase 0–2 are complete. Phase 3 introduces the controlled execution boundary: registered tools, permission evaluation, request/execution lifecycle, approval integration, internal safe tools, and Command Center visibility.
 
-Do not treat later Phase 3 milestones as shipped. 3.1 is persistence and domain helpers only.
+Do not treat later Phase 3 milestones as shipped. 3.1 is persistence. 3.2 is the code registry only.
 
 ## Objective
 
@@ -14,8 +14,8 @@ Make execution an explicit, permissioned tool boundary so actors never call inte
 
 ```text
 3.1 Tool domain model + architecture     Implemented
-3.2 Tool registry                        Planned
-3.3 Permission evaluation                Planned
+3.2 Tool registry                        Implemented
+3.3 Permission evaluation                Next
 3.4 Tool request/execution lifecycle     Planned
 3.5 Approval integration                 Planned
 3.6 Internal safe tools                  Planned
@@ -56,12 +56,13 @@ Canonical design: [tool architecture](../architecture/tool-architecture.md), [AD
 
 ## Milestone 3.2 — Tool registry
 
-**Status:** Planned
+**Status:** Implemented
 
-- Code registry of tool definitions (no executable blobs in the database)
-- Lookup by slug, enabled flag, version, schemas
-- Snapshot fields used when creating a ToolRequest
-- No coordinator yet
+- `defineTool` + `ToolRegistry` / `createToolRegistry` in `src/tools/`
+- Zod `inputSchema` required; optional `outputSchema`
+- Duplicate slug rejection; deterministic `list()` by slug
+- `getToolDefinitionSnapshot` for future ToolRequest rows
+- **No production tool definitions, coordinator, or persistence writes**
 
 ## Milestone 3.3 — Permission evaluation
 

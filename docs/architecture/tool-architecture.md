@@ -1,6 +1,6 @@
 # Tool architecture
 
-**Status:** Milestone 3.1 implemented (domain model + persistence). Runtime registry, permission/approval evaluators, coordinator, tool adapters, and Command Center Tools are still planned.
+**Status:** Milestones 3.1 and 3.2 implemented (persistence + code registry). Permission/approval evaluators, coordinator, tool adapters, and Command Center Tools are still planned.
 
 ```text
 Future actor
@@ -14,7 +14,7 @@ ToolExecution      ← implemented persistent model
 Adapter            ← planned (3.6)
 ```
 
-There is no tool registry runtime, no permission evaluator, and no Command Center Tools area. Do not treat later Phase 3 milestones as shipped.
+The code registry exists. There is no permission evaluator, no coordinator, and no Command Center Tools area. Do not treat later Phase 3 milestones as shipped.
 
 Tools are the controlled execution boundary. Actors must not receive unrestricted access to external services, credentials, or important state mutations.
 
@@ -50,6 +50,7 @@ See [ADR-008](../decisions/ADR-008-controlled-tool-execution-boundary.md) and [A
 |---|---|
 | Tool | A controlled capability JS OS knows how to execute |
 | Tool definition | Immutable capability contract in the code registry |
+| Tool implementation | Future executable adapter (`execute`). Not in 3.2. |
 | Tool request | One logical action: who asked, which tool, validated input, authorization state |
 | Tool execution | One attempt to carry out a request |
 | Permission ceiling | Maximum autonomy on an AgentDefinition (`OBSERVE` < `RECOMMEND` < `PREPARE` < `EXECUTE`) |
@@ -142,7 +143,7 @@ Rejected:
 - Storing code, HTTP templates, or scripts in PostgreSQL
 - A giant Prisma enum of every tool slug
 
-Phase 3 v0.1 enablement is a boolean on the registry entry (`enabled`). A future `ToolConfiguration` table (`organizationId` + `toolSlug` + enabled) can disable a dangerous integration without deleting code. Do not add that table in milestone 3.1 unless implementation proves a code flag is insufficient.
+Phase 3 v0.1 enablement is a boolean on the registry entry (`enabled`). A future `ToolConfiguration` table (`organizationId` + `toolSlug` + enabled) can disable a dangerous integration without deleting code. That table is not implemented.
 
 ## Identity and naming
 
@@ -190,44 +191,55 @@ toolVersion
 
 Historical UI must not resolve only the live registry. A removed tool remains displayable from snapshots.
 
-## Registry shape (conceptual)
+## Registry (implemented in 3.2)
 
-Not implemented. Intended module layout:
+Code registry is the source of truth for executable contracts. PostgreSQL is not consulted to know which tools exist.
 
 ```text
-src/tools/registry.ts
-src/tools/definitions/*.ts
-src/tools/evaluate-permission.ts
-src/tools/evaluate-approval.ts
-src/tools/coordinator.ts
+Code registry
+  ↓
+ToolDefinition
+  ├── stable slug
+  ├── version
+  ├── enabled
+  ├── required permission
+  ├── risk
+  ├── approval requirement
+  ├── persistExecution
+  ├── input schema (Zod, required)
+  └── optional output schema (Zod)
 ```
 
-Conceptual TypeScript (exact API is open at implementation):
-
-```ts
-type ToolDefinition = {
-  slug: string
-  name: string
-  description: string
-  enabled: boolean
-  requiredPermission: 'OBSERVE' | 'RECOMMEND' | 'PREPARE' | 'EXECUTE'
-  riskLevel: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL'
-  approvalRequirement: 'NEVER' | 'ALWAYS'
-  version: number
-  persistExecution: boolean
-  inputSchema: unknown // Zod schema
-  outputSchema?: unknown
-}
-
-type Tool<TInput, TOutput> = {
-  definition: ToolDefinition
-  inputSchema: /* ZodType<TInput> */
-  outputSchema?: /* ZodType<TOutput> */
-  execute(context: ToolExecutionContext, input: TInput): Promise<ToolResult<TOutput>>
-}
+```text
+src/tools/definition.ts     defineTool, snapshot helper
+src/tools/registry.ts       ToolRegistry / createToolRegistry
+src/tools/lifecycle.ts
+src/tools/validation.ts
 ```
 
-The adapter **must not** decide permission or approval. The coordinator calls `execute` only after those checks pass and the request is `READY`.
+`defineTool` validates slug (existing 3.1 helper, no rewrite), version ≥ 1, trimmed non-empty name/description, booleans, and a Zod `inputSchema`. It does not register, persist, or execute. `Object.freeze` protects the top-level contract; Zod internals are not deep-frozen.
+
+`ToolRegistry` is an isolated in-memory catalog (`Map` encapsulated). Construct with `createToolRegistry(definitions)` or `new ToolRegistry(definitions)`. There is **no** app-global populated singleton. Production composition happens in 3.6 when real tools exist.
+
+- One active contract per slug. Duplicate slugs are rejected even if versions differ.
+- `get(slug)` returns `ToolDefinition | null`. `require(slug)` throws `ToolNotFoundError`.
+- `list()` / `listEnabled()` sort by slug (`en`). Disabled tools stay in the registry.
+- `persistExecution` is metadata only. `false` does **not** bypass permission checks. Nothing creates ToolRequest rows in 3.2.
+- `getToolDefinitionSnapshot` maps `slug/name/version/requiredPermission/riskLevel/approvalRequirement` onto ToolRequest snapshot fields. It is not persisted here.
+
+No `src/tools/definitions/` yet. First real tools (`internal.create_work_item`, `internal.update_work_status`) arrive in 3.6. Read capabilities may use `persistExecution: false` later.
+
+Future binding (not implemented):
+
+```text
+ToolDefinition + ToolImplementation → registered executable capability
+```
+
+Still planned: `evaluate-permission.ts`, `evaluate-approval.ts`, `coordinator.ts`.
+
+The adapter **must not** decide permission or approval. The future coordinator calls `execute` only after those checks pass and the request is `READY`.
+
+Do not add generic transport fields (`url`, `httpMethod`, `sql`, `shellCommand`) or credentials to ToolDefinition. Actor-facing generic tools (`shell.execute`, `http.request`, `sql.execute`, `javascript.eval`, raw Prisma) remain prohibited.
 
 ## Database models
 
@@ -460,16 +472,18 @@ Enforced later by application code (helpers exist in `src/tools/validation.ts`; 
 - tool slug format, `toolVersion >= 1`, `attemptNumber >= 1`
 - valid status transitions (`src/tools/lifecycle.ts`)
 
-## Domain helpers (3.1)
+## Domain helpers
 
 ```text
 src/tools/types.ts
 src/tools/lifecycle.ts
 src/tools/validation.ts
+src/tools/definition.ts
+src/tools/registry.ts
 src/tools/index.ts
 ```
 
-No `registry.ts`, coordinator, or `execute`. Transition helpers do not persist.
+No coordinator or `execute`. Transition helpers do not persist. The registry does not import Prisma or `db`.
 
 ## Input and output validation
 

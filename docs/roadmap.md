@@ -84,8 +84,8 @@ See [phase-02-command-center.md](phases/phase-02-command-center.md).
 
 ```text
 3.1 Tool domain model + architecture     Implemented
-3.2 Tool registry                        Planned
-3.3 Permission evaluation                Planned
+3.2 Tool registry                        Implemented
+3.3 Permission evaluation                Next
 3.4 Tool request/execution lifecycle     Planned
 3.5 Approval integration                 Planned
 3.6 Internal safe tools                  Planned
