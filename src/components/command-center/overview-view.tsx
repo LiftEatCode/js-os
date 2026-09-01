@@ -124,6 +124,7 @@ export function OverviewView({ data }: { data: OverviewData }) {
                 .filter(Boolean)
                 .join(" · "),
               detail: event.description,
+              href: `/app/activity/${event.id}`,
             }))}
           />
         )}

@@ -1,5 +1,7 @@
 {
   "/_not-found/page": "app/_not-found/page.js",
+  "/app/activity/[eventId]/page": "app/app/activity/[eventId]/page.js",
+  "/app/activity/page": "app/app/activity/page.js",
   "/app/goals/[goalId]/page": "app/app/goals/[goalId]/page.js",
   "/app/goals/new/page": "app/app/goals/new/page.js",
   "/app/goals/page": "app/app/goals/page.js",

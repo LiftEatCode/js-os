@@ -1,6 +1,6 @@
 # Command Center
 
-**Status:** In progress. Milestones 2.1–2.4 (shell, Overview, Goals, Work) are implemented. Later Command Center milestones are planned.
+**Status:** In progress. Milestones 2.1–2.5 (shell, Overview, Goals, Work, Activity) are implemented. Later Command Center milestones are planned.
 
 The Command Center is the internal JS OS operating interface for JS Solutions.
 
@@ -33,12 +33,12 @@ Command Center
 | Overview | Current company state and owner attention | 2.2 Implemented |
 | Goals | Strategic objectives and measurable progress | 2.3 Implemented |
 | Work | WorkItems across JS Solutions | 2.4 Implemented |
-| Activity | BusinessEvent operational history | 2.5 Planned |
+| Activity | BusinessEvent operational history | 2.5 Implemented |
 | Approvals | Human decision / authorization queue | 2.6 Planned |
 | Agents | Organizational AgentDefinitions and later activity | 2.7 Planned |
 | Knowledge | Internal documentation browser | 2.8 Planned |
 
-Routes and navigation exist for all seven areas. Activity, Approvals, Agents, and Knowledge remain placeholders until their milestones. Goals and Work are implemented.
+Routes and navigation exist for all seven areas. Approvals, Agents, and Knowledge remain placeholders until their milestones. Goals, Work, and Activity are implemented.
 
 ## Route structure
 
@@ -55,7 +55,8 @@ The Next.js App Router lives in `src/app/`. The Command Center URL `/app` is the
 /app/work                 WorkItem list (optional status/priority/workType filters)
 /app/work/new             Create WorkItem
 /app/work/[workItemId]    WorkItem detail, edit, status, assignment
-/app/activity
+/app/activity              BusinessEvent list (optional sourceType/eventType filters)
+/app/activity/[eventId]    BusinessEvent detail (read-only)
 /app/approvals
 /app/agents
 /app/knowledge
@@ -304,6 +305,38 @@ WorkItem mutations do not write BusinessEvents. Same audit gap as Goals.
 
 Agent-created work, automatic planning/decomposition, tool or approval execution, workflow engines, workers, schedulers, deletion, or fabricated AgentRuns/Approvals.
 
+## Activity (Milestone 2.5)
+
+**Status:** Implemented
+
+Activity answers: what has happened inside JS OS. It is a read-only view of append-only BusinessEvents. There is no create/edit/delete UI, even when Command Center writes are enabled. Events are produced by business operations, not by Activity.
+
+### List and detail
+
+`/app/activity` is server-rendered (`dynamic = 'force-dynamic'`). Default page size is 50 (`listBusinessEvents` limit; optional `?limit=` is clamped 1–200). Ordering is most recent `occurredAt`, then `createdAt`, then `id`.
+
+Filters are GET search params: `sourceType` (known enum) and `eventType` (exact string match — not a frontend enum). Unknown `eventType` values still render if they exist.
+
+Empty copy: “No business events have been recorded yet.” That is the expected current development state. Goal and Work mutations have not been migrated onto the atomic command boundary, so owner edits do not yet appear here.
+
+Detail (`/app/activity/[eventId]`) shows title, description, eventType, sourceType, sourceId, occurredAt, createdAt, and metadata. Missing, invalid, or other-organization IDs are not found.
+
+### Formatting
+
+`eventType` is shown as a readable label plus the exact stored value (`work.completed` → Work Completed). Arbitrary future types such as `new.integration.event` still format. Source enums display as User, System, Agent, JS Growth, GitHub, and so on. A source enum does not mean that integration is active.
+
+Metadata is pretty-printed JSON in a `<pre>` block. Null metadata shows “No metadata recorded.” HTML is never interpreted.
+
+`sourceType` / `sourceId` identify the event source, not automatically the affected Goal or WorkItem. Activity does not invent related-entity links from those fields.
+
+### Overview
+
+Recent Activity continues to use `listRecentBusinessEvents()`. Rows link to `/app/activity/[eventId]`. The section still links to `/app/activity`.
+
+### Command boundary (not yet used by Goal/Work)
+
+Prisma 8 PostgreSQL supports `db.transaction`. Consequential mutations that should appear in history must eventually go through `src/business-commands/` so the state write and BusinessEvent append commit together. See [ADR-007](../decisions/ADR-007-atomic-business-mutation-and-event-recording.md). Goal and Work Server Actions still call business-state services only.
+
 ## Knowledge / documentation
 
 Markdown files under `docs/` remain the canonical source of truth.
@@ -320,15 +353,16 @@ The Command Center is currently unauthenticated development functionality. Do no
 
 The sidebar System area shows `Development` or `Production` from `NODE_ENV`. It does not expose hosts, connection strings, or credentials. `next start` therefore labels Production even on a developer machine. That is a known Milestone 2.1 limitation; it is not inferred from the Neon hostname. Do not treat the label as write-access state — writes use the separate `JS_OS_COMMAND_CENTER_WRITES` check above.
 
-## What 2.1–2.4 do not include
+## What 2.1–2.5 do not include
 
-- Activity, approval, or agent *management* UIs
+- Approval or agent *management* UIs
 - Approval or AgentRun actions from Overview
 - Documentation renderer / MDX
 - Auth
 - Tools, agents, orchestration, APIs created for their own sake
 - Goal or WorkItem deletion
-- Automatic BusinessEvent writes from Goal or WorkItem mutations
+- Goal/Work mutation migration onto atomic BusinessEvent commands
+- Manual Activity event authoring
 
 ## Related
 

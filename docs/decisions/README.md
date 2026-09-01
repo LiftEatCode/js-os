@@ -32,3 +32,4 @@ Number sequentially. Filename: `ADR-NNN-short-slug.md`.
 | [ADR-004](ADR-004-neon-environment-isolation.md) | Isolated Neon branches; pooled vs direct URLs |
 | [ADR-005](ADR-005-agent-run-audit-provenance.md) | AgentRun is audit; provenance FKs Restrict |
 | [ADR-006](ADR-006-permission-and-approval-boundaries.md) | Tools + permission ceiling + approvals (intent, not implemented) |
+| [ADR-007](ADR-007-atomic-business-mutation-and-event-recording.md) | Atomic command boundary for state + BusinessEvent |

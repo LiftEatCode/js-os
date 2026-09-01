@@ -6,7 +6,7 @@ JS OS is a separate application from **JS Growth**. JS Solutions is the company.
 
 ## Current status
 
-**Phase 1 (Business State) is complete.** Foundation (Phase 0) is complete. **Phase 2 (Command Center) is in progress:** `/app` shell (2.1), live Overview (2.2), owner-managed Goals (2.3), and owner-managed Work (2.4) exist. Activity, approval, and agent *management* screens are not implemented. Company Goal and WorkItem rows have not been populated yet. Command Center writes are disabled unless local development explicitly sets `JS_OS_COMMAND_CENTER_WRITES=true`. The Command Center is currently unauthenticated development functionality.
+**Phase 1 (Business State) is complete.** Foundation (Phase 0) is complete. **Phase 2 (Command Center) is in progress:** `/app` shell (2.1), live Overview (2.2), owner-managed Goals (2.3), owner-managed Work (2.4), and read-only Activity (2.5) exist. Approval and agent *management* screens are not implemented. Company Goal, WorkItem, and BusinessEvent rows have not been populated yet. Command Center writes are disabled unless local development explicitly sets `JS_OS_COMMAND_CENTER_WRITES=true`. The Command Center is currently unauthenticated development functionality.
 
 Stack in use: Next.js 16, React 19, TypeScript, Tailwind, Prisma 8, PostgreSQL on Neon (isolated development and production branches).
 

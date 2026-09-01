@@ -15,14 +15,14 @@ Give humans a central view of running JS Solutions: what is happening, what need
 2.2 Business overview                     Implemented
 2.3 Goals                                 Implemented
 2.4 Work                                  Implemented
-2.5 Activity                              Planned
+2.5 Activity                              Implemented
 2.6 Approvals                             Planned
 2.7 Agents                                Planned
 2.8 Knowledge / documentation browser     Planned
 2.9 Integration + polish                  Planned
 ```
 
-Routes for 2.5–2.8 exist as placeholders. That is not feature completion.
+Routes for 2.6–2.8 exist as placeholders. That is not feature completion.
 
 ## Milestone 2.1 — Shell + navigation
 
@@ -73,13 +73,24 @@ Routes for 2.5–2.8 exist as placeholders. That is not feature completion.
 - Assignment does not start an AgentRun
 - Work mutations do not write BusinessEvents
 
+## Milestone 2.5 — Activity
+
+**Status:** Implemented
+
+- Server-rendered `/app/activity` and `/app/activity/[eventId]`
+- Read-only BusinessEvent list and detail; no edit/delete
+- Filters: `sourceType`, exact `eventType`; default list limit 50
+- Metadata rendered as safe pretty-printed JSON
+- Atomic command/event architecture adopted ([ADR-007](../decisions/ADR-007-atomic-business-mutation-and-event-recording.md)); Goal/Work mutations not migrated
+- No fake BusinessEvents created to populate the page
+
 ## Remaining work
 
-- 2.5–2.7 feature screens for Activity, Approvals, Agents
+- 2.6–2.7 feature screens for Approvals, Agents
 - 2.8 Knowledge browser over canonical `docs/` markdown
 - 2.9 polish, empty-state quality, and cross-page consistency
 - Authentication (replaces the Command Center write safeguard)
-- Unified mutation-to-BusinessEvent auditing
+- Migrate Goal/Work (and later Approvals/Agents) onto atomic BusinessEvent commands
 
 Not in Phase 2: tools, agent reasoning, integrations, schema changes.
 
@@ -89,7 +100,7 @@ Read and coordinate. The Command Center does not execute external tools. UI must
 
 ## Exit criteria
 
-Owner can see goals, work, approvals, and recent events from live business state. Partially met: Overview is live; Goals and Work can be managed when writes are enabled; dedicated Activity/Approvals/Agents screens are still planned.
+Owner can see goals, work, approvals, and recent events from live business state. Partially met: Overview, Goals, Work, and Activity are implemented; dedicated Approvals/Agents screens remain. Activity may be empty until Goal/Work commands emit events.
 
 ## Related
 

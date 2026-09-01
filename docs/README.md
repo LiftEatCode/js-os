@@ -31,7 +31,7 @@ Do not treat Planned/Future text as shipped capability.
 | [Agent architecture](architecture/agent-architecture.md) | AgentDefinition vs AgentRun; permission ceiling. |
 | [Tool architecture](architecture/tool-architecture.md) | Future execution boundary; not implemented. |
 | [Approval system](architecture/approval-system.md) | Approval authorizes; it does not execute. |
-| [Command Center](architecture/command-center.md) | Internal operating UI: routes, navigation, Goals, Work, implemented vs planned. |
+| [Command Center](architecture/command-center.md) | Internal operating UI: routes, navigation, Goals, Work, Activity, implemented vs planned. |
 | [Integrations (architecture)](architecture/integrations.md) | How JS OS will talk to other systems without duplicating them. |
 
 Compatibility pointers (old paths): [architecture.md](architecture.md), [database.md](database.md), [data-model.md](data-model.md).
@@ -137,6 +137,7 @@ How ADRs work and the accepted decisions: [decisions/README.md](decisions/README
 | [ADR-004](decisions/ADR-004-neon-environment-isolation.md) | Isolated Neon branches; pooled vs direct URLs. |
 | [ADR-005](decisions/ADR-005-agent-run-audit-provenance.md) | AgentRun is audit; provenance FKs Restrict. |
 | [ADR-006](decisions/ADR-006-permission-and-approval-boundaries.md) | Tools + permission ceiling + approvals (intent, not enforced). |
+| [ADR-007](decisions/ADR-007-atomic-business-mutation-and-event-recording.md) | Atomic command boundary for state + BusinessEvent. |
 
 ---
 
@@ -147,4 +148,4 @@ How ADRs work and the accepted decisions: [decisions/README.md](decisions/README
 | [Roadmap](roadmap.md) | Phases 0–15: objective, capabilities, safety, exit criteria. |
 | [Phase 0 — Foundation](phases/phase-00-foundation.md) | Repo, Next.js, architecture, Node 24, Prisma 8 foundation. |
 | [Phase 1 — Business State](phases/phase-01-business-state.md) | Contract, Neon, bootstrap, service layer. Complete; Goal rows later. |
-| [Phase 2 — Command Center](phases/phase-02-command-center.md) | Shell, Overview, Goals, and Work management; later screens planned. |
+| [Phase 2 — Command Center](phases/phase-02-command-center.md) | Shell, Overview, Goals, Work, and Activity; later screens planned. |

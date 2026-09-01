@@ -100,7 +100,9 @@ Append-only. `recordBusinessEvent()` creates rows. There is no update or delete 
 
 `eventType` must be `lowercase.dot.notation` (for example `lead.created`).
 
-There is no transactional “mutate Goal or WorkItem + record BusinessEvent” helper. Command Center Goal and Work Server Actions therefore persist those rows only. Unified mutation-to-BusinessEvent auditing is a future cross-cutting concern.
+`listBusinessEvents` filters `organizationId`, optional `eventType` (exact), optional `sourceType`, and `limit` (default 50, max 200), ordered by `occurredAt` desc.
+
+There is no transactional helper inside this module. Atomic state+event recording belongs in `src/business-commands/` ([ADR-007](../decisions/ADR-007-atomic-business-mutation-and-event-recording.md)). Command implementations must use the transaction handle (`tx.orm`). Existing `createGoal` / `updateWorkItem` / `recordBusinessEvent` functions still use the global `db` client, so calling them sequentially is not atomic. Goal and Work Command Center actions have not been migrated.
 
 ## Approval
 
@@ -142,7 +144,7 @@ Prisma integrity errors are not swallowed.
 
 ## Tests and verification
 
-Unit tests cover validation, Goal `completedAt` lifecycle, WorkItem lifecycle and parent-cycle checks, Command Center write-access, Goal/Work list ordering, and form parsing (`npm test`). There is no isolated mutating test database yet, so services are not integration-tested against Neon in CI.
+Unit tests cover validation, Goal `completedAt` lifecycle, WorkItem lifecycle and parent-cycle checks, command-layer rollback pairing, Command Center write-access, Goal/Work list ordering, Activity formatting/filters, and form parsing (`npm test`). There is no isolated mutating test database yet, so services are not integration-tested against Neon in CI.
 
 Read-only development check:
 

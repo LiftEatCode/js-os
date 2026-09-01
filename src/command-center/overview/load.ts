@@ -53,6 +53,7 @@ export type OverviewApprovalRow = {
 };
 
 export type OverviewEventRow = {
+  id: string;
   title: string;
   eventType: string;
   sourceType: BusinessEvent['sourceType'];
@@ -153,6 +154,7 @@ export async function loadOverview(): Promise<OverviewData> {
       requestedAtLabel: formatBusinessInstant(approval.requestedAt, timeZone),
     })),
     events: events.map((event) => ({
+      id: event.id,
       title: event.title,
       eventType: event.eventType,
       sourceType: event.sourceType,

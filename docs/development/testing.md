@@ -23,6 +23,8 @@ npm test
 - `src/business-state/work-item-hierarchy.test.ts` (self-parent and descendant cycle rejection)
 - `src/command-center/work/ordering.test.ts` (WorkItem list ordering)
 - `src/command-center/work/parse.test.ts` (Work form parsing, enums, due dates)
+- `src/command-center/activity/format.test.ts` (event/source labels, filters, metadata JSON)
+- `src/business-commands/command.test.ts` (mutation+event commit/rollback pairing; no Neon)
 
 These tests do not connect to a database. Do not mutate Neon from automated tests.
 
