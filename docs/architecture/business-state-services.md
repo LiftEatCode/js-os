@@ -104,7 +104,7 @@ UUIDs are never hardcoded.
 
 Append-only. `recordBusinessEvent()` creates rows. There is no update or delete API.
 
-`eventType` must be `lowercase.dot.notation` (for example `lead.created`).
+`eventType` must be `lowercase.dot.notation` (for example `lead.created`). Segments may include underscores (`goal.status_changed`).
 
 `listBusinessEvents` filters `organizationId`, optional `eventType` (exact), optional `sourceType`, and `limit` (default 50, max 200), ordered by `occurredAt` desc.
 

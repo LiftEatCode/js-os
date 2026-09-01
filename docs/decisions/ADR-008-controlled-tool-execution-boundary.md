@@ -8,16 +8,16 @@ Accepted
 - ToolRequest/ToolExecution persistence (3.1)
 - ToolDefinition + ToolRegistry (3.2)
 - technical permission evaluator (3.3)
+- request/execution lifecycle services (3.4)
 
 **Planned:**
-- request lifecycle persistence (creating rows from a coordinator)
-- approval integration
-- execution coordinator
+- approval integration (3.5)
+- execution coordinator / adapters
 - real tools
 - external adapters
 - Command Center Tools
 
-The execution boundary is not fully enforced yet. Permission evaluation is a pure check; nothing executes or persists a request.
+The execution boundary is not fully enforced yet. 3.4 persists requests and attempts and consumes `evaluateToolPermission`. It does not call adapters, create Approval rows, or run tools.
 
 ## Context
 

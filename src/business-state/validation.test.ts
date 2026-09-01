@@ -25,6 +25,9 @@ describe('business-state validation', () => {
     assert.equal(isValidEventType('lead.created'), true);
     assert.equal(isValidEventType('work.completed'), true);
     assert.equal(isValidEventType('approval.requested'), true);
+    assert.equal(isValidEventType('goal.status_changed'), true);
+    assert.equal(isValidEventType('tool.waiting_approval'), true);
+    assert.equal(isValidEventType('tool.execution_queued'), true);
     assert.equal(requireEventType('  lead.created  '), 'lead.created');
   });
 

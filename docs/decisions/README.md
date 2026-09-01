@@ -31,6 +31,6 @@ Number sequentially. Filename: `ADR-NNN-short-slug.md`.
 | [ADR-003](ADR-003-prisma-8-contract-architecture.md) | Prisma 8 contract on PostgreSQL/Neon |
 | [ADR-004](ADR-004-neon-environment-isolation.md) | Isolated Neon branches; pooled vs direct URLs |
 | [ADR-005](ADR-005-agent-run-audit-provenance.md) | AgentRun is audit; provenance FKs Restrict |
-| [ADR-006](ADR-006-permission-and-approval-boundaries.md) | Tools + permission ceiling + approvals (3.3 technical evaluator; approval/policy not) |
+| [ADR-006](ADR-006-permission-and-approval-boundaries.md) | Tools + permission ceiling + approvals (3.3 technical evaluator; 3.4 consumes it; approval/policy not) |
 | [ADR-007](ADR-007-atomic-business-mutation-and-event-recording.md) | Atomic command boundary for state + BusinessEvent |
-| [ADR-008](ADR-008-controlled-tool-execution-boundary.md) | Actors execute only through registered tools (3.1–3.3 persistence, registry, permission evaluator; runtime not implemented) |
+| [ADR-008](ADR-008-controlled-tool-execution-boundary.md) | Actors execute only through registered tools (3.1–3.4 persistence, registry, permission evaluator, request lifecycle; adapters not implemented) |

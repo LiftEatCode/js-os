@@ -1,6 +1,6 @@
 # Event system
 
-**Status:** Implemented (model + append-only service + Command Center Activity). Goal, Work, Approval, and Agent Command Center mutations emit events atomically. Emission from integrations and AgentRuns is future.
+**Status:** Implemented (model + append-only service + Command Center Activity). Goal, Work, Approval, Agent, and ToolRequest/ToolExecution lifecycle mutations emit events atomically. Emission from integrations and AgentRuns is future.
 
 BusinessEvent is the operational timeline JS OS and future agents inspect. It is not chat history.
 
@@ -37,7 +37,7 @@ Titles should be human-readable and self-contained (for example `Goal created`).
 
 ## Naming convention
 
-`eventType` must be `lowercase.dot.notation` at the service boundary.
+`eventType` must be `lowercase.dot.notation` at the service boundary. Segments may include underscores (`goal.status_changed`, `tool.waiting_approval`).
 
 Recommended structure: `<domain>.<action>`.
 
@@ -65,14 +65,17 @@ agent.run.started
 agent.run.completed
 agent.run.failed
 
-tool.requested
 tool.denied
+tool.waiting_approval
+tool.ready
+tool.execution_queued
+tool.execution_started
 tool.executed
-tool.failed
+tool.execution_failed
 tool.cancelled
 ```
 
-`tool.*` names are reserved for Phase 3. They are not emitted yet (3.1 creates no BusinessEvents). Do not also emit `tool.waiting_approval` or `tool.execution_started`. Approval activity stays on `approval.*`.
+`tool.*` types above are emitted by the 3.4 lifecycle services (`src/tools/events.ts`). Creation emits the routed outcome (`tool.ready` / `tool.waiting_approval` / `tool.denied`), not a separate `tool.requested`. `tool.waiting_approval` does not imply an Approval row exists (3.5). Approval activity stays on `approval.*`.
 
 Do not turn `eventType` into a schema enum.
 
@@ -146,6 +149,7 @@ BusinessEvent is **operational history**. It is not a complete security audit lo
 | Agents | Yes | Yes | Yes |
 | Knowledge | No | N/A | N/A |
 | Overview | No | N/A | N/A |
+| Tools (3.4 lifecycle) | No UI | Yes (`requestToolUse` / execution transitions) | Yes (`tool.*`) |
 
 Command Center owner actions use `sourceType = USER` and `sourceId = null`.
 

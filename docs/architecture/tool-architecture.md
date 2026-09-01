@@ -1,20 +1,24 @@
 # Tool architecture
 
-**Status:** Milestones 3.1–3.3 implemented (persistence, code registry, technical permission evaluator). Approval evaluation, coordinator, tool adapters, and Command Center Tools are still planned.
+**Status:** Milestones 3.1–3.4 implemented (persistence, code registry, technical permission evaluator, request/execution lifecycle services). Approval evaluation, adapters, and Command Center Tools are still planned.
 
 ```text
-Future actor
+Actor
     ↓
-ToolRequest        ← implemented persistent model
+resolved ToolDefinition
     ↓
-Authorization      ← 3.3 permission evaluator implemented; 3.5 approval planned
+requestToolUse     ← implemented (3.4)
     ↓
-ToolExecution      ← implemented persistent model
+ToolRequest        ← durable logical action
+    ↓
+Authorization      ← 3.3 permission evaluator consumed by 3.4; 3.5 approval planned
+    ↓
+ToolExecution      ← attempt records; no adapter call yet
     ↓
 Adapter            ← planned (3.6)
 ```
 
-The code registry and technical permission evaluator exist. There is no approval evaluator, coordinator, or Command Center Tools area. Do not treat later Phase 3 milestones as shipped.
+The persisted request/execution state machine exists. There is no approval row creation, real tool adapter, coordinator that calls adapters, or Command Center Tools area. Do not treat later Phase 3 milestones as shipped.
 
 Tools are the controlled execution boundary. Actors must not receive unrestricted access to external services, credentials, or important state mutations.
 
@@ -224,7 +228,7 @@ src/tools/validation.ts
 - One active contract per slug. Duplicate slugs are rejected even if versions differ.
 - `get(slug)` returns `ToolDefinition | null`. `require(slug)` throws `ToolNotFoundError`.
 - `list()` / `listEnabled()` sort by slug (`en`). Disabled tools stay in the registry.
-- `persistExecution` is metadata only. `false` does **not** bypass permission checks. Nothing creates ToolRequest rows in 3.2.
+- `persistExecution` is metadata only. `false` does **not** bypass permission checks. 3.4 `requestToolUse` rejects non-persisted definitions rather than writing rows.
 - `getToolDefinitionSnapshot` maps `slug/name/version/requiredPermission/riskLevel/approvalRequirement` onto ToolRequest snapshot fields. It is not persisted here.
 
 No `src/tools/definitions/` yet. First real tools (`internal.create_work_item`, `internal.update_work_status`) arrive in 3.6. Read capabilities may use `persistExecution: false` later.
@@ -357,8 +361,8 @@ WAITING_APPROVAL
   └── CANCELLED
 
 READY
-  ├── FULFILLED      (an attempt SUCCEEDED)
-  ├── FAILED         (latest attempt FAILED; v0.1 does not auto-retry)
+  ├── FULFILLED      (an attempt SUCCEEDED; execution-derived, not a public request mutation)
+  ├── FAILED         (an attempt FAILED; execution-derived, not a public request mutation)
   └── CANCELLED
 
 FULFILLED, FAILED, CANCELLED, DENIED are terminal in v0.1.
@@ -366,11 +370,15 @@ FULFILLED, FAILED, CANCELLED, DENIED are terminal in v0.1.
 
 Future retries may reopen `FAILED` → `READY` without a schema change. Do not implement retry workers in Phase 3.
 
+`ToolRequest FULFILLED` and `FAILED` are **execution-derived terminal states** in v0.1. The only supported paths are `completeToolExecution` (SUCCEEDED + FULFILLED + `tool.executed`) and `failToolExecution` (FAILED + FAILED + `tool.execution_failed`), each in one transaction. There is no public `fulfillToolRequest` / `failToolRequest`. `src/tools/lifecycle.ts` still knows `READY → FULFILLED` / `READY → FAILED` as valid conceptual transitions; that is state-machine knowledge, not a public mutation API.
+
 `ToolRequest.status = FAILED` means at least one actual execution attempt ran and the logical action did not succeed. Do **not** use `FAILED` for invalid input, disabled tools, insufficient permission, unsupported actors, or approval required/rejected/expired. Those either prevent request creation or result in `DENIED`, `WAITING_APPROVAL`, or `CANCELLED`.
 
-Pure transition helpers live in `src/tools/lifecycle.ts`. Persistence transitions are milestone 3.4.
+Pure transition helpers live in `src/tools/lifecycle.ts`. Persistence transitions are implemented in 3.4 (`src/tools/requests.ts`, `src/tools/executions.ts`, `src/tools/request-tool.ts`).
 
-`REQUESTED` is the insert state before permission/approval evaluation finishes. Ordinary denials that happen before persistence may produce no row (typed evaluator result only). If a request is persisted and then denied, status is `DENIED` and `tool.denied` is recorded.
+`REQUESTED` is a **conceptual** insert state. `requestToolUse` validates input, evaluates permission, and routes in one transaction. The persisted row lands on the routed status (`READY`, `WAITING_APPROVAL`, or `DENIED`). Transient `REQUESTED` is not externally visible. Explicit transition helpers still accept `REQUESTED` if a row in that status ever exists.
+
+Invalid input does **not** create a ToolRequest. Permission denial **does** create a `DENIED` audit row (`tool.denied`) with no ToolExecution.
 
 ### ToolExecution
 
@@ -384,7 +392,9 @@ RUNNING
   └── FAILED
 ```
 
-v0.1: at most one execution per request. `RUNNING` cancellation is unsupported. `SUCCEEDED` / `FAILED` cannot become `CANCELLED`.
+v0.1: at most one **successful or failed** execution per request, because `FULFILLED` / `FAILED` are terminal. The schema allows 0..N `ToolExecution` rows. There is no automatic retry. `RUNNING` cancellation is unsupported. `SUCCEEDED` / `FAILED` cannot become `CANCELLED`.
+
+A cancelled `QUEUED` attempt leaves a `READY` request, so a later manual attempt could be created. That is not an automatic retry. Future retry semantics may require an explicit reopen of `FAILED` → `READY`. Do not invent that now.
 
 ## JSON
 
@@ -404,7 +414,7 @@ ToolExecution.output
 | `ToolRequest.input` | Tool args vary by slug; future Zod validation before persist | Generic metadata bag; credentials; unvalidated actor JSON |
 | `ToolExecution.output` | Normalized success payload; small structured result | Raw third-party dumps; secrets; full HTTP transcripts |
 
-Do not add generic `metadata` JSON on these models. Request identity, status, risk, and provenance stay typed. Milestone 3.1 does not validate `input` against a registry schema yet.
+Do not add generic `metadata` JSON on these models. Request identity, status, risk, and provenance stay typed. Milestone 3.4 validates `input` with `definition.inputSchema.safeParse` before persist and stores the parsed value. Output schema validation on success is deferred to a future coordinator so execution persistence stays decoupled from registry lookup.
 
 `Approval.payload` for a tool-linked Approval is a **small pointer**, not a copy of `input`:
 
@@ -465,7 +475,7 @@ Enforced by PostgreSQL:
 
 - org FKs, provenance FKs, unique attempt numbers, unique non-null idempotency keys, enum CHECKs
 
-Enforced later by application code (helpers exist in `src/tools/validation.ts`; persistence in 3.4):
+Enforced by application code in 3.4 (helpers exist in `src/tools/validation.ts`):
 
 - `requestedByType = AGENT` → `agentDefinitionId` required
 - `ToolExecution.organizationId` equals `ToolRequest.organizationId`
@@ -480,10 +490,14 @@ src/tools/lifecycle.ts
 src/tools/validation.ts
 src/tools/definition.ts
 src/tools/registry.ts
+src/tools/evaluate-permission.ts
+src/tools/request-tool.ts
+src/tools/requests.ts
+src/tools/executions.ts
 src/tools/index.ts
 ```
 
-No coordinator or `execute`. Transition helpers do not persist. The registry does not import Prisma or `db`.
+No coordinator or `execute`. The registry does not import Prisma or `db`. `evaluateToolPermission` remains pure. Request/execution services persist through `runBusinessCommand` / `commitStateAndEvent`.
 
 ## Input and output validation
 
@@ -503,7 +517,9 @@ persist ToolExecution.output
 
 Never pass unvalidated JSON to `execute`. Implementations return a small result object. Coordinator persists only the normalized form. Failures store `error` as a short string, not a stack dump of internals or upstream bodies.
 
-Read tools with `persistExecution: false` still validate input in memory. They do not write ToolRequest rows in v0.1.
+Read tools with `persistExecution: false` still validate input in memory when a future coordinator asks. They do not write ToolRequest rows in v0.1.
+
+`requestToolUse` is the **persisted** request path. It rejects `persistExecution: false` rather than silently writing rows. The non-persisted runtime path is planned coordinator work, not implemented in 3.4.
 
 ## Execution context
 
@@ -597,11 +613,69 @@ SYSTEM is technically allowed for any enabled tool. It is reserved for future sc
 
 Tool-not-found belongs to registry lookup, not this evaluator. The core function assumes a resolved `ToolDefinition`.
 
-Approval evaluation is not part of 3.3. `approvalRequirement` and `riskLevel` are ignored here.
+Approval evaluation is not part of 3.3. `approvalRequirement` and `riskLevel` are ignored by the evaluator. 3.4 reads `approvalRequirement` only to route `ALWAYS` → `WAITING_APPROVAL` or `NEVER` → `READY` after permission allow. That routing does **not** create an Approval row.
+
+## Request / execution lifecycle (Milestone 3.4)
+
+**Status:** Implemented. No real adapters, queues, workers, or approval satisfaction.
+
+Entry point: `requestToolUse({ organizationId, actor, definition, input, agentRunId?, workItemId?, idempotencyKey? })`.
+
+```text
+valid input
+      ↓
+evaluateToolPermission(actor, definition)
+      ↓
+persist ToolRequest + BusinessEvent (one transaction)
+      ├── DENIED              (permission denied; no ToolExecution)
+      ├── WAITING_APPROVAL    (allowed + ALWAYS; no Approval row yet)
+      └── READY               (allowed + NEVER)
+```
+
+3.4:
+
+```text
+approvalRequirement=ALWAYS
+→ ToolRequest WAITING_APPROVAL
+
+but no Approval row is created yet.
+```
+
+3.5 will connect `WAITING_APPROVAL` to durable Approval authorization.
+
+Snapshot fields (`toolSlug`, `toolName`, `toolVersion`, `requiredPermission`, `riskLevel`, `approvalRequirement`) come only from `getToolDefinitionSnapshot`. Callers cannot override them.
+
+Actor mapping: USER (`requestedById` optional), AGENT (`requestedById` and `agentDefinitionId` from the DB AgentDefinition), SYSTEM (`requestedById` null). AGENT permission evaluation uses the database AgentDefinition, not the caller's claimed ceiling.
+
+Optional `agentRunId` / `workItemId` must exist in the same organization. AGENT runs must belong to the requesting AgentDefinition.
+
+Idempotency: unique `(organizationId, toolSlug, idempotencyKey)` when the key is non-null. Same logical request returns the existing row without a second event. A different logical request with the same key throws `ToolIdempotencyConflictError`. Comparison uses canonical JSON for `input`.
+
+Execution attempts: only `READY` requests. `attemptNumber` is server-derived (1, then 2, …) inside a transaction; unique `(toolRequestId, attemptNumber)` is the database backstop. Residual limitation: concurrent creates retry the whole command on unique violation (3 attempts). No automatic retries after `FAILED`.
+
+```text
+READY
+  → create ToolExecution QUEUED
+  → RUNNING
+  → SUCCEEDED  (request FULFILLED, same transaction, tool.executed)
+  → FAILED     (request FAILED, same transaction, tool.execution_failed)
+
+QUEUED → CANCELLED (request stays READY unless the request is cancelled)
+
+Request CANCELLED from REQUESTED / WAITING_APPROVAL / READY
+  cancels QUEUED executions in the same transaction
+  rejects cancellation if a RUNNING execution exists
+```
+
+`ToolRequest FULFILLED` and `FAILED` are execution-derived terminal states in v0.1. Public request services can cancel, deny, or route to READY / WAITING_APPROVAL; they cannot independently fulfill or fail a request.
+
+`ToolRequest FAILED` still means an attempt actually ran. Invalid input, disabled tools, permission denial, and missing references do not use `FAILED`.
+
+Event strategy: one outcome event at creation (`tool.ready` / `tool.waiting_approval` / `tool.denied`). There is no extra `tool.requested`. Later: `tool.execution_queued`, `tool.execution_started`, `tool.executed`, `tool.execution_failed`, `tool.cancelled`. Metadata is IDs, slug, version, status, attemptNumber, and `denialCode` when relevant. Full input/output is not copied into BusinessEvent metadata.
 
 ## Approval evaluation
 
-**Status:** Planned (Milestone 3.5). Not invoked by the 3.3 permission evaluator.
+**Status:** Planned (Milestone 3.5). 3.4 may persist `WAITING_APPROVAL` from static `approvalRequirement=ALWAYS` without creating or linking an Approval.
 
 Separate service `evaluateToolApproval`.
 
@@ -726,17 +800,20 @@ Do not auto-set WorkItem `WAITING_APPROVAL` when a tool needs approval. That Pha
 
 ## BusinessEvent taxonomy
 
-Minimal tool events:
+3.4 emits:
 
 ```text
-tool.requested
 tool.denied
+tool.waiting_approval
+tool.ready
+tool.execution_queued
+tool.execution_started
 tool.executed
-tool.failed
+tool.execution_failed
 tool.cancelled
 ```
 
-Do not emit `tool.waiting_approval` or `tool.execution_started`. Approval activity remains:
+Creation records the routed outcome only. `tool.requested` is reserved and not emitted, to avoid a duplicate “created then routed” pair. Approval activity remains:
 
 ```text
 approval.requested
@@ -745,7 +822,9 @@ approval.rejected
 approval.cancelled
 ```
 
-Internal tools that call business commands will also emit domain events (`work.created`, `work.status_changed`). That is two layers, not duplication of Approval events. Tool metadata is IDs only: `toolRequestId`, `toolExecutionId`, `toolSlug`, status. No input dump, no credentials.
+`tool.waiting_approval` in 3.4 does **not** imply `approval.requested`. 3.5 will add the Approval row and `approval.*` event.
+
+Internal tools that call business commands will also emit domain events (`work.created`, `work.status_changed`). That is two layers, not duplication of Approval events. Tool metadata is IDs only: `toolRequestId`, `toolExecutionId`, `toolSlug`, `toolVersion`, status, `attemptNumber`, `denialCode`. No input dump, no credentials.
 
 Activity (`/app/activity`) already formats arbitrary `lowercase.dot` names. Do not redesign Activity.
 
@@ -777,13 +856,15 @@ Do not implement vendor idempotency in Phase 3. Do not design a model that overw
 
 ## Retry
 
-v0.1: one attempt. Failed requests stay `FAILED`. Schema allows `attemptNumber` 2..N later. No queues.
+ToolRequest supports 0..N ToolExecution records structurally.
+
+v0.1 lifecycle does not automatically retry. `FAILED` is terminal. Explicit retry / reopen semantics are future work. Schema allows `attemptNumber` 2..N later. No queues.
 
 ## Cancellation
 
 Valid on ToolRequest: `REQUESTED`, `WAITING_APPROVAL`, `READY` → `CANCELLED`.
 
-If `WAITING_APPROVAL`, cancel the linked Approval via the existing cancel command when that Approval is still `PENDING`.
+If `WAITING_APPROVAL`, 3.5 will cancel the linked Approval via the existing cancel command when that Approval is still `PENDING`. 3.4 has no Approval row to cancel.
 
 Not valid: `FULFILLED`, `FAILED`, `DENIED`, or after an execution `SUCCEEDED` / `FAILED`.
 

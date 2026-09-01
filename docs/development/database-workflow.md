@@ -89,6 +89,12 @@ Tool table constraint check (creates rows only inside rolled-back transactions):
 npm run tool-schema:verify
 ```
 
+Persisted request/execution lifecycle (development only; creates then deletes rows; requires `JS_OS_TOOL_LIFECYCLE_VERIFY_TARGET=development` and refuses production-looking hosts):
+
+```bash
+npm run tool-lifecycle:verify
+```
+
 ## Source of truth
 
 ```text

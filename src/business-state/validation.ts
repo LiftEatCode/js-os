@@ -1,7 +1,7 @@
 import { InvalidBusinessStateInputError, InvalidBusinessStateTransitionError } from './errors.ts';
 import type { AgentRunStatus, ApprovalStatus } from './types.ts';
 
-const EVENT_TYPE_PATTERN = /^[a-z][a-z0-9]*(\.[a-z][a-z0-9]*)+$/;
+const EVENT_TYPE_PATTERN = /^[a-z][a-z0-9_]*(\.[a-z][a-z0-9_]*)+$/;
 
 export function requireNonEmptyString(value: string, field: string): string {
   const trimmed = value.trim();

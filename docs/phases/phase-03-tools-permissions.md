@@ -1,10 +1,10 @@
 # Phase 3 — Tools + Permissions
 
-**Status:** In progress. Milestones 3.1, 3.2, and 3.3 are implemented. Approval evaluation, execution, and Command Center Tools are not.
+**Status:** In progress. Milestones 3.1–3.4 are implemented. Approval integration, internal tools, and Command Center Tools are not.
 
 Phase 0–2 are complete. Phase 3 introduces the controlled execution boundary: registered tools, permission evaluation, request/execution lifecycle, approval integration, internal safe tools, and Command Center visibility.
 
-Do not treat later Phase 3 milestones as shipped. 3.1 is persistence. 3.2 is the code registry. 3.3 is technical permission evaluation only.
+Do not treat later Phase 3 milestones as shipped. 3.1 is persistence. 3.2 is the code registry. 3.3 is technical permission evaluation. 3.4 is the persisted request/execution lifecycle without adapters.
 
 ## Objective
 
@@ -16,8 +16,8 @@ Make execution an explicit, permissioned tool boundary so actors never call inte
 3.1 Tool domain model + architecture     Implemented
 3.2 Tool registry                        Implemented
 3.3 Permission evaluation                Implemented
-3.4 Tool request/execution lifecycle     Next
-3.5 Approval integration                 Planned
+3.4 Tool request/execution lifecycle     Implemented
+3.5 Approval integration                 Next
 3.6 Internal safe tools                  Planned
 3.7 Tools Command Center                 Planned
 3.8 Phase 3 integration + validation     Planned
@@ -76,13 +76,19 @@ Canonical design: [tool architecture](../architecture/tool-architecture.md), [AD
 
 ## Milestone 3.4 — Tool request/execution lifecycle
 
-**Status:** Planned
+**Status:** Implemented
 
-- Persist requests and attempts
-- Valid status transitions
-- Cancellation of pre-running requests
-- `tool.requested` / `tool.cancelled` / `tool.denied` as applicable
-- Still no adapter `execute()` for real work
+- `requestToolUse` persists a routed ToolRequest after input validation and `evaluateToolPermission`
+- Routed statuses: `DENIED` (permission denied), `WAITING_APPROVAL` (`ALWAYS`, **no Approval row yet**), `READY` (`NEVER`)
+- Conceptual `REQUESTED` is not persisted; routing and the outcome BusinessEvent commit together
+- ToolExecution attempts: server-derived `attemptNumber` starting at 1; `QUEUED` → `RUNNING` → `SUCCEEDED`/`FAILED`; `QUEUED` → `CANCELLED`
+- `FULFILLED` / `FAILED` are execution-derived: only `completeToolExecution` / `failToolExecution` may set them (atomically with the attempt and `tool.executed` / `tool.execution_failed`). No public `fulfillToolRequest` / `failToolRequest`.
+- Idempotency reuse vs conflict; org-scoped AgentDefinition / AgentRun / WorkItem checks
+- `persistExecution=false` is rejected on this persisted path
+- Development verification: `npm run tool-lifecycle:verify`
+- **No adapters, approval rows, retries, queues, or Tools UI**
+
+3.5 will connect `WAITING_APPROVAL` to durable Approval authorization.
 
 ## Milestone 3.5 — Approval integration
 
@@ -128,7 +134,7 @@ Call `createWorkItemCommand` / `updateWorkItemStatusCommand`. Organization-scope
 
 - At least one internal non-production tool can be requested and allowed or denied according to documented permission rules
 - Approval-required path can wait, approve, and only then execute via explicit continuation
-- Enforcement of the full request/execution path does not exist yet. Technical permission evaluation (3.3) is implemented; the coordinator does not call it.
+- Request/execution persistence and technical permission evaluation exist (3.3–3.4). Adapters, approval satisfaction, and Command Center Tools do not.
 - No external integrations shipped as a Phase 3 requirement
 
 ## Key safety boundary

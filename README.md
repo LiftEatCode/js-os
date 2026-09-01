@@ -6,13 +6,13 @@ JS OS is a separate application from **JS Growth**. JS Solutions is the company.
 
 ## Current status
 
-**Phase 1 (Business State) is complete.** Foundation (Phase 0) is complete. **Phase 2 (Command Center) is complete.** **Phase 3 (Tools + Permissions) is in progress:** 3.1 persistence, 3.2 code registry, and 3.3 technical permission evaluation. There is no execution coordinator or `/app/tools` UI yet. Command Center writes are disabled unless local development explicitly sets `JS_OS_COMMAND_CENTER_WRITES=true`. The Command Center is currently unauthenticated development functionality.
+**Phase 1 (Business State) is complete.** Foundation (Phase 0) is complete. **Phase 2 (Command Center) is complete.** **Phase 3 (Tools + Permissions) is in progress:** 3.1 persistence, 3.2 code registry, 3.3 technical permission evaluation, and 3.4 request/execution lifecycle. There is no execution adapter or `/app/tools` UI yet. Command Center writes are disabled unless local development explicitly sets `JS_OS_COMMAND_CENTER_WRITES=true`. The Command Center is currently unauthenticated development functionality.
 
 Stack in use: Next.js 16, React 19, TypeScript, Tailwind, Prisma 8, PostgreSQL on Neon (isolated development and production branches).
 
 ## Core principle
 
-AI may recommend and prepare actions. JS OS controls what is permitted to execute. Integrations and autonomous actions must pass through explicit tools, permission rules, and approvals. Tool execution runtime is **not implemented**; request/attempt tables exist as of Phase 3.1.
+AI may recommend and prepare actions. JS OS controls what is permitted to execute. Integrations and autonomous actions must pass through explicit tools, permission rules, and approvals. Tool adapters are **not implemented**; request/attempt lifecycle services persist rows as of Phase 3.4.
 
 ## Documentation
 

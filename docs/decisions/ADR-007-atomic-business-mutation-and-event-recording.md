@@ -42,7 +42,8 @@ Existing services call the global `db` client. Calling `createGoal()` then `reco
 - Approval Command Center mutations (Milestone 2.6) are the first production use of this boundary: `requestApprovalCommand` / `approveApprovalCommand` / `rejectApprovalCommand` / `cancelApprovalCommand` write through `tx.orm` and append `approval.requested` / `approved` / `rejected` / `cancelled` in the same transaction.
 - Agent configuration mutations (Milestone 2.7) use the same boundary: `changeAgentStatusCommand` / `changeAgentPermissionLevelCommand` append `agent.status_changed` / `agent.permission_changed`. Public `updateAgentStatus` / `updateAgentPermissionLevel` remain event-free primitives.
 - BusinessEvent remains operational event history, not a complete security audit log.
-- Residual concurrency: commands load current state inside the transaction, but Phase 2 does not add row locks or a version column. Concurrent owner edits can last-write-win.
+- Residual concurrency: commands load current state inside the transaction, but Phase 2 does not add row locks or a version column. Concurrent owner edits can last-write-win. ToolRequest / ToolExecution status changes (Milestone 3.4) use guarded `where({ id, status: from }).update(...)` so two callers cannot both win the same transition without detection. Attempt-number allocation retries the whole command on unique violation.
+- Tool request/execution lifecycle (Milestone 3.4) uses the same `runBusinessCommand` / `commitStateAndEvent` boundary. Meaningful `tool.*` events commit with the state mutation. `requestToolUse` lands on the routed status in one transaction (no visible intermediate `REQUESTED`). Execution success/failure updates ToolExecution and ToolRequest together.
 
 ## Alternatives considered
 

@@ -3,7 +3,10 @@ export {
   InvalidToolDefinitionError,
   InvalidToolInputError,
   InvalidToolTransitionError,
+  ToolExecutionNotFoundError,
+  ToolIdempotencyConflictError,
   ToolNotFoundError,
+  ToolRequestNotFoundError,
 } from './errors.ts';
 
 export { defineTool, getToolDefinitionSnapshot } from './definition.ts';
@@ -69,3 +72,30 @@ export {
   TOOL_EXECUTION_STATUSES,
   TOOL_REQUEST_STATUSES,
 } from './types.ts';
+
+export { TOOL_EVENT_TYPES } from './events.ts';
+
+export { requestToolUse } from './request-tool.ts';
+export type { RequestToolUseInput } from './request-tool.ts';
+
+export {
+  cancelToolRequest,
+  denyToolRequest,
+  getToolRequestById,
+  listToolRequests,
+  markToolRequestReady,
+  markToolRequestWaitingApproval,
+} from './requests.ts';
+export type { ToolRequestListFilter } from './requests.ts';
+
+export {
+  cancelQueuedToolExecution,
+  completeToolExecution,
+  createToolExecutionAttempt,
+  failToolExecution,
+  getToolExecutionById,
+  listToolExecutions,
+  listToolExecutionsForRequest,
+  markToolExecutionRunning,
+} from './executions.ts';
+export type { ToolExecutionListFilter } from './executions.ts';

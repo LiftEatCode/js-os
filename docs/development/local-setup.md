@@ -49,6 +49,12 @@ Development read-only service check (uses Neon development; does not write):
 npm run business-state:verify
 ```
 
+Development tool request/execution lifecycle check (writes then deletes rows; development Neon only):
+
+```bash
+npm run tool-lifecycle:verify
+```
+
 After editing `src/prisma/contract.prisma`:
 
 ```bash

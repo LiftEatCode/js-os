@@ -217,7 +217,7 @@ Intentional tightenings vs the original Phase 1 helpers:
 ToolRequest.approvalId → Approval.id
 ```
 
-The FK exists as of 3.1 (`Restrict`). Coordinators must not auto-create Approvals, auto-transition requests, or execute on `APPROVED`. That is milestone 3.5.
+The FK exists as of 3.1 (`Restrict`). 3.4 may persist `ToolRequest.status = WAITING_APPROVAL` from static `approvalRequirement=ALWAYS` **without creating an Approval row**. Coordinators must not auto-create Approvals, auto-transition requests from approval decisions, or execute on `APPROVED`. That is milestone 3.5.
 
 The ToolRequest owns the logical action. Approval remains authorization only.
 
