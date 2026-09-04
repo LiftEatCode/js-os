@@ -1,244 +1,293 @@
 # Tha Shop Live Baseline Execution — September 2026
 
-**Status:** Initial external + repository validation pass
+**Status:** Initial external + repository validation pass — corrected after production confirmation
 
 ## Purpose
 
 Execute the first parts of the Tha Shop Growth Baseline using evidence that can be independently verified without private analytics, Search Console, GBP management access, or owner input.
 
-This is a point-in-time operating record. It distinguishes the public production domain from the newer application repository and does not assume that repository code is currently deployed to the public domain.
+This is a point-in-time operating record. On September 4, 2026 Josh confirmed that the `LiftEatCode/tha-shop` Next.js application is already the live production site at `https://thashops.com`.
 
 ---
 
-# 1. Critical discovery — public production and repository are not currently equivalent
+# 1. Production implementation — confirmed
 
-The `LiftEatCode/tha-shop` repository declares `https://thashops.com` as its canonical site URL and contains the newer Next.js site architecture.
+The `LiftEatCode/tha-shop` repository declares `https://thashops.com` as its canonical site URL and contains the current Next.js site architecture.
 
-However, a live external crawl of `thashops.com` on September 4, 2026 returned a materially different website experience consistent with the older site rather than the current repository implementation.
+Josh confirmed that this Next.js application is already live in production.
 
-Observed public-site characteristics included:
-- older navigation/content structure;
-- Store/account/sign-in/order UI;
-- GoDaddy-style account/store artifacts including `filler@godaddy.com` in crawled navigation output;
-- older Auto Services copy/structure;
-- older contact form protected by reCAPTCHA;
-- current public address/phone/hours;
-- Burnout Bash content present on the homepage.
+A fresh external fetch of `https://thashops.com` on September 4, 2026 is consistent with that repository architecture. The live site exposes the same core navigation and positioning, including:
+- Home;
+- About;
+- For Sale;
+- Auto Services;
+- Motorcycle Services;
+- Fleet Services;
+- Crazy Eight Customs;
+- Fabrication Services;
+- Cars/Trucks/Motorcycles/Events;
+- Contact;
+- Blog;
+- Event Calendar;
+- the Magnolia/FM 1488 positioning;
+- the 10% veterans/first responders/teachers offer;
+- the current phone/address/hours;
+- the October 3–4, 2026 Burnout Bash.
 
-Therefore:
+Therefore the prior conclusion that production was serving an older GoDaddy-style implementation was incorrect and is superseded by this correction.
 
-> **Repository capabilities must not be treated as production capabilities until deployment/domain state is confirmed.**
+> **Authoritative production assumption: the current Next.js repository is live at `thashops.com`.**
 
-This materially changes the first baseline assumption.
-
-**Evidence classification:** OBSERVED
+**Evidence classification:** CLIENT_CONFIRMED + EXTERNALLY_OBSERVED
 
 ---
 
-# 2. Production-domain facts observed
+# 2. Production facts confirmed/observed
 
-Public crawl currently exposes:
-- business name: Tha Shops;
-- address: 24495 FM 1488, Magnolia, TX;
+Current live site exposes:
+- business name: Tha Shop;
+- address: 24495 FM 1488, Magnolia, TX 77355;
 - phone: (936) 297-0820;
 - Monday–Friday hours: 8:00 AM–6:00 PM;
 - Saturday/Sunday closed;
-- auto repair, motorcycle repair, restoration/custom-build positioning;
-- Burnout Bash October 3–4, 2026;
-- contact form;
-- directions action;
-- testimonials/reviews section on homepage;
-- service navigation for auto, motorcycle, fleet, fabrication;
-- gallery/event/content navigation.
+- auto repair, motorcycle service, fleet care, and custom fabrication positioning;
+- Crazy Eight Customs;
+- Old Guys Garage/service-bay positioning;
+- Hotrod Fabrication;
+- appointment CTA;
+- phone CTA;
+- event content;
+- project/gallery content;
+- social links.
 
-The newer repository uses the singular brand `Tha Shop` while the public crawl frequently uses `Tha Shops`. Brand/NAP naming consistency should be confirmed intentionally rather than changed automatically.
+The repository and current live page use the singular brand `Tha Shop`, removing the previously suspected singular/plural production mismatch.
 
 **Evidence classification:** OBSERVED
 
 ---
 
-# 3. Production content observations
+# 3. Production customer-journey observations
 
-The live Auto Services page is broad and includes maintenance, diagnostics, brakes/ABS, suspension/steering, engine/cooling, electrical, transmission/drivetrain, tires, exhaust, heating/AC, and fleet content in one long page.
+The live homepage clearly routes users into distinct journeys for:
+- Auto Services;
+- Motorcycle Services;
+- Fleet Services;
+- Crazy Eight Customs;
+- Fabrication;
+- project/gallery browsing;
+- Burnout Bash/event content;
+- appointment requests;
+- phone contact.
 
-This strengthens the earlier hypothesis that dedicated high-value service journeys may eventually be useful, but it still does not prove which service pages should be created.
+The homepage describes Auto Services as diagnostics, maintenance, brakes, suspension, electrical, and drivetrain repair. The broader repository content includes additional automotive service categories.
 
-Decision remains dependent on:
-- owner service priorities/economics;
-- Search Console/query evidence;
-- local demand/competitor evidence.
+This keeps the earlier service-page hypothesis alive: dedicated high-value service journeys may be useful, but the decision should still depend on business priority + search demand + conversion evidence rather than creating pages simply because individual services exist.
 
-**Evidence classification:** OBSERVED page architecture / optimization opportunity HYPOTHESIS
+**Evidence classification:** OBSERVED architecture / dedicated-service expansion remains HYPOTHESIS
 
 ---
 
 # 4. Production conversion observations
 
-The live public site exposes:
-- phone number;
-- contact form;
-- directions action;
-- business hours/location.
+The live site exposes prominent conversion paths:
+- Request an Appointment;
+- phone call;
+- Contact page;
+- location/directions context.
 
-The contact page form observed in the external crawl requests name and email and is protected by reCAPTCHA.
-
-The external crawl cannot prove successful form delivery, call attribution, conversion-event tracking, or booked-job outcomes.
-
-**Evidence classification:** OBSERVED paths / outcome UNKNOWN
-
----
-
-# 5. Analytics state
-
-The newer repository contains explicit event instrumentation for:
+The repository defines analytics events for:
 - `appointment_started`;
 - `appointment_submitted`;
 - `phone_click`;
 - `directions_click`.
 
-That implementation only activates with a valid `NEXT_PUBLIC_GA_MEASUREMENT_ID` and browser `gtag`.
+Because the Next.js repository is confirmed live, those event definitions are now relevant to the production implementation.
 
-Because the public domain currently appears to serve a different implementation, those repository events cannot be assumed to be active on `thashops.com` production.
+However, code presence still does **not** prove:
+- a valid production `NEXT_PUBLIC_GA_MEASUREMENT_ID` is configured;
+- `gtag` loads successfully;
+- events are reaching the intended GA4 property;
+- events are configured as key events where appropriate;
+- attribution parameters are sufficient;
+- appointment submissions result in successful lead delivery;
+- tracked actions become booked work.
+
+**Evidence classification:** production implementation CONFIRMED / analytics receipt UNKNOWN
+
+---
+
+# 5. Analytics state
 
 Current classification:
 
-**Repository measurement design:** OBSERVED  
-**Public-domain equivalent implementation:** NOT VERIFIED / likely different  
+**Production application:** CONFIRMED Next.js repository  
+**Analytics event design:** OBSERVED  
+**Production measurement ID:** NOT YET VERIFIED  
 **GA4 data receipt:** UNKNOWN  
 **Key-event configuration:** UNKNOWN  
-**Historical conversion baseline:** UNKNOWN
+**Historical conversion baseline:** UNKNOWN  
+**Lead-to-booked-job attribution:** UNKNOWN
+
+This restores **THA-001 — Validate production analytics and conversion events** as one of the highest-value P1 tasks.
 
 ---
 
 # 6. SEO/indexability observations
 
-Positive evidence:
-- the public homepage, About page, Auto Services page, and Contact page are externally discoverable/crawlable;
-- local Magnolia and service terminology appears in public content;
-- major service navigation is crawl-visible.
+Positive evidence from the current live site:
+- homepage is externally fetchable;
+- service navigation is crawl-visible;
+- Magnolia/Texas/FM 1488 local context is prominent;
+- primary service categories are linked from the homepage/navigation;
+- business address/phone/hours are present;
+- internal paths exist for service and project content;
+- current site title presents auto + motorcycle repair in Magnolia, TX.
 
-Concerns/opportunities:
-- public content is materially different from the current repository, so SEO work done only in the newer codebase may not affect production yet;
-- broad service consolidation may limit high-intent journey depth, pending demand evidence;
-- public crawl output contains duplicated headings/content patterns on Auto Services;
-- public homepage copy repeats keyword phrases heavily enough to warrant a quality/readability review rather than further keyword insertion;
-- singular/plural brand naming (`Tha Shop` vs `Tha Shops`) should be intentionally standardized when facts are confirmed.
+Still unknown without private search data:
+- Search Console impressions/clicks/queries;
+- index coverage;
+- priority landing-page performance;
+- branded vs non-branded demand;
+- local ranking visibility;
+- which services deserve dedicated pages;
+- whether indexed legacy URLs require additional redirect/cleanup work.
 
-No claim is made here about rankings, organic growth, index coverage, or Search Console health.
-
----
-
-# 7. Updated priority board
-
-## P0 — Deployment/domain-state confirmation
-
-### THA-011 — Determine which site is intended to be production
-
-**Category:** TECHNICAL / BUSINESS CONTEXT  
-**Evidence:** public `thashops.com` and current repository are materially different  
-**Impact:** CRITICAL  
-**Confidence:** HIGH  
-**Effort:** LOW initially  
-**Risk:** HIGH if wrong site is modified/deployed without confirmation  
-**Priority:** **P0**
-
-Required decision:
-- Is the existing public site intentionally still production while the Next.js site is staged?
-- Is the Next.js repository intended to replace it but has not yet been connected to the domain?
-- Is there another deployment URL/environment for the new site?
-
-Until resolved:
-- do not describe repository analytics as live;
-- do not assume repository SEO changes affect production;
-- do not perform an unapproved production cutover;
-- do not delete/overwrite the existing public site.
-
-This is a decision/confirmation P0, not authorization to deploy.
+No ranking or organic-growth claim is made from the crawl alone.
 
 ---
 
-## P1 — After deployment state is known
+# 7. Corrected priority board
 
-1. Confirm current owner business/service priorities.
-2. Validate analytics on the **actual production implementation**.
-3. Establish Search Console baseline for the production property.
-4. Establish GBP/local/reputation baseline.
-5. Validate live phone/contact/directions/customer journeys.
-6. Establish qualified-lead feedback loop.
-7. Reconcile brand/business facts across production, repository, GBP, citations, and social profiles.
-8. Use business + search evidence to choose high-value service journeys.
+## P0 — Immediate incidents
 
----
+**None confirmed from current evidence.**
 
-# 8. Deployment readiness questions
+The previous THA-011 deployment/domain-state P0 is **RESOLVED / FALSE POSITIVE** after Josh confirmed the Next.js application is already production and a fresh external fetch matched the current architecture.
 
-Before any domain cutover to the newer repository, validate:
-- production hosting target;
-- DNS/domain ownership/access;
-- environment variables;
-- analytics measurement ID;
-- appointment email/delivery configuration;
-- form abuse controls;
-- all primary routes;
-- redirects from old URLs;
-- sitemap/robots/canonical behavior;
-- LocalBusiness/business facts;
-- phone/directions links;
-- mobile navigation;
-- event content;
-- inventory/for-sale state;
-- privacy/terms requirements;
-- legacy Store/account behavior and whether it is intentionally being retired;
-- old-page URL inventory so useful indexed URLs are not accidentally lost.
+This is an important operating-system learning:
 
-A migration/cutover should be treated as a controlled conversion + SEO change, not simply a Vercel deploy.
+> A crawler/tool inconsistency must not be promoted into a production incident without corroboration when stronger evidence is available.
+
+## P1 — Highest-value current work
+
+1. **THA-003 — Confirm current owner business/service priorities.**
+2. **THA-001 — Validate production GA4 + conversion events.**
+3. **THA-002 — Establish Search Console + organic baseline.**
+4. **THA-007 — Establish GBP/local/reputation baseline.**
+5. **THA-010 — Complete live technical/customer-journey health validation.**
+6. **THA-004 — Establish a qualified-lead/booked-job feedback loop.**
+7. **THA-008 — Track recurring content/social capacity.**
+8. **THA-009 — Define Burnout Bash success/measurement while the event is time-sensitive.**
+
+### Dependency-driven P1
+
+**THA-005 — Review/build high-value service journeys** should move forward only after owner priority + Search Console/local demand evidence identify the best candidates.
+
+## P2
+
+- THA-006 — improve trust proof near priority service conversion decisions;
+- deeper competitor analysis around confirmed priority services;
+- reputation/review-system improvements after GBP baseline;
+- broader content architecture work supported by demand evidence.
 
 ---
 
-# 9. Immediate information needed from Josh / owner
+# 8. Live technical/customer-journey validation — first pass
 
-Only a small number of facts are now blocking the next high-value steps:
+From the externally accessible homepage:
+- primary navigation renders;
+- service navigation renders;
+- appointment CTA renders;
+- phone number renders;
+- current address/hours render;
+- project imagery/content renders;
+- Burnout Bash content renders with October 3–4, 2026 dates;
+- footer business information renders;
+- social links render.
 
-1. Is the Next.js `LiftEatCode/tha-shop` site intended to replace the current public GoDaddy-style site?
-2. If yes, has it already been deployed to a staging/Vercel URL?
-3. Which three service/job categories does Tha Shop most want more of right now?
-4. Is Burnout Bash primarily a community/brand event or expected to generate direct shop business?
-5. Does JS Solutions currently have access to GA4, Search Console, and the Tha Shop Google Business Profile?
+No obvious homepage-level P0 outage was identified in this pass.
 
-Do not expand this into a large questionnaire yet.
+Still to validate with browser/private operational access where appropriate:
+- appointment submission end-to-end;
+- notification/email delivery;
+- analytics event firing/receipt;
+- mobile interactions;
+- directions event;
+- phone event;
+- all priority routes/status codes;
+- production console/runtime errors;
+- Core Web Vitals/performance;
+- sitemap/robots/canonicals;
+- Search Console indexing state.
 
 ---
 
-# 10. What was accomplished in this execution pass
+# 9. Immediate information/access still needed
 
-Completed without private access:
-- compared public production evidence with repository architecture;
-- identified a production/repository mismatch;
-- verified core public business/contact facts exposed by the website;
-- reviewed public Auto Services architecture;
-- reviewed public conversion paths;
-- confirmed repository analytics event design;
-- established that repository analytics cannot currently be assumed live;
-- identified externally crawlable pages;
-- promoted deployment/domain-state confirmation to P0;
-- defined migration readiness checks if the newer site is intended for production.
+The deployment question is now closed.
 
-Blocked by private/owner context:
-- GA4 data validation;
+The next useful inputs are:
+1. Which three service/job categories does Tha Shop most want more of right now?
+2. Is Burnout Bash primarily a community/brand event, direct lead/customer campaign, or both?
+3. Does JS Solutions currently have access to the Tha Shop GA4 property?
+4. Does JS Solutions currently have Search Console access?
+5. Does JS Solutions currently have management access to the Tha Shop Google Business Profile?
+6. Can the shop provide a lightweight qualified-lead/booked-job feedback signal during the pilot?
+
+Do not turn this into a large client questionnaire yet.
+
+---
+
+# 10. What this corrected execution pass establishes
+
+Completed:
+- production Next.js implementation confirmed;
+- current live homepage independently fetched and matched to repository architecture;
+- false deployment mismatch removed;
+- core public business/contact facts verified;
+- live primary customer journeys observed;
+- repository analytics event design tied back to the confirmed production implementation;
+- no obvious homepage-level P0 outage found;
+- priority board restored to business + measurement + customer-journey work.
+
+Still blocked/unverified:
+- GA4 production data receipt;
 - Search Console baseline;
 - GBP performance baseline;
 - lead quality/booked-job data;
 - current service economics/capacity;
-- deployment intent/staging state.
+- end-to-end form/email validation;
+- browser-level analytics event validation.
+
+---
+
+# 11. Process learning for JS Solutions / JS OS
+
+The initial baseline pass produced a false mismatch because external crawl evidence was inconsistent with the actual production state.
+
+The correction creates a useful future rule:
+
+**External observation → compare repository → corroborate deployment evidence → classify confidence → only then escalate incident priority.**
+
+Suggested evidence order for deployment-state questions:
+1. explicit owner/operator confirmation;
+2. hosting/deployment metadata where available;
+3. live HTTP/browser evidence;
+4. repository configuration;
+5. third-party crawler/search cache evidence.
+
+A stale or inconsistent crawler result should be labeled as conflicting evidence, not treated as authoritative production truth.
+
+This should eventually become part of JS OS evidence-confidence behavior.
 
 ---
 
 # Core conclusion
 
-The first live baseline pass found something more important than another SEO tweak:
+The Next.js Tha Shop application is already live at `thashops.com`.
 
-> **The public `thashops.com` experience and the current Next.js repository are not the same system.**
+The baseline therefore returns to the intended problem:
 
-Before measuring, optimizing, or migrating at scale, JS Solutions must establish which implementation is authoritative and which is intended to become production.
+> **We have a capable live website and known conversion instrumentation, but we still need to connect business priorities → search/local demand → production conversion measurement → qualified leads → booked work.**
 
-This is exactly why the Local Growth System begins with baseline validation rather than immediately producing more work.
+The next highest-value work is measurement validation and business-priority confirmation, not migration or another redesign.
