@@ -316,7 +316,7 @@ model BusinessEvent {
 
   @@index([organizationId, occurredAt])
   @@index([organizationId, eventType])
-  @@index([sourceType, sourceId])
+  @@unique([organizationId, sourceType, sourceId])
 }
 
 model Approval {
