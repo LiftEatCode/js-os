@@ -2,14 +2,20 @@
 import { db } from '../prisma/db.ts';
 import { commitStateAndEvent } from '../business-commands/command.ts';
 import { runBusinessCommand } from '../business-commands/run.ts';
+import { cancelApprovalWithStore } from '../business-commands/approvals.ts';
 import { TOOL_EVENT_TYPES, toolLifecycleEvent } from './events.ts';
 import { InvalidToolTransitionError, ToolRequestNotFoundError } from './errors.ts';
 import {
+  getToolRequestByApprovalIdWithOrm,
   getToolRequestByIdWithOrm,
   listToolRequestsWithOrm,
   type ToolRequestListFilter,
 } from './request-persistence.ts';
-import { toolLifecycleStoreFromTx, type ToolLifecycleStore } from './lifecycle-store.ts';
+import {
+  approvalCommandStoreFromToolStore,
+  toolLifecycleStoreFromTx,
+  type ToolLifecycleStore,
+} from './lifecycle-store.ts';
 import { assertToolRequestTransition, canCancelToolRequest } from './lifecycle.ts';
 import type { ToolRequest, ToolRequestStatus } from './types.ts';
 
@@ -17,6 +23,10 @@ export type { ToolRequestListFilter };
 
 export async function getToolRequestById(id: string): Promise<ToolRequest | null> {
   return getToolRequestByIdWithOrm(db.orm, id);
+}
+
+export async function getToolRequestByApprovalId(approvalId: string): Promise<ToolRequest | null> {
+  return getToolRequestByApprovalIdWithOrm(db.orm, approvalId);
 }
 
 export async function listToolRequests(filter: ToolRequestListFilter): Promise<ToolRequest[]> {
@@ -41,6 +51,7 @@ async function transitionRequestWithStore(
   now: Temporal.Instant,
   eventType: string,
   titleFor: (request: ToolRequest) => string,
+  extras?: { reason?: string },
 ): Promise<ToolRequest> {
   const existing = await requireRequest(store, id);
   assertToolRequestTransition(existing.status, to);
@@ -54,6 +65,7 @@ async function transitionRequestWithStore(
           eventType,
           title: titleFor(request),
           now,
+          reason: extras?.reason,
         }),
       );
     },
@@ -94,6 +106,7 @@ export async function denyToolRequestWithStore(
   store: ToolLifecycleStore,
   id: string,
   now: Temporal.Instant = Temporal.Now.instant(),
+  reason?: string,
 ): Promise<ToolRequest> {
   return transitionRequestWithStore(
     store,
@@ -102,6 +115,7 @@ export async function denyToolRequestWithStore(
     now,
     TOOL_EVENT_TYPES.denied,
     (request) => `Tool request denied: ${request.toolName}`,
+    reason ? { reason } : undefined,
   );
 }
 
@@ -122,6 +136,22 @@ export async function cancelToolRequestWithStore(
     throw new InvalidToolTransitionError(
       'ToolRequest cannot be cancelled while a ToolExecution is RUNNING.',
     );
+  }
+
+  if (existing.approvalId) {
+    const approval = await store.getApprovalById(existing.approvalId);
+    if (approval?.status === 'PENDING') {
+      await cancelApprovalWithStore(
+        approvalCommandStoreFromToolStore(store),
+        approval.id,
+        {},
+        now,
+        {
+          sourceType: existing.requestedByType,
+          sourceId: existing.requestedById,
+        },
+      );
+    }
   }
 
   return commitStateAndEvent(

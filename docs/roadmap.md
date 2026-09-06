@@ -78,7 +78,7 @@ See [phase-02-command-center.md](phases/phase-02-command-center.md).
 
 **Key safety boundary:** No unrestricted model access to email, GitHub, payments, or production. Actors never call integration clients directly. `AgentDefinition.permissionLevel` is a ceiling, not a grant. `APPROVED ≠ EXECUTED`. No generic shell/HTTP/SQL/eval tools.
 
-**Exit criteria:** At least one internal non-production tool can be requested and denied/allowed according to documented permission rules. An approval-required path can wait, be authorized, and only then execute via explicit continuation. Technical permission evaluation and request/execution persistence exist (3.3–3.4); adapters and approval satisfaction do not.
+**Exit criteria:** At least one internal non-production tool can be requested and denied/allowed according to documented permission rules. An approval-required path can wait, be authorized, and only then execute via explicit continuation. Technical permission evaluation, request/execution persistence, and Approval integration exist (3.3–3.5); adapters do not.
 
 **Milestones:**
 
@@ -87,8 +87,8 @@ See [phase-02-command-center.md](phases/phase-02-command-center.md).
 3.2 Tool registry                        Implemented
 3.3 Permission evaluation                Implemented
 3.4 Tool request/execution lifecycle     Implemented
-3.5 Approval integration                 Next
-3.6 Internal safe tools                  Planned
+3.5 Approval integration                 Implemented
+3.6 Internal safe tools                  Next
 3.7 Tools Command Center                 Planned
 3.8 Phase 3 integration + validation     Planned
 ```

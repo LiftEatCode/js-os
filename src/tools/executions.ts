@@ -9,6 +9,7 @@ import {
   ToolExecutionNotFoundError,
   ToolRequestNotFoundError,
 } from './errors.ts';
+import { assertToolRequestAuthorizedForExecution } from './approval.ts';
 import {
   getToolExecutionByIdWithOrm,
   isUniqueViolation,
@@ -91,6 +92,9 @@ export async function createToolExecutionAttemptWithStore(
       `ToolExecution attempts can only be created for READY requests; found ${request.status}.`,
     );
   }
+
+  const approval = request.approvalId ? await store.getApprovalById(request.approvalId) : null;
+  assertToolRequestAuthorizedForExecution(request, approval, now);
 
   const existing = await store.listToolExecutionsForRequest(toolRequestId);
   if (existing.some((execution) => execution.status === 'QUEUED' || execution.status === 'RUNNING')) {

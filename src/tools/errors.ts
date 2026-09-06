@@ -81,3 +81,21 @@ export class ToolIdempotencyConflictError extends Error {
     this.existingRequestId = existingRequestId;
   }
 }
+
+export class ToolInvariantError extends Error {
+  readonly code = 'TOOL_INVARIANT';
+
+  constructor(message: string) {
+    super(message);
+    this.name = 'ToolInvariantError';
+  }
+}
+
+export class ToolAuthorizationError extends Error {
+  readonly code = 'TOOL_AUTHORIZATION';
+
+  constructor(message: string) {
+    super(message);
+    this.name = 'ToolAuthorizationError';
+  }
+}

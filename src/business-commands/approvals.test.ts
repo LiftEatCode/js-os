@@ -139,6 +139,26 @@ function storeFrom(scope: MemoryState): ApprovalCommandStore {
       scope.approvals.set(id, updated);
       return updated;
     },
+    async expirePending(id, decidedAt, reason) {
+      const existing = scope.approvals.get(id);
+      if (!existing) {
+        throw new BusinessStateNotFoundError(`Approval not found: ${id}`);
+      }
+      if (existing.status !== 'PENDING') {
+        throw new InvalidBusinessStateTransitionError(
+          `Approval cannot expire from status ${existing.status}; expected PENDING.`,
+        );
+      }
+      const updated: Approval = {
+        ...existing,
+        status: 'EXPIRED',
+        decidedAt,
+        decisionReason: reason?.trim() ? reason.trim() : 'Expired before authorization.',
+        updatedAt: decidedAt,
+      };
+      scope.approvals.set(id, updated);
+      return updated;
+    },
     async recordEvent(input) {
       if (scope.failOnEvent) {
         throw new Error('event failed');

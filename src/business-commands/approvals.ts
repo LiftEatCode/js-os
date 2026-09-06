@@ -14,6 +14,7 @@ export const APPROVAL_EVENT_TYPES = {
   approved: 'approval.approved',
   rejected: 'approval.rejected',
   cancelled: 'approval.cancelled',
+  expired: 'approval.expired',
 } as const;
 
 export type ApprovalCommandActor = {
@@ -30,6 +31,7 @@ export type ApprovalCommandStore = {
     input: ApprovalDecisionInput,
     now: Temporal.Instant,
   ): Promise<Approval>;
+  expirePending(id: string, now: Temporal.Instant, reason?: string | null): Promise<Approval>;
   recordEvent(input: RecordBusinessEventInput): Promise<void>;
 };
 

@@ -47,6 +47,34 @@ export async function getToolRequestByIdWithOrm(
   return orm.public.ToolRequest.where({ id }).first();
 }
 
+export async function getToolRequestByApprovalIdWithOrm(
+  orm: PersistenceOrm,
+  approvalId: string,
+): Promise<ToolRequest | null> {
+  return orm.public.ToolRequest.where({ approvalId }).first();
+}
+
+export async function attachToolRequestApprovalIdWithOrm(
+  orm: PersistenceOrm,
+  id: string,
+  approvalId: string,
+): Promise<ToolRequest> {
+  const updated = await orm.public.ToolRequest.where({ id, approvalId: null }).update({
+    approvalId,
+  });
+  const row = firstUpdated(updated);
+  if (row?.approvalId === approvalId) {
+    return row;
+  }
+  const current = await getToolRequestByIdWithOrm(orm, id);
+  if (!current) {
+    throw new ToolRequestNotFoundError(id);
+  }
+  throw new InvalidToolTransitionError(
+    `ToolRequest ${id} could not attach Approval ${approvalId}; current approvalId is ${current.approvalId}.`,
+  );
+}
+
 export async function findToolRequestByIdempotencyWithOrm(
   orm: PersistenceOrm,
   organizationId: string,

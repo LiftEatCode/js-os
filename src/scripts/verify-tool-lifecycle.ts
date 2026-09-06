@@ -121,6 +121,14 @@ async function cleanup(
 ): Promise<void> {
   const uniqueRequestIds = [...new Set(requestIds)];
   const uniqueExecutionIds = [...new Set(executionIds)];
+  const approvalIds: string[] = [];
+
+  for (const id of uniqueRequestIds) {
+    const request = await db.orm.public.ToolRequest.where({ id }).first();
+    if (request?.approvalId) {
+      approvalIds.push(request.approvalId);
+    }
+  }
 
   for (const id of uniqueExecutionIds) {
     await deleteById(db.orm.public.ToolExecution as unknown as Deletable, id);
@@ -134,16 +142,29 @@ async function cleanup(
   for (const id of uniqueRequestIds) {
     await deleteById(db.orm.public.ToolRequest as unknown as Deletable, id);
   }
+  for (const id of [...new Set(approvalIds)]) {
+    await deleteById(db.orm.public.Approval as unknown as Deletable, id);
+  }
 
   const events: Awaited<ReturnType<typeof listBusinessEvents>> = [];
-  for (const eventType of Object.values(TOOL_EVENT_TYPES)) {
+  for (const eventType of [
+    ...Object.values(TOOL_EVENT_TYPES),
+    'approval.requested',
+    'approval.approved',
+    'approval.rejected',
+    'approval.cancelled',
+    'approval.expired',
+  ]) {
     events.push(
       ...(await listBusinessEvents({ organizationId, eventType, limit: 100 })),
     );
   }
   for (const event of events) {
-    const metadata = event.metadata as { toolRequestId?: string } | null;
-    if (metadata?.toolRequestId && uniqueRequestIds.includes(metadata.toolRequestId)) {
+    const metadata = event.metadata as { toolRequestId?: string; approvalId?: string } | null;
+    if (
+      (metadata?.toolRequestId && uniqueRequestIds.includes(metadata.toolRequestId)) ||
+      (metadata?.approvalId && approvalIds.includes(metadata.approvalId))
+    ) {
       await deleteById(db.orm.public.BusinessEvent as unknown as Deletable, event.id);
     }
   }
@@ -172,10 +193,6 @@ try {
 
   const requestIds: string[] = [];
   const executionIds: string[] = [];
-  const approvalCountBefore = (await db.orm.public.Approval.where({
-    organizationId: organization.id,
-    actionType: 'test.approval_action',
-  }).all()).length;
 
   try {
     const user = createUserToolActor();
@@ -225,7 +242,7 @@ try {
     }
     console.log('  passed');
 
-    console.log('Scenario C: ALWAYS → WAITING_APPROVAL, zero executions, no Approval row');
+    console.log('Scenario C: ALWAYS → WAITING_APPROVAL with a PENDING Approval, zero executions');
     const waiting = await requestToolUse({
       organizationId: organization.id,
       actor: user,
@@ -234,17 +251,16 @@ try {
     });
     requestIds.push(waiting.id);
     const waitingExecutions = await listToolExecutionsForRequest(waiting.id);
-    const approvalCountAfter = (await db.orm.public.Approval.where({
-      organizationId: organization.id,
-      actionType: 'test.approval_action',
-    }).all()).length;
     if (
       waiting.status !== 'WAITING_APPROVAL' ||
-      waiting.approvalId != null ||
-      waitingExecutions.length !== 0 ||
-      approvalCountAfter !== approvalCountBefore
+      waiting.approvalId == null ||
+      waitingExecutions.length !== 0
     ) {
-      throw new Error('Scenario C expected WAITING_APPROVAL without Approval or executions');
+      throw new Error('Scenario C expected WAITING_APPROVAL with Approval and zero executions');
+    }
+    const linkedApproval = await db.orm.public.Approval.where({ id: waiting.approvalId }).first();
+    if (linkedApproval?.status !== 'PENDING' || linkedApproval.actionType !== 'tool.execute') {
+      throw new Error('Scenario C expected a PENDING tool.execute Approval');
     }
     console.log('  passed');
 
@@ -358,7 +374,11 @@ try {
       for (const execution of executions) {
         await deleteById(db.orm.public.ToolExecution as unknown as Deletable, execution.id);
       }
+      const approvalId = row.approvalId;
       await deleteById(db.orm.public.ToolRequest as unknown as Deletable, row.id);
+      if (approvalId) {
+        await deleteById(db.orm.public.Approval as unknown as Deletable, approvalId);
+      }
     }
     console.log('cleanup complete');
   }

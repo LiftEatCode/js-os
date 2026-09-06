@@ -3,8 +3,10 @@ export {
   InvalidToolDefinitionError,
   InvalidToolInputError,
   InvalidToolTransitionError,
+  ToolAuthorizationError,
   ToolExecutionNotFoundError,
   ToolIdempotencyConflictError,
+  ToolInvariantError,
   ToolNotFoundError,
   ToolRequestNotFoundError,
 } from './errors.ts';
@@ -75,12 +77,25 @@ export {
 
 export { TOOL_EVENT_TYPES } from './events.ts';
 
+export {
+  TOOL_APPROVAL_PAYLOAD_KIND,
+  TOOL_DENIAL_REASONS,
+  TOOL_EXECUTE_ACTION_TYPE,
+  assertToolRequestAuthorizedForExecution,
+  mapToolActorToApprovalRequester,
+  mapToolRiskToApprovalRisk,
+  toolApprovalDescription,
+  toolApprovalTitle,
+} from './approval.ts';
+export type { ToolApprovalPayload, ToolDenialReason } from './approval.ts';
+
 export { requestToolUse } from './request-tool.ts';
 export type { RequestToolUseInput } from './request-tool.ts';
 
 export {
   cancelToolRequest,
   denyToolRequest,
+  getToolRequestByApprovalId,
   getToolRequestById,
   listToolRequests,
   markToolRequestReady,

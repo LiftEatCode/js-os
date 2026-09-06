@@ -378,11 +378,11 @@ Full request, payload JSON, related Work Item (link to `/app/work/[id]`), relate
 
 ### Overview and Activity
 
-Pending Approval rows and Owner Attention link to `/app/approvals/[approvalId]`. Events `approval.requested` / `approval.approved` / `approval.rejected` / `approval.cancelled` appear on Activity. Overview pending count uses `listPendingApprovals()`.
+Pending Approval rows and Owner Attention link to `/app/approvals/[approvalId]`. Tool-linked Approvals appear in the same queue because they are real Approval rows. Approve still does not execute. Events `approval.requested` / `approval.approved` / `approval.rejected` / `approval.cancelled` / `approval.expired` appear on Activity. Overview pending count uses `listPendingApprovals()`.
 
 ### Not in 2.6
 
-Tool execution, automatic Approval creation from `WAITING_APPROVAL`, approval chains, RBAC, expiration workers, notifications, queues, or fabricated Approvals.
+Tool execution, approval chains, RBAC, expiration workers, notifications, queues, or fabricated Approvals. Milestone 3.5 creates Approvals together with ALWAYS ToolRequests; it does not scan `WAITING_APPROVAL` later or execute on approve.
 
 ## Agents (Milestone 2.7)
 

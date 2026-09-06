@@ -24,7 +24,7 @@ Details: [approval system](../architecture/approval-system.md).
    - spending money
    - production deployments
    - refunds
-3. Future tooling will evaluate whether a tool request needs an Approval. The Phase 3 design is static `NEVER` / `ALWAYS` on the tool definition ([tool architecture](../architecture/tool-architecture.md)). That evaluator is not implemented.
+3. Future tooling evaluates whether a tool request needs an Approval using static `NEVER` / `ALWAYS` on the tool definition ([tool architecture](../architecture/tool-architecture.md)). Milestone 3.5 creates and decides those Approvals. Conditional policy is Phase 4.
 4. An `EXECUTE` permission level does not skip this policy.
 
 Do not invent numeric spend thresholds or a complete `actionType` catalog here. Those belong with tools.

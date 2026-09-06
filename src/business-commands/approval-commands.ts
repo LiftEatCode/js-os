@@ -2,6 +2,7 @@
 import {
   applyApprovalDecisionWithOrm,
   createApprovalRequestWithOrm,
+  expirePendingApprovalWithOrm,
   getApprovalByIdWithOrm,
 } from '../business-state/approval-persistence.ts';
 import { recordBusinessEventWithOrm } from '../business-state/business-events.ts';
@@ -11,14 +12,17 @@ import type {
   CreateApprovalRequestInput,
 } from '../business-state/types.ts';
 import {
-  approveApprovalWithStore,
-  cancelApprovalWithStore,
-  requestApprovalWithStore,
-  rejectApprovalWithStore,
   type ApprovalCommandActor,
   type ApprovalCommandStore,
+  requestApprovalWithStore,
 } from './approvals.ts';
 import { runBusinessCommand, type BusinessCommandTx } from './run.ts';
+import { toolLifecycleStoreFromTx } from '../tools/lifecycle-store.ts';
+import {
+  approveApprovalAndLinkedToolRequest,
+  cancelApprovalAndLinkedToolRequest,
+  rejectApprovalAndLinkedToolRequest,
+} from '../tools/approval-decisions.ts';
 
 const OWNER_ACTOR: ApprovalCommandActor = {
   sourceType: 'USER',
@@ -31,6 +35,7 @@ function storeFromTx(tx: BusinessCommandTx): ApprovalCommandStore {
     createApproval: (input) => createApprovalRequestWithOrm(tx.orm, input),
     applyDecision: (id, status, input, now) =>
       applyApprovalDecisionWithOrm(tx.orm, id, status, input, now),
+    expirePending: (id, now, reason) => expirePendingApprovalWithOrm(tx.orm, id, now, reason),
     recordEvent: async (input) => {
       await recordBusinessEventWithOrm(tx.orm, input);
     },
@@ -53,6 +58,7 @@ export async function requestApprovalCommand(
 /**
  * Records owner authorization. APPROVED ≠ EXECUTED.
  * Does not call tools, APIs, complete WorkItems, or continue AgentRuns.
+ * A linked WAITING_APPROVAL ToolRequest becomes READY in the same transaction.
  */
 export async function approveApprovalCommand(
   id: string,
@@ -60,7 +66,14 @@ export async function approveApprovalCommand(
   actor: ApprovalCommandActor = OWNER_ACTOR,
 ): Promise<Approval> {
   return runBusinessCommand(async (tx) => {
-    return approveApprovalWithStore(storeFromTx(tx), id, input, Temporal.Now.instant(), actor);
+    return approveApprovalAndLinkedToolRequest(
+      storeFromTx(tx),
+      toolLifecycleStoreFromTx(tx),
+      id,
+      input,
+      Temporal.Now.instant(),
+      actor,
+    );
   });
 }
 
@@ -70,7 +83,14 @@ export async function rejectApprovalCommand(
   actor: ApprovalCommandActor = OWNER_ACTOR,
 ): Promise<Approval> {
   return runBusinessCommand(async (tx) => {
-    return rejectApprovalWithStore(storeFromTx(tx), id, input, Temporal.Now.instant(), actor);
+    return rejectApprovalAndLinkedToolRequest(
+      storeFromTx(tx),
+      toolLifecycleStoreFromTx(tx),
+      id,
+      input,
+      Temporal.Now.instant(),
+      actor,
+    );
   });
 }
 
@@ -80,6 +100,13 @@ export async function cancelApprovalCommand(
   actor: ApprovalCommandActor = OWNER_ACTOR,
 ): Promise<Approval> {
   return runBusinessCommand(async (tx) => {
-    return cancelApprovalWithStore(storeFromTx(tx), id, input, Temporal.Now.instant(), actor);
+    return cancelApprovalAndLinkedToolRequest(
+      storeFromTx(tx),
+      toolLifecycleStoreFromTx(tx),
+      id,
+      input,
+      Temporal.Now.instant(),
+      actor,
+    );
   });
 }

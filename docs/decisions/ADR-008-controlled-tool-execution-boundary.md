@@ -9,15 +9,15 @@ Accepted
 - ToolDefinition + ToolRegistry (3.2)
 - technical permission evaluator (3.3)
 - request/execution lifecycle services (3.4)
+- Approval integration (3.5): ALWAYS requests create PENDING Approvals; owner decisions move the request to READY / DENIED / CANCELLED; execution attempts require a valid APPROVED Approval. `APPROVED ≠ EXECUTED`.
 
 **Planned:**
-- approval integration (3.5)
 - execution coordinator / adapters
 - real tools
 - external adapters
 - Command Center Tools
 
-The execution boundary is not fully enforced yet. 3.4 persists requests and attempts and consumes `evaluateToolPermission`. It does not call adapters, create Approval rows, or run tools.
+The execution boundary is not fully enforced yet. 3.4–3.5 persist requests, attempts, and authorization. They do not call adapters or run tools.
 
 ## Context
 
@@ -39,7 +39,7 @@ A single execution row would force authorization, attempt, retry, and result int
 1. Actors never call integration clients, Prisma, or business-state mutations directly. Every executable capability passes through a registered tool and a centralized authorization/execution coordinator.
 2. The immutable capability contract (slug, name, description, required permission, risk, approval requirement, version, schemas, implementation) lives in a **code registry**. Executable code is never stored in the database.
 3. Durable operational records are **ToolRequest** (one logical action, including authorization) and **ToolExecution** (one attempt). Phase 3 may create at most one attempt per request. The schema must allow additional attempts later.
-4. Approval remains authorization. `APPROVED ≠ EXECUTED`. A tool-linked Approval points at the ToolRequest; the request holds validated input. Approval `payload` must not become a second copy of the execution body.
+4. Approval remains authorization. `APPROVED ≠ EXECUTED`. A tool-linked Approval is related through `ToolRequest.approvalId`. The request holds validated input. Approval `payload` is a frozen proposed-action snapshot (including validated input for owner review) and must not be treated as the execution record. `ToolExecution` is the attempt. Credentials never belong in payload.
 5. Permission evaluation and approval evaluation are separate deterministic services. The tool adapter does not decide either.
 6. Internal tools call existing business commands. They do not use Prisma directly and do not bypass command rules.
 7. External side effects cannot join ADR-007’s single-database transaction. Intent is persisted first, the effect runs, then result and BusinessEvent are persisted. Partial-failure windows are accepted and documented; there is no distributed transaction.

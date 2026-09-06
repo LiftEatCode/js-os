@@ -27,6 +27,8 @@ export type ToolEventMetadata = {
   toolExecutionId?: string;
   attemptNumber?: string;
   denialCode?: ToolPermissionDenialCode;
+  approvalId?: string;
+  reason?: string;
 };
 
 export function toolEventSourceType(requestedByType: ToolActorType): 'USER' | 'AGENT' | 'SYSTEM' {
@@ -49,6 +51,12 @@ function metadata(fields: ToolEventMetadata): Record<string, string> {
   if (fields.denialCode) {
     result.denialCode = fields.denialCode;
   }
+  if (fields.approvalId) {
+    result.approvalId = fields.approvalId;
+  }
+  if (fields.reason) {
+    result.reason = fields.reason;
+  }
   return result;
 }
 
@@ -59,6 +67,7 @@ export function toolLifecycleEvent(input: {
   now: Temporal.Instant;
   execution?: ToolExecution;
   denialCode?: ToolPermissionDenialCode;
+  reason?: string;
 }): RecordBusinessEventInput {
   return {
     organizationId: input.request.organizationId,
@@ -79,6 +88,8 @@ export function toolLifecycleEvent(input: {
           }
         : {}),
       ...(input.denialCode ? { denialCode: input.denialCode } : {}),
+      ...(input.request.approvalId ? { approvalId: input.request.approvalId } : {}),
+      ...(input.reason ? { reason: input.reason } : {}),
     }),
   };
 }

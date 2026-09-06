@@ -29,15 +29,39 @@ export function isTerminalApprovalStatus(status: ApprovalStatus): boolean {
 }
 
 /**
- * Derived UI information only. Does not mutate status.
- * A PENDING row with expiresAt in the past is still PENDING, not EXPIRED.
+ * Authorization is invalid when expiresAt is set and is at or before now.
+ * Used at decision and execution boundaries. There is no expiration worker.
+ */
+export function isApprovalAuthorizationExpired(
+  expiresAt: Temporal.Instant | null,
+  now: Temporal.Instant,
+): boolean {
+  return expiresAt !== null && Temporal.Instant.compare(expiresAt, now) <= 0;
+}
+
+/**
+ * Derived UI information only. Does not mutate status by itself.
+ * A PENDING row with expiresAt in the past is still PENDING until a decision
+ * boundary persists EXPIRED.
  */
 export function isPendingPastExpiration(
   status: ApprovalStatus,
   expiresAt: Temporal.Instant | null,
   now: Temporal.Instant,
 ): boolean {
-  return status === 'PENDING' && expiresAt !== null && Temporal.Instant.compare(expiresAt, now) < 0;
+  return status === 'PENDING' && isApprovalAuthorizationExpired(expiresAt, now);
+}
+
+export function nextApprovalExpiration(
+  now: Temporal.Instant,
+  reason?: string | null,
+): { status: 'EXPIRED'; decidedAt: Temporal.Instant; decisionReason: string } {
+  const trimmed = reason?.trim() ?? '';
+  return {
+    status: 'EXPIRED',
+    decidedAt: now,
+    decisionReason: trimmed.length === 0 ? 'Expired before authorization.' : trimmed,
+  };
 }
 
 export function requireRejectionReason(reason: string | null | undefined): string {

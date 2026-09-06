@@ -95,6 +95,12 @@ Persisted request/execution lifecycle (development only; creates then deletes ro
 npm run tool-lifecycle:verify
 ```
 
+ToolRequest ↔ Approval integration (development only; creates then deletes rows; requires `JS_OS_TOOL_APPROVAL_VERIFY_TARGET=development`):
+
+```bash
+npm run tool-approval:verify
+```
+
 ## Source of truth
 
 ```text

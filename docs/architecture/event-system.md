@@ -57,6 +57,7 @@ approval.requested
 approval.approved
 approval.rejected
 approval.cancelled
+approval.expired
 
 agent.status_changed
 agent.permission_changed
@@ -75,7 +76,7 @@ tool.execution_failed
 tool.cancelled
 ```
 
-`tool.*` types above are emitted by the 3.4 lifecycle services (`src/tools/events.ts`). Creation emits the routed outcome (`tool.ready` / `tool.waiting_approval` / `tool.denied`), not a separate `tool.requested`. `tool.waiting_approval` does not imply an Approval row exists (3.5). Approval activity stays on `approval.*`.
+`tool.*` types above are emitted by the lifecycle services (`src/tools/events.ts`). Creation emits the routed outcome (`tool.ready` / `tool.waiting_approval` / `tool.denied`), not a separate `tool.requested`. ALWAYS creation also records `approval.requested`. Tool-linked owner decisions may record both `approval.approved` and `tool.ready` (or `approval.rejected` and `tool.denied`) in one transaction. `approval.expired` is a decision-boundary event, not a worker. Metadata uses IDs (`toolRequestId`, `approvalId`, slug, version, status, `reason`); it does not copy Approval.payload.
 
 Do not turn `eventType` into a schema enum.
 

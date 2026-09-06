@@ -1,6 +1,6 @@
 /// <reference types="temporal-polyfill/types/global" />
-import { nextApprovalDecision } from './approval-lifecycle.ts';
-import { BusinessStateNotFoundError } from './errors.ts';
+import { nextApprovalDecision, nextApprovalExpiration } from './approval-lifecycle.ts';
+import { BusinessStateNotFoundError, InvalidBusinessStateTransitionError } from './errors.ts';
 import type { PersistenceOrm } from './persistence.ts';
 import type {
   Approval,
@@ -94,16 +94,64 @@ export async function applyApprovalDecisionWithOrm(
   }
 
   const patch = nextApprovalDecision(status, input.decisionReason, now);
-
-  await orm.public.Approval.where({ id }).update({
+  const updated = await orm.public.Approval.where({ id, status: 'PENDING' }).update({
     status: patch.status,
     decidedAt: patch.decidedAt,
     decisionReason: patch.decisionReason,
   });
+  const row = firstUpdated(updated);
+  if (row) {
+    return row;
+  }
 
-  const updated = await getApprovalByIdWithOrm(orm, id);
-  if (!updated) {
+  const current = await getApprovalByIdWithOrm(orm, id);
+  if (!current) {
     throw new BusinessStateNotFoundError(`Approval not found after decision: ${id}`);
   }
-  return updated;
+  throw new InvalidBusinessStateTransitionError(
+    `Approval cannot transition from ${current.status} to ${status}.`,
+  );
+}
+
+export async function expirePendingApprovalWithOrm(
+  orm: PersistenceOrm,
+  id: string,
+  now: Temporal.Instant = Temporal.Now.instant(),
+  reason?: string | null,
+): Promise<Approval> {
+  const existing = await getApprovalByIdWithOrm(orm, id);
+  if (!existing) {
+    throw new BusinessStateNotFoundError(`Approval not found: ${id}`);
+  }
+  if (existing.status !== 'PENDING') {
+    throw new InvalidBusinessStateTransitionError(
+      `Approval cannot expire from status ${existing.status}; expected PENDING.`,
+    );
+  }
+
+  const patch = nextApprovalExpiration(now, reason);
+  const updated = await orm.public.Approval.where({ id, status: 'PENDING' }).update({
+    status: patch.status,
+    decidedAt: patch.decidedAt,
+    decisionReason: patch.decisionReason,
+  });
+  const row = firstUpdated(updated);
+  if (row) {
+    return row;
+  }
+
+  const current = await getApprovalByIdWithOrm(orm, id);
+  if (!current) {
+    throw new BusinessStateNotFoundError(`Approval not found after expiration: ${id}`);
+  }
+  throw new InvalidBusinessStateTransitionError(
+    `Approval cannot expire from status ${current.status}; expected PENDING.`,
+  );
+}
+
+function firstUpdated<T>(updated: T | T[] | null | undefined): T | undefined {
+  if (updated == null) {
+    return undefined;
+  }
+  return Array.isArray(updated) ? updated[0] : updated;
 }

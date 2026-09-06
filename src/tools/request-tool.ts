@@ -14,12 +14,18 @@ import { TOOL_EVENT_TYPES, toolLifecycleEvent } from './events.ts';
 import { InvalidToolInputError, ToolIdempotencyConflictError } from './errors.ts';
 import { isUniqueViolation } from './execution-persistence.ts';
 import { asJsonValue, jsonValuesEqual } from './json.ts';
-import { toolLifecycleStoreFromTx, type ToolLifecycleStore } from './lifecycle-store.ts';
+import { createToolApprovalRequestInput } from './approval.ts';
+import {
+  approvalCommandStoreFromToolStore,
+  toolLifecycleStoreFromTx,
+  type ToolLifecycleStore,
+} from './lifecycle-store.ts';
 import {
   findToolRequestByIdempotencyWithOrm,
   type CreateToolRequestRecordInput,
 } from './request-persistence.ts';
 import type { ToolActorType, ToolRequest } from './types.ts';
+import { requestApprovalWithStore } from '../business-commands/approvals.ts';
 
 export type RequestToolUseInput = {
   organizationId: string;
@@ -263,6 +269,22 @@ export async function requestToolUseWithStore(
       }
       return existing;
     }
+  }
+
+  if (status === 'WAITING_APPROVAL') {
+    const created = await store.createToolRequest(record);
+    const approval = await requestApprovalWithStore(
+      approvalCommandStoreFromToolStore(store),
+      createToolApprovalRequestInput(created),
+      now,
+      {
+        sourceType: created.requestedByType,
+        sourceId: created.requestedById,
+      },
+    );
+    const attached = await store.attachToolRequestApprovalId(created.id, approval.id);
+    await store.recordEvent(creationEvent(attached, now, permission.code));
+    return attached;
   }
 
   return commitStateAndEvent(

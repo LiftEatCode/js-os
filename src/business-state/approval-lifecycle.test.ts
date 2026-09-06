@@ -3,9 +3,11 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import { InvalidBusinessStateInputError } from './errors.ts';
 import {
+  isApprovalAuthorizationExpired,
   isPendingPastExpiration,
   isTerminalApprovalStatus,
   nextApprovalDecision,
+  nextApprovalExpiration,
   requireRejectionReason,
 } from './approval-lifecycle.ts';
 import { assertApprovalCanCancel, assertApprovalCanDecide } from './validation.ts';
@@ -63,10 +65,19 @@ describe('Approval lifecycle', () => {
     assert.equal(nextApprovalDecision('CANCELLED', undefined, now).decisionReason, null);
   });
 
-  it('does not treat a past expiresAt as persisted EXPIRED', () => {
+  it('does not treat a past expiresAt as persisted EXPIRED until a decision boundary', () => {
     assert.equal(isPendingPastExpiration('PENDING', earlier, now), true);
+    assert.equal(isPendingPastExpiration('PENDING', now, now), true);
     assert.equal(isPendingPastExpiration('PENDING', null, now), false);
     assert.equal(isPendingPastExpiration('APPROVED', earlier, now), false);
     assert.equal(isPendingPastExpiration('EXPIRED', earlier, now), false);
+    assert.equal(isApprovalAuthorizationExpired(earlier, now), true);
+    assert.equal(isApprovalAuthorizationExpired(now, now), true);
+    assert.equal(isApprovalAuthorizationExpired(null, now), false);
+    assert.deepEqual(nextApprovalExpiration(now), {
+      status: 'EXPIRED',
+      decidedAt: now,
+      decisionReason: 'Expired before authorization.',
+    });
   });
 });

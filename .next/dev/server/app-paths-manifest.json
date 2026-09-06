@@ -1,13 +1,7 @@
 {
-  "/app/activity/page": "app/app/activity/page.js",
-  "/app/agents/page": "app/app/agents/page.js",
-  "/app/approvals/new/page": "app/app/approvals/new/page.js",
-  "/app/approvals/page": "app/app/approvals/page.js",
-  "/app/goals/new/page": "app/app/goals/new/page.js",
+  "/_not-found/page": "app/_not-found/page.js",
   "/app/goals/page": "app/app/goals/page.js",
   "/app/knowledge/page": "app/app/knowledge/page.js",
   "/app/page": "app/app/page.js",
-  "/app/work/new/page": "app/app/work/new/page.js",
-  "/app/work/page": "app/app/work/page.js",
   "/page": "app/page.js"
 }

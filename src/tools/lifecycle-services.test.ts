@@ -5,9 +5,14 @@ import { z } from 'zod';
 import type {
   AgentDefinition,
   AgentRun,
+  Approval,
+  ApprovalDecisionInput,
+  CreateApprovalRequestInput,
   RecordBusinessEventInput,
   WorkItem,
 } from '../business-state/types.ts';
+import { BusinessStateNotFoundError, InvalidBusinessStateTransitionError } from '../business-state/errors.ts';
+import { nextApprovalDecision } from '../business-state/approval-lifecycle.ts';
 import { defineTool } from './definition.ts';
 import {
   createAgentToolActor,
@@ -17,9 +22,21 @@ import {
 import {
   InvalidToolInputError,
   InvalidToolTransitionError,
+  ToolAuthorizationError,
   ToolIdempotencyConflictError,
+  ToolInvariantError,
 } from './errors.ts';
 import { TOOL_EVENT_TYPES } from './events.ts';
+import {
+  TOOL_DENIAL_REASONS,
+  TOOL_EXECUTE_ACTION_TYPE,
+} from './approval.ts';
+import {
+  approveApprovalAndLinkedToolRequest,
+  cancelApprovalAndLinkedToolRequest,
+  rejectApprovalAndLinkedToolRequest,
+} from './approval-decisions.ts';
+import { approvalCommandStoreFromToolStore } from './lifecycle-store.ts';
 import {
   cancelQueuedToolExecutionWithStore,
   completeToolExecutionWithStore,
@@ -43,6 +60,7 @@ type MemoryState = {
   runs: Map<string, AgentRun>;
   workItems: Map<string, WorkItem>;
   requests: Map<string, ToolRequest>;
+  approvals: Map<string, Approval>;
   executions: Map<string, ToolExecution>;
   events: RecordBusinessEventInput[];
   nextId: number;
@@ -55,6 +73,7 @@ function emptyState(): MemoryState {
     runs: new Map(),
     workItems: new Map(),
     requests: new Map(),
+    approvals: new Map(),
     executions: new Map(),
     events: [],
     nextId: 1,
@@ -114,6 +133,22 @@ function memoryStore(state: MemoryState): ToolLifecycleStore {
       state.requests.set(created.id, created);
       return created;
     },
+    async attachToolRequestApprovalId(id, approvalId) {
+      const existing = state.requests.get(id);
+      if (!existing || existing.approvalId != null) {
+        throw new InvalidToolTransitionError(
+          `ToolRequest ${id} could not attach Approval ${approvalId}.`,
+        );
+      }
+      const updated = { ...existing, approvalId };
+      state.requests.set(id, updated);
+      return updated;
+    },
+    async getToolRequestByApprovalId(approvalId) {
+      return (
+        [...state.requests.values()].find((request) => request.approvalId === approvalId) ?? null
+      );
+    },
     async transitionToolRequestStatus(id, from, to) {
       const existing = state.requests.get(id);
       if (!existing || existing.status !== from) {
@@ -123,6 +158,74 @@ function memoryStore(state: MemoryState): ToolLifecycleStore {
       }
       const updated = { ...existing, status: to as ToolRequestStatus, updatedAt: now };
       state.requests.set(id, updated);
+      return updated;
+    },
+    async getApprovalById(id) {
+      return state.approvals.get(id) ?? null;
+    },
+    async createApproval(input: CreateApprovalRequestInput) {
+      const created: Approval = {
+        id: `approval-${state.nextId++}`,
+        organizationId: input.organizationId,
+        title: input.title,
+        actionType: input.actionType,
+        riskLevel: input.riskLevel,
+        requestedByType: input.requestedByType,
+        status: 'PENDING',
+        description: input.description ?? null,
+        workItemId: input.workItemId ?? null,
+        agentRunId: input.agentRunId ?? null,
+        requestedById: input.requestedById ?? null,
+        requestedAt: now,
+        decidedAt: null,
+        decisionReason: null,
+        expiresAt: input.expiresAt ?? null,
+        payload: input.payload ?? null,
+        createdAt: now,
+        updatedAt: now,
+      };
+      state.approvals.set(created.id, created);
+      return created;
+    },
+    async applyApprovalDecision(id, status, input: ApprovalDecisionInput, decidedAt) {
+      const existing = state.approvals.get(id);
+      if (!existing) {
+        throw new BusinessStateNotFoundError(`Approval not found: ${id}`);
+      }
+      if (existing.status !== 'PENDING') {
+        throw new InvalidBusinessStateTransitionError(
+          `Approval cannot transition from ${existing.status} to ${status}.`,
+        );
+      }
+      const patch = nextApprovalDecision(status, input.decisionReason, decidedAt);
+      const updated: Approval = {
+        ...existing,
+        status: patch.status,
+        decidedAt: patch.decidedAt,
+        decisionReason: patch.decisionReason,
+        updatedAt: decidedAt,
+      };
+      state.approvals.set(id, updated);
+      return updated;
+    },
+    async expirePendingApproval(id, decidedAt, reason) {
+      const existing = state.approvals.get(id);
+      if (!existing) {
+        throw new BusinessStateNotFoundError(`Approval not found: ${id}`);
+      }
+      if (existing.status !== 'PENDING') {
+        throw new InvalidBusinessStateTransitionError(
+          `Approval cannot expire from status ${existing.status}; expected PENDING.`,
+        );
+      }
+      const updated: Approval = {
+        ...existing,
+        status: 'EXPIRED',
+        decidedAt,
+        decisionReason: reason?.trim() ? reason.trim() : 'Expired before authorization.',
+        updatedAt: decidedAt,
+      };
+      state.approvals.set(id, updated);
       return updated;
     },
     async getToolExecutionById(id) {
@@ -340,7 +443,7 @@ describe('requestToolUseWithStore', () => {
     assert.equal(state.events[0]?.eventType, TOOL_EVENT_TYPES.ready);
   });
 
-  it('routes ALWAYS tools to WAITING_APPROVAL without an Approval row', async () => {
+  it('routes ALWAYS tools to WAITING_APPROVAL with a PENDING Approval', async () => {
     const state = emptyState();
     const store = memoryStore(state);
     const request = await requestToolUseWithStore(
@@ -354,10 +457,19 @@ describe('requestToolUseWithStore', () => {
       now,
     );
     assert.equal(request.status, 'WAITING_APPROVAL');
-    assert.equal(request.approvalId, null);
+    assert.ok(request.approvalId);
+    const approval = state.approvals.get(request.approvalId);
+    assert.equal(approval?.status, 'PENDING');
     assert.equal(request.requestedByType, 'SYSTEM');
     assert.equal(request.requestedById, null);
-    assert.equal(state.events[0]?.eventType, TOOL_EVENT_TYPES.waitingApproval);
+    assert.equal(
+      state.events.some((event) => event.eventType === TOOL_EVENT_TYPES.waitingApproval),
+      true,
+    );
+    assert.equal(
+      state.events.some((event) => event.eventType === 'approval.requested'),
+      true,
+    );
   });
 
   it('persists DENIED when permission evaluation denies, with zero executions', async () => {
@@ -742,5 +854,365 @@ describe('public ToolRequest API', () => {
     assert.equal('failToolRequestWithStore' in toolsPublicApi, false);
     assert.equal('completeToolExecution' in toolsPublicApi, true);
     assert.equal('failToolExecution' in toolsPublicApi, true);
+  });
+});
+
+const ownerActor = { sourceType: 'USER' as const, sourceId: null };
+
+async function waitingApprovalRequest(store: ToolLifecycleStore, risk: ToolRequest['riskLevel'] = 'MEDIUM') {
+  const definition = defineTool({
+    slug: 'test.approval_action',
+    name: 'Approval Action',
+    description: 'Test tool that routes to WAITING_APPROVAL.',
+    version: 1,
+    enabled: true,
+    requiredPermission: 'PREPARE',
+    riskLevel: risk,
+    approvalRequirement: 'ALWAYS',
+    persistExecution: true,
+    inputSchema: z.object({ title: z.string().min(1) }),
+  });
+  return requestToolUseWithStore(
+    store,
+    {
+      organizationId: 'org-1',
+      actor: createUserToolActor('owner'),
+      definition,
+      input: { title: 'Needs review' },
+    },
+    now,
+  );
+}
+
+describe('tool approval integration', () => {
+  it('creates a PENDING Approval, links approvalId, and snapshots payload', async () => {
+    const state = emptyState();
+    const store = memoryStore(state);
+    const request = await waitingApprovalRequest(store, 'HIGH');
+    assert.equal(request.status, 'WAITING_APPROVAL');
+    assert.ok(request.approvalId);
+    const approval = state.approvals.get(request.approvalId);
+    assert.equal(approval?.status, 'PENDING');
+    assert.equal(approval?.actionType, TOOL_EXECUTE_ACTION_TYPE);
+    assert.equal(approval?.title, 'Approve tool: Approval Action');
+    assert.equal(
+      approval?.description,
+      'Authorize JS OS to execute the Approval Action capability.',
+    );
+    assert.equal(approval?.riskLevel, 'HIGH');
+    assert.equal(approval?.requestedByType, 'USER');
+    assert.equal(approval?.requestedById, 'owner');
+    assert.deepEqual(approval?.payload, {
+      kind: 'tool_request',
+      toolRequestId: request.id,
+      toolSlug: 'test.approval_action',
+      toolName: 'Approval Action',
+      toolVersion: 1,
+      requiredPermission: 'PREPARE',
+      riskLevel: 'HIGH',
+      input: { title: 'Needs review' },
+    });
+    assert.equal(state.executions.size, 0);
+  });
+
+  it('maps each risk level onto the linked Approval', async () => {
+    for (const risk of ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'] as const) {
+      const state = emptyState();
+      const store = memoryStore(state);
+      const request = await waitingApprovalRequest(store, risk);
+      assert.equal(state.approvals.get(request.approvalId ?? '')?.riskLevel, risk);
+    }
+  });
+
+  it('approves into READY without creating a ToolExecution', async () => {
+    const state = emptyState();
+    const store = memoryStore(state);
+    const request = await waitingApprovalRequest(store);
+    const approval = await approveApprovalAndLinkedToolRequest(
+      approvalCommandStoreFromToolStore(store),
+      store,
+      request.approvalId!,
+      {},
+      now,
+      ownerActor,
+    );
+    assert.equal(approval.status, 'APPROVED');
+    assert.deepEqual(approval.payload, state.approvals.get(approval.id)?.payload);
+    assert.equal(state.requests.get(request.id)?.status, 'READY');
+    assert.equal(state.executions.size, 0);
+    assert.equal(
+      state.events.some((event) => event.eventType === 'approval.approved'),
+      true,
+    );
+    assert.equal(
+      state.events.some((event) => event.eventType === TOOL_EVENT_TYPES.ready),
+      true,
+    );
+  });
+
+  it('rejects into DENIED with APPROVAL_REJECTED and no execution', async () => {
+    const state = emptyState();
+    const store = memoryStore(state);
+    const request = await waitingApprovalRequest(store);
+    const approval = await rejectApprovalAndLinkedToolRequest(
+      approvalCommandStoreFromToolStore(store),
+      store,
+      request.approvalId!,
+      { decisionReason: 'Not now' },
+      now,
+      ownerActor,
+    );
+    assert.equal(approval.status, 'REJECTED');
+    assert.equal(state.requests.get(request.id)?.status, 'DENIED');
+    assert.equal(state.executions.size, 0);
+    const denied = state.events.find((event) => event.eventType === TOOL_EVENT_TYPES.denied);
+    assert.equal(
+      (denied?.metadata as { reason?: string } | null)?.reason,
+      TOOL_DENIAL_REASONS.APPROVAL_REJECTED,
+    );
+    assert.notEqual(
+      (denied?.metadata as { denialCode?: string } | null)?.denialCode,
+      'INSUFFICIENT_PERMISSION',
+    );
+  });
+
+  it('cancels Approval and ToolRequest together from the approval side', async () => {
+    const state = emptyState();
+    const store = memoryStore(state);
+    const request = await waitingApprovalRequest(store);
+    const approval = await cancelApprovalAndLinkedToolRequest(
+      approvalCommandStoreFromToolStore(store),
+      store,
+      request.approvalId!,
+      {},
+      now,
+      ownerActor,
+    );
+    assert.equal(approval.status, 'CANCELLED');
+    assert.equal(state.requests.get(request.id)?.status, 'CANCELLED');
+  });
+
+  it('cancels a PENDING Approval when the ToolRequest is cancelled', async () => {
+    const state = emptyState();
+    const store = memoryStore(state);
+    const request = await waitingApprovalRequest(store);
+    await cancelToolRequestWithStore(store, request.id, now);
+    assert.equal(state.requests.get(request.id)?.status, 'CANCELLED');
+    assert.equal(state.approvals.get(request.approvalId!)?.status, 'CANCELLED');
+    assert.equal(
+      state.events.some((event) => event.eventType === 'approval.cancelled'),
+      true,
+    );
+    assert.equal(
+      state.events.some((event) => event.eventType === TOOL_EVENT_TYPES.cancelled),
+      true,
+    );
+  });
+
+  it('expires a past-due PENDING approval instead of making the request READY', async () => {
+    const state = emptyState();
+    const store = memoryStore(state);
+    const request = await waitingApprovalRequest(store);
+    const pending = state.approvals.get(request.approvalId!)!;
+    state.approvals.set(pending.id, {
+      ...pending,
+      expiresAt: Temporal.Instant.from('2026-08-01T00:00:00Z'),
+    });
+    const expired = await approveApprovalAndLinkedToolRequest(
+      approvalCommandStoreFromToolStore(store),
+      store,
+      pending.id,
+      {},
+      now,
+      ownerActor,
+    );
+    assert.equal(expired.status, 'EXPIRED');
+    assert.equal(state.requests.get(request.id)?.status, 'DENIED');
+    assert.equal(state.executions.size, 0);
+    const denied = state.events.find((event) => event.eventType === TOOL_EVENT_TYPES.denied);
+    assert.equal(
+      (denied?.metadata as { reason?: string } | null)?.reason,
+      TOOL_DENIAL_REASONS.APPROVAL_EXPIRED,
+    );
+  });
+
+  it('does not create an execution for READY ALWAYS without a valid Approval', async () => {
+    const state = emptyState();
+    const store = memoryStore(state);
+    const request = await waitingApprovalRequest(store);
+    const ready = { ...request, status: 'READY' as const, approvalId: null };
+    state.requests.set(request.id, ready);
+    await assert.rejects(
+      () => createToolExecutionAttemptWithStore(store, request.id, now),
+      ToolInvariantError,
+    );
+    assert.equal(state.executions.size, 0);
+  });
+
+  it('blocks execution for PENDING, REJECTED, CANCELLED, and EXPIRED approvals', async () => {
+    for (const status of ['PENDING', 'REJECTED', 'CANCELLED', 'EXPIRED'] as const) {
+      const state = emptyState();
+      const store = memoryStore(state);
+      const request = await waitingApprovalRequest(store);
+      const existing = state.approvals.get(request.approvalId!)!;
+      state.approvals.set(existing.id, { ...existing, status });
+      state.requests.set(request.id, { ...request, status: 'READY' });
+      await assert.rejects(
+        () => createToolExecutionAttemptWithStore(store, request.id, now),
+        ToolAuthorizationError,
+      );
+      assert.equal(state.executions.size, 0);
+    }
+  });
+
+  it('blocks execution when an APPROVED Approval is past expiresAt', async () => {
+    const state = emptyState();
+    const store = memoryStore(state);
+    const request = await waitingApprovalRequest(store);
+    await approveApprovalAndLinkedToolRequest(
+      approvalCommandStoreFromToolStore(store),
+      store,
+      request.approvalId!,
+      {},
+      now,
+      ownerActor,
+    );
+    const approved = state.approvals.get(request.approvalId!)!;
+    state.approvals.set(approved.id, {
+      ...approved,
+      expiresAt: Temporal.Instant.from('2026-08-01T00:00:00Z'),
+    });
+    await assert.rejects(
+      () => createToolExecutionAttemptWithStore(store, request.id, now),
+      ToolAuthorizationError,
+    );
+    assert.equal(state.executions.size, 0);
+  });
+
+  it('allows a QUEUED attempt after a valid APPROVED Approval', async () => {
+    const state = emptyState();
+    const store = memoryStore(state);
+    const request = await waitingApprovalRequest(store);
+    await approveApprovalAndLinkedToolRequest(
+      approvalCommandStoreFromToolStore(store),
+      store,
+      request.approvalId!,
+      {},
+      now,
+      ownerActor,
+    );
+    const execution = await createToolExecutionAttemptWithStore(store, request.id, now);
+    assert.equal(execution.status, 'QUEUED');
+    assert.equal(execution.attemptNumber, 1);
+    assert.equal(state.requests.get(request.id)?.status, 'READY');
+  });
+
+  it('does not require Approval for NEVER tool execution', async () => {
+    const state = emptyState();
+    const store = memoryStore(state);
+    const request = await requestToolUseWithStore(
+      store,
+      {
+        organizationId: 'org-1',
+        actor: createUserToolActor(),
+        definition: readyTool(),
+        input: { title: 'Go' },
+      },
+      now,
+    );
+    const execution = await createToolExecutionAttemptWithStore(store, request.id, now);
+    assert.equal(execution.status, 'QUEUED');
+    assert.equal(request.approvalId, null);
+  });
+
+  it('rejects a second approval decision', async () => {
+    const state = emptyState();
+    const store = memoryStore(state);
+    const request = await waitingApprovalRequest(store);
+    const approvalStore = approvalCommandStoreFromToolStore(store);
+    await approveApprovalAndLinkedToolRequest(
+      approvalStore,
+      store,
+      request.approvalId!,
+      {},
+      now,
+      ownerActor,
+    );
+    await assert.rejects(
+      () =>
+        approveApprovalAndLinkedToolRequest(
+          approvalStore,
+          store,
+          request.approvalId!,
+          {},
+          now,
+          ownerActor,
+        ),
+      InvalidBusinessStateTransitionError,
+    );
+    assert.equal(state.requests.get(request.id)?.status, 'READY');
+    assert.equal(
+      state.events.filter((event) => event.eventType === 'approval.approved').length,
+      1,
+    );
+  });
+
+  it('preserves non-tool Approval approve, reject, and cancel', async () => {
+    const state = emptyState();
+    const store = memoryStore(state);
+    const approvalStore = approvalCommandStoreFromToolStore(store);
+    const created = await store.createApproval({
+      organizationId: 'org-1',
+      title: 'Send outreach email',
+      actionType: 'outreach.send_email',
+      riskLevel: 'HIGH',
+      requestedByType: 'USER',
+    });
+
+    const approved = await approveApprovalAndLinkedToolRequest(
+      approvalStore,
+      store,
+      created.id,
+      {},
+      now,
+      ownerActor,
+    );
+    assert.equal(approved.status, 'APPROVED');
+    assert.equal(state.requests.size, 0);
+
+    const rejected = await store.createApproval({
+      organizationId: 'org-1',
+      title: 'Issue refund',
+      actionType: 'payment.issue_refund',
+      riskLevel: 'HIGH',
+      requestedByType: 'USER',
+    });
+    const afterReject = await rejectApprovalAndLinkedToolRequest(
+      approvalStore,
+      store,
+      rejected.id,
+      { decisionReason: 'No' },
+      now,
+      ownerActor,
+    );
+    assert.equal(afterReject.status, 'REJECTED');
+
+    const cancelled = await store.createApproval({
+      organizationId: 'org-1',
+      title: 'Withdraw',
+      actionType: 'work.execute',
+      riskLevel: 'LOW',
+      requestedByType: 'USER',
+    });
+    const afterCancel = await cancelApprovalAndLinkedToolRequest(
+      approvalStore,
+      store,
+      cancelled.id,
+      {},
+      now,
+      ownerActor,
+    );
+    assert.equal(afterCancel.status, 'CANCELLED');
+    assert.equal(state.requests.size, 0);
   });
 });

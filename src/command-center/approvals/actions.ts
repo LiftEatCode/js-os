@@ -14,6 +14,7 @@ import {
   getJsSolutionsOrganization,
   getWorkItemById,
 } from '@/business-state';
+import { InvalidToolTransitionError } from '@/tools';
 import { revalidatePath } from 'next/cache';
 import { redirect, unstable_rethrow } from 'next/navigation';
 import { isCommandCenterWriteEnabled } from '../write-access';
@@ -59,6 +60,9 @@ function formError(error: unknown): ApprovalFormState {
   }
   if (error instanceof InvalidBusinessStateTransitionError) {
     return { error: 'This approval can no longer be decided.' };
+  }
+  if (error instanceof InvalidToolTransitionError) {
+    return { error: 'The linked tool request can no longer be updated.' };
   }
   if (error instanceof BusinessStateNotFoundError) {
     return { error: 'Approval could not be found.' };
@@ -150,6 +154,13 @@ export async function decideApprovalAction(
     let approval = existing;
     if (parsed.value.decision === 'approve') {
       approval = await approveApprovalCommand(existing.id, reason);
+      revalidateApprovalPaths(approval.id);
+      if (approval.status === 'EXPIRED') {
+        return {
+          error: 'This approval has expired and cannot authorize the request.',
+        };
+      }
+      return {};
     } else if (parsed.value.decision === 'reject') {
       approval = await rejectApprovalCommand(existing.id, reason);
     } else {

@@ -1,6 +1,6 @@
 # Tool architecture
 
-**Status:** Milestones 3.1–3.4 implemented (persistence, code registry, technical permission evaluator, request/execution lifecycle services). Approval evaluation, adapters, and Command Center Tools are still planned.
+**Status:** Milestones 3.1–3.5 implemented (persistence, code registry, technical permission evaluator, request/execution lifecycle, Approval integration). Adapters and Command Center Tools are still planned.
 
 ```text
 Actor
@@ -11,7 +11,7 @@ requestToolUse     ← implemented (3.4)
     ↓
 ToolRequest        ← durable logical action
     ↓
-Authorization      ← 3.3 permission evaluator consumed by 3.4; 3.5 approval planned
+Authorization      ← 3.3 permission evaluator; 3.5 Approval integration
     ↓
 ToolExecution      ← attempt records; no adapter call yet
     ↓
@@ -613,11 +613,11 @@ SYSTEM is technically allowed for any enabled tool. It is reserved for future sc
 
 Tool-not-found belongs to registry lookup, not this evaluator. The core function assumes a resolved `ToolDefinition`.
 
-Approval evaluation is not part of 3.3. `approvalRequirement` and `riskLevel` are ignored by the evaluator. 3.4 reads `approvalRequirement` only to route `ALWAYS` → `WAITING_APPROVAL` or `NEVER` → `READY` after permission allow. That routing does **not** create an Approval row.
+Approval evaluation is not part of 3.3. `approvalRequirement` and `riskLevel` are ignored by the evaluator. 3.4 reads `approvalRequirement` to route `ALWAYS` → `WAITING_APPROVAL` or `NEVER` → `READY` after permission allow. Milestone 3.5 creates the linked Approval on that ALWAYS path.
 
 ## Request / execution lifecycle (Milestone 3.4)
 
-**Status:** Implemented. No real adapters, queues, workers, or approval satisfaction.
+**Status:** Implemented. No real adapters, queues, or workers. Approval satisfaction is Milestone 3.5.
 
 Entry point: `requestToolUse({ organizationId, actor, definition, input, agentRunId?, workItemId?, idempotencyKey? })`.
 
@@ -628,20 +628,9 @@ evaluateToolPermission(actor, definition)
       ↓
 persist ToolRequest + BusinessEvent (one transaction)
       ├── DENIED              (permission denied; no ToolExecution)
-      ├── WAITING_APPROVAL    (allowed + ALWAYS; no Approval row yet)
+      ├── WAITING_APPROVAL    (allowed + ALWAYS; 3.5 also creates Approval PENDING)
       └── READY               (allowed + NEVER)
 ```
-
-3.4:
-
-```text
-approvalRequirement=ALWAYS
-→ ToolRequest WAITING_APPROVAL
-
-but no Approval row is created yet.
-```
-
-3.5 will connect `WAITING_APPROVAL` to durable Approval authorization.
 
 Snapshot fields (`toolSlug`, `toolName`, `toolVersion`, `requiredPermission`, `riskLevel`, `approvalRequirement`) come only from `getToolDefinitionSnapshot`. Callers cannot override them.
 
@@ -671,13 +660,11 @@ Request CANCELLED from REQUESTED / WAITING_APPROVAL / READY
 
 `ToolRequest FAILED` still means an attempt actually ran. Invalid input, disabled tools, permission denial, and missing references do not use `FAILED`.
 
-Event strategy: one outcome event at creation (`tool.ready` / `tool.waiting_approval` / `tool.denied`). There is no extra `tool.requested`. Later: `tool.execution_queued`, `tool.execution_started`, `tool.executed`, `tool.execution_failed`, `tool.cancelled`. Metadata is IDs, slug, version, status, attemptNumber, and `denialCode` when relevant. Full input/output is not copied into BusinessEvent metadata.
+Event strategy: one outcome event at creation (`tool.ready` / `tool.waiting_approval` / `tool.denied`). There is no extra `tool.requested`. Later: `tool.execution_queued`, `tool.execution_started`, `tool.executed`, `tool.execution_failed`, `tool.cancelled`. Metadata is IDs, slug, version, status, attemptNumber, `approvalId` when present, `denialCode` when permission denied, and `reason` when a later denial is not a permission failure. Full input/output is not copied into BusinessEvent metadata.
 
 ## Approval evaluation
 
-**Status:** Planned (Milestone 3.5). 3.4 may persist `WAITING_APPROVAL` from static `approvalRequirement=ALWAYS` without creating or linking an Approval.
-
-Separate service `evaluateToolApproval`.
+**Status:** Implemented for static `NEVER` / `ALWAYS` at request creation and execution-attempt time (Milestone 3.5). A coordinator-shaped `evaluateToolApproval` result object remains future.
 
 v0.1:
 
@@ -687,57 +674,115 @@ ALWAYS → an in-org Approval must exist, reference this request, be APPROVED,
          and not be past expiresAt
 ```
 
-Do not invent CONDITIONAL rules in Phase 3.
+Do not invent CONDITIONAL rules in Phase 3. All `ALWAYS` tools require approval regardless of risk. Risk is display/context only.
 
 ## Permission and approval result shape
 
-Keep the two evaluations distinct even if a coordinator wraps them.
+Keep the two evaluations distinct even if a coordinator wraps them later.
 
 ```text
-{
-  allowed: boolean
-  permission: { allowed: boolean, code?: ToolPermissionDenialCode }
-  approval: { allowed: boolean, code?: ToolApprovalDenialCode, approvalId?: string }
-}
-
 ToolPermissionDenialCode
   TOOL_DISABLED
   INSUFFICIENT_PERMISSION
   ACTOR_NOT_ALLOWED
 
-ToolApprovalDenialCode
-  APPROVAL_REQUIRED
-  APPROVAL_NOT_APPROVED
+Tool denial reason (lifecycle / event metadata; not a permission code)
+  APPROVAL_REJECTED
   APPROVAL_EXPIRED
 ```
 
-`APPROVAL_REQUIRED` means create or wait for an Approval; it is not a permission-ceiling failure.
+Permission denial at request creation uses `denialCode`. Approval rejection after permission already passed uses `reason = APPROVAL_REJECTED`. Do not reuse `INSUFFICIENT_PERMISSION`.
+
+3.5 enforces approval at execution with `assertToolRequestAuthorizedForExecution`. It does not execute anything.
 
 ## Approval integration
 
-Preserve:
+**Status:** Implemented (Milestone 3.5).
 
 ```text
 APPROVED ≠ EXECUTED
 ```
 
 ```text
-Tool Request
-  ↓
-ALWAYS? → create Approval (PENDING), request WAITING_APPROVAL
-  ↓
-owner decides
-  ↓
-APPROVED → request READY (still not executed)
-  ↓
-explicit continuation
-  ↓
-Tool Execution
+ToolRequest
+     ↓
+permission allowed
+     ↓
+approvalRequirement
+     ├── NEVER
+     │     ↓
+     │   READY
+     │
+     └── ALWAYS
+           ↓
+      WAITING_APPROVAL
+           +
+      Approval PENDING
+           ↓
+       owner decision
+        ├───────────┐
+        ▼           ▼
+    APPROVED     REJECTED
+        │           ▼
+        ▼         DENIED
+      READY
 ```
 
-Linkage: `ToolRequest.approvalId → Approval.id`. Do not add a required `toolRequestId` on Approval in v0.1; reverse lookup is `ToolRequest` where `approvalId` matches. `Approval.actionType` should equal `toolSlug`. Copy `workItemId` / `agentRunId` / requester fields when present so the existing Approvals UI remains coherent.
+Approval only authorizes the ToolRequest to become READY. It does not create a ToolExecution, mutate WorkItems, or run a tool.
 
-Standalone owner-created Approvals (Phase 2 forms) remain valid. They are not ToolRequests until a coordinator consumes them. Phase 3 should not reinterpret every Approval as a tool call.
+```text
+ALWAYS request creation (one transaction)
+  validate input
+        ↓
+  resolve actor state
+        ↓
+  evaluate permission
+        ↓
+  create ToolRequest WAITING_APPROVAL
+  create Approval PENDING
+  attach ToolRequest.approvalId
+  record tool.waiting_approval + approval.requested
+```
+
+There is no committed state where a newly created ALWAYS ToolRequest is `WAITING_APPROVAL` without its Approval row.
+
+Linkage: `ToolRequest.approvalId → Approval.id` is authoritative. Do not identify tool-linked Approvals by parsing `payload.kind` alone. Reverse lookup is `getToolRequestByApprovalId`. `Approval.actionType` is the stable `tool.execute` (tool identity lives in payload). Copy `workItemId` / `agentRunId` / requester fields when present so `/app/approvals` remains coherent.
+
+Payload is a proposed-action snapshot, frozen after create:
+
+```json
+{
+  "kind": "tool_request",
+  "toolRequestId": "...",
+  "toolSlug": "...",
+  "toolName": "...",
+  "toolVersion": 1,
+  "requiredPermission": "...",
+  "riskLevel": "...",
+  "input": {}
+}
+```
+
+Validated tool input may appear because the payload explains the proposal. Credentials, tokens, secrets, stack traces, and vendor auth data must not. Status/decision fields change; the payload does not.
+
+Owner decisions use the existing Phase 2 commands (`approveApprovalCommand` / `rejectApprovalCommand` / `cancelApprovalCommand`). They branch only when a ToolRequest is linked:
+
+| Approval decision | Linked ToolRequest |
+|---|---|
+| APPROVED | READY + `tool.ready` |
+| REJECTED | DENIED + `tool.denied` (`reason=APPROVAL_REJECTED`) |
+| CANCELLED | CANCELLED + `tool.cancelled` |
+| expired PENDING approve | EXPIRED + DENIED (`reason=APPROVAL_EXPIRED`) |
+
+Request-side `cancelToolRequest` while `WAITING_APPROVAL` also cancels a PENDING linked Approval atomically.
+
+Standalone owner-created Approvals remain valid. They are not ToolRequests. Phase 3 does not reinterpret every Approval as a tool call.
+
+Missing `approvalId` on a persisted ALWAYS request that is `WAITING_APPROVAL` or `READY` is an invalid state. Execution must throw an invariant error. Do not silently create an Approval at execution time.
+
+READY alone is not sufficient for ALWAYS tools. `createToolExecutionAttempt` calls `assertToolRequestAuthorizedForExecution`: same-org Approval, payload/reference matches this request, status `APPROVED`, and `expiresAt` is null or after now.
+
+Future work (not 3.5): re-resolve tool enablement from the live registry before execution; re-evaluate permission; an expiration worker.
 
 ## Approval rejection
 
@@ -745,9 +790,13 @@ Linked Approval `REJECTED` → ToolRequest `DENIED`. Do not execute. This is not
 
 ## Approval expiration
 
-Phase 2 has no expiration worker. Past `expiresAt` may still be `PENDING`.
+Phase 2/3.5 have no expiration worker, cron, or scheduler. Past `expiresAt` may still be `PENDING` until a decision or execution boundary.
 
-Execution and approval evaluation must **refuse** if `expiresAt` is in the past, even when persisted status is still `PENDING`. That matches existing derived-expiration semantics. Do not assume a row has been moved to `EXPIRED`.
+Decision (3.5): approving a PENDING Approval where `expiresAt <= now` persists `Approval EXPIRED` and a linked WAITING_APPROVAL ToolRequest as `DENIED` (`reason=APPROVAL_EXPIRED`). Authorization was not obtained. Reject and cancel of an expired PENDING row remain explicit owner dispositions (REJECTED / CANCELLED).
+
+Execution (3.5): `READY` + `ALWAYS` still cannot create a ToolExecution unless the linked Approval is `APPROVED` and not past `expiresAt`. An Approval is not valid merely because `status = APPROVED` if `expiresAt <= now`. NEVER tools are unchanged.
+
+`isPendingPastExpiration` is derived UI. Reads never mutate status.
 
 ## Risk
 
@@ -822,9 +871,9 @@ approval.rejected
 approval.cancelled
 ```
 
-`tool.waiting_approval` in 3.4 does **not** imply `approval.requested`. 3.5 will add the Approval row and `approval.*` event.
+`tool.waiting_approval` is paired with `approval.requested` when an ALWAYS tool request is created. Owner decisions may emit both `approval.approved` + `tool.ready` or `approval.rejected` + `tool.denied` in the same transaction. `approval.expired` is recorded when a decision boundary persists EXPIRED (not a worker).
 
-Internal tools that call business commands will also emit domain events (`work.created`, `work.status_changed`). That is two layers, not duplication of Approval events. Tool metadata is IDs only: `toolRequestId`, `toolExecutionId`, `toolSlug`, `toolVersion`, status, `attemptNumber`, `denialCode`. No input dump, no credentials.
+Internal tools that call business commands will also emit domain events (`work.created`, `work.status_changed`). That is two layers, not duplication of Approval events. Tool metadata is IDs only: `toolRequestId`, `toolExecutionId`, `toolSlug`, `toolVersion`, status, `attemptNumber`, `approvalId`, `denialCode`, `reason`. No input dump, no Approval payload copy, no credentials.
 
 Activity (`/app/activity`) already formats arbitrary `lowercase.dot` names. Do not redesign Activity.
 
@@ -864,7 +913,7 @@ v0.1 lifecycle does not automatically retry. `FAILED` is terminal. Explicit retr
 
 Valid on ToolRequest: `REQUESTED`, `WAITING_APPROVAL`, `READY` → `CANCELLED`.
 
-If `WAITING_APPROVAL`, 3.5 will cancel the linked Approval via the existing cancel command when that Approval is still `PENDING`. 3.4 has no Approval row to cancel.
+If `WAITING_APPROVAL`, cancel also cancels the linked Approval when that Approval is still `PENDING`. Approval-side cancel of a tool-linked PENDING row cancels the ToolRequest. `REJECTED` → `DENIED`; `CANCELLED` → `CANCELLED`.
 
 Not valid: `FULFILLED`, `FAILED`, `DENIED`, or after an execution `SUCCEEDED` / `FAILED`.
 

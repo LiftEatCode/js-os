@@ -1,6 +1,6 @@
 # Approval system
 
-**Status:** Implemented (model, persistence, Command Center, atomic commands). Tool execution, expiration workers, and automatic WorkItem coupling are future. `ToolRequest.approvalId` exists as of 3.1; approval evaluation is not.
+**Status:** Implemented (model, persistence, Command Center, atomic commands, Phase 3.5 tool linkage). Tool execution, expiration workers, and automatic WorkItem coupling are future.
 
 An Approval is authorization for a proposed action. It is not the action itself.
 
@@ -10,7 +10,7 @@ APPROVED ≠ EXECUTED
 
 Approving records that the owner authorized the proposal. It does **not** mean a tool ran, an API was called, email was sent, content was published, an AgentRun continued, or a WorkItem completed.
 
-Phase 3 designs how tool-linked Approvals authorize a ToolRequest. Approving still does not execute. See [tool architecture](tool-architecture.md).
+For tool-linked Approvals, `APPROVED` moves the ToolRequest to `READY`. Execution is a later, explicit `ToolExecution` attempt. See [tool architecture](tool-architecture.md).
 
 ## Why it exists
 
@@ -64,7 +64,9 @@ PENDING
 
 Terminal: `APPROVED`, `REJECTED`, `CANCELLED`, `EXPIRED`. Once terminal, owner decision actions are unavailable.
 
-`EXPIRED` exists on the persisted enum. There is **no** scheduler or worker that transitions `PENDING` rows to `EXPIRED`. A pending request whose `expiresAt` is in the past is still `PENDING`. The UI may show **Past expiration time** as derived information. Reads never mutate status. There is no manual EXPIRED transition in the service API.
+`EXPIRED` exists on the persisted enum. There is **no** scheduler or worker that transitions `PENDING` rows to `EXPIRED` on a timer. A pending request whose `expiresAt` is in the past is still `PENDING` until a decision or execution boundary. The UI may show **Past expiration time** as derived information. Reads never mutate status.
+
+3.5 decision-boundary expiration: if the owner approves a PENDING Approval where `expiresAt <= now`, JS OS persists `EXPIRED` (and denies a linked WAITING_APPROVAL ToolRequest). That is not a worker. `nextApprovalExpiration` is the domain helper for that boundary.
 
 ## `decidedAt` and `decisionReason`
 
@@ -97,9 +99,24 @@ Request fields are immutable after creation. Only decision state changes afterwa
 
 ## Payload
 
-`payload` describes the proposed action for standalone Approvals. Command Center renders it as pretty-printed JSON in a `<pre>` block. HTML is never interpreted. Null shows “No action payload recorded.”
+`payload` describes the proposed action. Command Center renders it as pretty-printed JSON in a `<pre>` block, with a short tool name/slug summary when `kind` is `tool_request`. HTML is never interpreted. Null shows “No action payload recorded.”
 
-Phase 3 tool-linked Approvals should store a small pointer (`toolRequestId`, `toolSlug`) rather than duplicating `ToolRequest.input`. The ToolRequest owns validated execution input. That split is designed, not implemented.
+Tool-linked Approvals store a frozen proposed-action snapshot:
+
+```json
+{
+  "kind": "tool_request",
+  "toolRequestId": "...",
+  "toolSlug": "...",
+  "toolName": "...",
+  "toolVersion": 1,
+  "requiredPermission": "...",
+  "riskLevel": "...",
+  "input": {}
+}
+```
+
+Validated ToolRequest input may be included because the payload is the proposal the owner authorizes. Credentials, tokens, secrets, stack traces, and vendor authentication data must not. The payload is not rewritten on approve/reject/cancel.
 
 Manual creation accepts a textarea: empty → `null`; valid JSON → stored value; invalid JSON → form error. JSON only. Nothing is evaluated.
 
@@ -187,20 +204,21 @@ Do not call `createApprovalRequest()` then `recordBusinessEvent()` against globa
 | approve | `approval.approved` | Owner authorized the proposal. Not execution. |
 | reject | `approval.rejected` | Owner denied the request |
 | cancel | `approval.cancelled` | Request withdrawn; not a denial |
+| expired-on-approve | `approval.expired` | Decision boundary; `expiresAt` had passed. Not a worker. |
 
-Titles: `Approval requested`, `Approval approved`, `Approval rejected`, `Approval cancelled`.
+Titles: `Approval requested`, `Approval approved`, `Approval rejected`, `Approval cancelled`, `Approval expired`.
 
 Command Center actions use `sourceType = USER` and `sourceId = null`. `occurredAt` is command time, never browser input.
 
-Request metadata: `approvalId`, `actionType`, `riskLevel`, optional `workItemId`. Decision metadata: `approvalId`, `riskLevel`, optional `workItemId`. Optional IDs only when present.
+Request metadata: `approvalId`, `actionType`, `riskLevel`, optional `workItemId`. Decision metadata: `approvalId`, `riskLevel`, optional `workItemId`. Optional IDs only when present. Do not copy Approval.payload into events.
 
-`approval.expired` is not implemented (no expiration worker).
+Tool-linked decisions also record `tool.ready` / `tool.denied` / `tool.cancelled` in the same transaction.
 
 ## Duplicate decisions and concurrency
 
-Decision commands load the Approval **inside** the same transaction, verify `PENDING`, then mutate and append the event. A second approve of an already `APPROVED` row is an invalid transition and does not append another `approval.approved` event.
+Decision commands load the Approval **inside** the same transaction, verify `PENDING`, then mutate with a guarded `where({ id, status: PENDING })` update and append the event. A second approve of an already `APPROVED` row is an invalid transition and does not append another `approval.approved` event. Linked ToolRequest transitions are likewise guarded on the current status.
 
-JS OS does not yet use row-level locks or a version column. A true concurrent double-decision race remains a residual v0.1 limitation.
+JS OS does not yet use row-level locks or a version column. Guarded status updates close the last-write-win hole for decision and request status. Residual: two concurrent transactions can still race before the guarded update; only one wins, the other fails cleanly.
 
 ## Public business-state services
 
@@ -211,22 +229,43 @@ Intentional tightenings vs the original Phase 1 helpers:
 - `actionType` must be `lowercase.dot.notation`
 - rejection requires `decisionReason`
 
-## Phase 3 tool linkage (schema implemented; behavior not)
+## Phase 3 tool linkage (Milestone 3.5)
 
 ```text
 ToolRequest.approvalId → Approval.id
 ```
 
-The FK exists as of 3.1 (`Restrict`). 3.4 may persist `ToolRequest.status = WAITING_APPROVAL` from static `approvalRequirement=ALWAYS` **without creating an Approval row**. Coordinators must not auto-create Approvals, auto-transition requests from approval decisions, or execute on `APPROVED`. That is milestone 3.5.
+The FK exists as of 3.1 (`Restrict`). 3.5 creates the Approval atomically with an ALWAYS ToolRequest.
 
-The ToolRequest owns the logical action. Approval remains authorization only.
+```text
+ToolRequest
+     ↓
+permission allowed
+     ↓
+approvalRequirement
+     ├── NEVER → READY
+     └── ALWAYS → WAITING_APPROVAL + Approval PENDING
+           ↓
+       owner decision
+        ├── APPROVED → ToolRequest READY
+        └── REJECTED → ToolRequest DENIED
+```
 
-- `ALWAYS` tools create a `PENDING` Approval; the request becomes `WAITING_APPROVAL`
+```text
+APPROVED ≠ EXECUTED
+```
+
+- `ALWAYS` tools create a `PENDING` Approval; `actionType` is `tool.execute`; title is `Approve tool: {toolName}`
 - `APPROVED` moves the request to `READY`; it does not start `ToolExecution`
 - `REJECTED` moves the request to `DENIED`; no execution
-- Past `expiresAt` must refuse execution even if status is still `PENDING` (no expiration worker)
+- Approval-side `CANCELLED` moves the request to `CANCELLED`
+- Request-side cancel of `WAITING_APPROVAL` cancels a PENDING Approval
+- Approving when `expiresAt <= now` persists `EXPIRED` and denies the linked request
+- Execution of ALWAYS READY requests requires a same-org `APPROVED` Approval that is not past `expiresAt`
 
-Do not add an unbounded execution payload onto Approval when ToolRequest already holds input.
+Standalone Phase 2 Approvals keep working. The command branches only when `getToolRequestByApprovalId` finds a row.
+
+Do not add a second approval table. Do not execute from `/app/approvals`.
 
 ## Not in 2.6
 

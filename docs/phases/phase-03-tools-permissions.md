@@ -1,6 +1,6 @@
 # Phase 3 — Tools + Permissions
 
-**Status:** In progress. Milestones 3.1–3.4 are implemented. Approval integration, internal tools, and Command Center Tools are not.
+**Status:** In progress. Milestones 3.1–3.5 are implemented. Internal tools and Command Center Tools are not.
 
 Phase 0–2 are complete. Phase 3 introduces the controlled execution boundary: registered tools, permission evaluation, request/execution lifecycle, approval integration, internal safe tools, and Command Center visibility.
 
@@ -17,8 +17,8 @@ Make execution an explicit, permissioned tool boundary so actors never call inte
 3.2 Tool registry                        Implemented
 3.3 Permission evaluation                Implemented
 3.4 Tool request/execution lifecycle     Implemented
-3.5 Approval integration                 Next
-3.6 Internal safe tools                  Planned
+3.5 Approval integration                 Implemented
+3.6 Internal safe tools                  Next
 3.7 Tools Command Center                 Planned
 3.8 Phase 3 integration + validation     Planned
 ```
@@ -71,7 +71,7 @@ Canonical design: [tool architecture](../architecture/tool-architecture.md), [AD
 - Pure `evaluateToolPermission(actor, definition)` in `src/tools/evaluate-permission.ts`
 - Typed denials: `TOOL_DISABLED`, `ACTOR_NOT_ALLOWED`, `INSUFFICIENT_PERMISSION`
 - USER and SYSTEM skip the agent ceiling; AGENT requires `ACTIVE` and `rank(ceiling) >= rank(required)`
-- Approval evaluation is **not** part of 3.3 (`evaluateToolApproval` remains planned for 3.5)
+- Approval evaluation is **not** part of 3.3. 3.5 creates/links Approvals from static `approvalRequirement=ALWAYS` and guards execution.
 - No persistence, registry lookup, or AgentDefinition DB fetch inside the evaluator
 
 ## Milestone 3.4 — Tool request/execution lifecycle
@@ -79,26 +79,39 @@ Canonical design: [tool architecture](../architecture/tool-architecture.md), [AD
 **Status:** Implemented
 
 - `requestToolUse` persists a routed ToolRequest after input validation and `evaluateToolPermission`
-- Routed statuses: `DENIED` (permission denied), `WAITING_APPROVAL` (`ALWAYS`, **no Approval row yet**), `READY` (`NEVER`)
+- Routed statuses: `DENIED` (permission denied), `WAITING_APPROVAL` (`ALWAYS`; 3.5 creates the Approval), `READY` (`NEVER`)
 - Conceptual `REQUESTED` is not persisted; routing and the outcome BusinessEvent commit together
 - ToolExecution attempts: server-derived `attemptNumber` starting at 1; `QUEUED` → `RUNNING` → `SUCCEEDED`/`FAILED`; `QUEUED` → `CANCELLED`
 - `FULFILLED` / `FAILED` are execution-derived: only `completeToolExecution` / `failToolExecution` may set them (atomically with the attempt and `tool.executed` / `tool.execution_failed`). No public `fulfillToolRequest` / `failToolRequest`.
 - Idempotency reuse vs conflict; org-scoped AgentDefinition / AgentRun / WorkItem checks
 - `persistExecution=false` is rejected on this persisted path
 - Development verification: `npm run tool-lifecycle:verify`
-- **No adapters, approval rows, retries, queues, or Tools UI**
-
-3.5 will connect `WAITING_APPROVAL` to durable Approval authorization.
+- **No adapters, retries, queues, or Tools UI**
 
 ## Milestone 3.5 — Approval integration
 
-**Status:** Planned
+**Status:** Implemented
 
-- `ALWAYS` tools create/link Approval; request `WAITING_APPROVAL`
-- `APPROVED` → `READY`, not executed
-- `REJECTED` → `DENIED`
-- Derived expiration refuse even when Approval status is still `PENDING`
-- Existing Approval Command Center remains the decision UI unless 3.7 adds deep links
+```text
+ALWAYS + permission allowed
+  → ToolRequest WAITING_APPROVAL
+  → Approval PENDING (actionType tool.execute)
+  → ToolRequest.approvalId = Approval.id
+```
+
+Owner decisions use the existing `/app/approvals` commands:
+
+- `APPROVED` → ToolRequest `READY` (not executed; zero ToolExecution)
+- `REJECTED` → ToolRequest `DENIED` (`reason=APPROVAL_REJECTED`)
+- `CANCELLED` → ToolRequest `CANCELLED`
+- Request-side cancel of `WAITING_APPROVAL` also cancels a PENDING Approval
+- Approving when `expiresAt <= now` persists `EXPIRED` and denies the linked request
+
+`assertToolRequestAuthorizedForExecution` runs before `createToolExecutionAttempt`. NEVER tools are unchanged. READY is not sufficient for ALWAYS tools.
+
+Development verification: `npm run tool-approval:verify`
+
+**No** production tools, global registry, `/app/tools`, adapters, expiration worker, or conditional policy.
 
 ## Milestone 3.6 — Internal safe tools
 
@@ -134,7 +147,7 @@ Call `createWorkItemCommand` / `updateWorkItemStatusCommand`. Organization-scope
 
 - At least one internal non-production tool can be requested and allowed or denied according to documented permission rules
 - Approval-required path can wait, approve, and only then execute via explicit continuation
-- Request/execution persistence and technical permission evaluation exist (3.3–3.4). Adapters, approval satisfaction, and Command Center Tools do not.
+- Request/execution persistence, technical permission evaluation, and Approval integration exist (3.3–3.5). Adapters and Command Center Tools do not.
 - No external integrations shipped as a Phase 3 requirement
 
 ## Key safety boundary

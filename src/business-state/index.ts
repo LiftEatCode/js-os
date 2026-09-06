@@ -48,9 +48,11 @@ export {
 } from './approvals.ts';
 
 export {
+  isApprovalAuthorizationExpired,
   isPendingPastExpiration,
   isTerminalApprovalStatus,
   nextApprovalDecision,
+  nextApprovalExpiration,
   requireRejectionReason,
 } from './approval-lifecycle.ts';
 

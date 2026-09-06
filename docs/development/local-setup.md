@@ -53,6 +53,7 @@ Development tool request/execution lifecycle check (writes then deletes rows; de
 
 ```bash
 npm run tool-lifecycle:verify
+npm run tool-approval:verify
 ```
 
 After editing `src/prisma/contract.prisma`:
