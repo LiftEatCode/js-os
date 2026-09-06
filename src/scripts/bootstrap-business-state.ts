@@ -121,7 +121,7 @@ const WORK_ITEMS = [
     description: 'Define the offer, positioning, CTA, and conversion path for the GBP Audit v1 launch.',
     status: 'READY' as const,
     priority: 'HIGH' as const,
-    workType: 'MARKETING' as const,
+    workType: 'CONTENT' as const,
   },
   {
     sourceId: 'bootstrap:work:copper-secure-case-study',
