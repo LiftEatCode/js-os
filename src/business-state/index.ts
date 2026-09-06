@@ -38,6 +38,11 @@ export {
 } from './business-events.ts';
 
 export {
+  buildBusinessStateSnapshot,
+  getBusinessState,
+} from './get-business-state.ts';
+
+export {
   approveApproval,
   cancelApproval,
   createApprovalRequest,
@@ -99,6 +104,11 @@ export type {
   BusinessEvent,
   BusinessEventListFilter,
   BusinessEventSourceType,
+  BusinessState,
+  BusinessStateEvent,
+  BusinessStateGoal,
+  BusinessStateOrganization,
+  BusinessStateWorkItem,
   CreateAgentRunInput,
   CreateApprovalRequestInput,
   CreateGoalInput,

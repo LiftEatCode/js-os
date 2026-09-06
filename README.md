@@ -1,58 +1,49 @@
 # JS OS
 
-Internal operating system for **JS Solutions**.
+JS OS is the internal operating system for JS Solutions. It coordinates company state, goals, work, business events, approvals, agents, tools, and command-center workflows.
 
-JS OS is a separate application from **JS Growth**. JS Solutions is the company. JS Growth is the customer-facing product platform (audits, prospecting, campaigns, and related commercial data). JS OS is the internal command layer: goals, business state, work, approvals, events, and later bounded AI coordination.
+The project intentionally keeps JS Growth / JS Solutions customer-facing systems separate from JS OS. JS Growth owns customer-facing workflows and source business data; JS OS consumes normalized business events and turns them into operating state, priorities, and coordinated work.
 
-## Current status
+## Current foundation
 
-**Phase 1 (Business State) is complete.** Foundation (Phase 0) is complete. **Phase 2 (Command Center) is complete.** **Phase 3 (Tools + Permissions) is in progress:** 3.1 persistence, 3.2 code registry, 3.3 technical permission evaluation, and 3.4 request/execution lifecycle. There is no execution adapter or `/app/tools` UI yet. Command Center writes are disabled unless local development explicitly sets `JS_OS_COMMAND_CENTER_WRITES=true`. The Command Center is currently unauthenticated development functionality.
+- Business-state contract and Prisma 8 / Neon persistence
+- JS Solutions organization bootstrap
+- Goals, WorkItems, BusinessEvents, approvals, agent definitions, and agent runs
+- `getBusinessState()` normalized operating snapshot
+- Command Center surfaces
+- Tool request / execution lifecycle
+- Authenticated JS Growth event ingestion for high-value business outcomes
 
-Stack in use: Next.js 16, React 19, TypeScript, Tailwind, Prisma 8, PostgreSQL on Neon (isolated development and production branches).
+## JS Growth integration
 
-## Core principle
+JS OS accepts server-to-server business events at:
 
-AI may recommend and prepare actions. JS OS controls what is permitted to execute. Integrations and autonomous actions must pass through explicit tools, permission rules, and approvals. Tool adapters are **not implemented**; request/attempt lifecycle services persist rows as of Phase 3.4.
+`POST /api/integrations/js-growth/events`
 
-## Documentation
+The v1 integration currently accepts:
 
-**Start here:** [docs/README.md](docs/README.md)
+- `growth.quote_submitted`
+- `growth.audit_completed`
 
-That index covers architecture, company context, departments, policies, operations, integrations, development, ADRs, and the roadmap.
+Requests require the server-only `JS_GROWTH_EVENTS_SECRET` bearer secret. Events are stored as `BusinessEvent` rows with `sourceType = JS_GROWTH` and use the publisher `eventId` as `sourceId` for idempotency.
 
 ## Development
 
-Requires **Node 24**. Copy `.env.example` to `.env.local` (development Neon URLs only). Do not commit secrets.
+Use Node 24 and configure `.env.local` from `.env.example`.
 
 ```bash
 npm install
-npm run dev
-```
-
-Validation:
-
-```bash
 npm run typecheck
-npm run lint
+npm test
 npm run build
 ```
 
-Prisma contract (offline):
-
-```bash
-npm run contract:emit
-```
-
-Development bootstrap (not a migration; development only):
+Business-state bootstrap and verification target the Neon development branch only:
 
 ```bash
 npm run db:bootstrap
-```
-
-Read-only service verification (development):
-
-```bash
 npm run business-state:verify
+npm run js-growth-ingestion:verify
 ```
 
-Never apply a database migration before reviewing its plan. Never point development at production. Details: [docs/development/local-setup.md](docs/development/local-setup.md).
+After changing `src/prisma/contract.prisma`, emit the contract and create/review/apply the corresponding Prisma migration before relying on the new database constraint in a shared environment.

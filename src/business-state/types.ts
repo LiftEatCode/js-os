@@ -169,3 +169,65 @@ export type AgentRunListFilter = {
   status?: AgentRunStatus;
   limit?: number;
 };
+
+export type BusinessStateOrganization = Pick<
+  Organization,
+  'id' | 'name' | 'slug' | 'description' | 'timezone' | 'status'
+>;
+
+export type BusinessStateGoal = Pick<
+  Goal,
+  | 'id'
+  | 'title'
+  | 'description'
+  | 'status'
+  | 'priority'
+  | 'timeHorizon'
+  | 'targetDate'
+  | 'metricName'
+  | 'metricUnit'
+  | 'targetValue'
+  | 'currentValue'
+>;
+
+export type BusinessStateWorkItem = Pick<
+  WorkItem,
+  | 'id'
+  | 'goalId'
+  | 'parentId'
+  | 'title'
+  | 'description'
+  | 'status'
+  | 'priority'
+  | 'workType'
+  | 'assignedAgentId'
+  | 'dueAt'
+  | 'startedAt'
+  | 'completedAt'
+>;
+
+export type BusinessStateEvent = Pick<
+  BusinessEvent,
+  | 'id'
+  | 'eventType'
+  | 'sourceType'
+  | 'sourceId'
+  | 'title'
+  | 'description'
+  | 'occurredAt'
+>;
+
+export type BusinessState = {
+  organization: BusinessStateOrganization;
+  goals: BusinessStateGoal[];
+  activeWork: BusinessStateWorkItem[];
+  blockedWork: BusinessStateWorkItem[];
+  recentEvents: BusinessStateEvent[];
+  summary: {
+    activeGoals: number;
+    activeWorkItems: number;
+    blockedWorkItems: number;
+    highPriorityWorkItems: number;
+  };
+  generatedAt: BusinessEvent['occurredAt'];
+};
