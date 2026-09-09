@@ -1,35 +1,15 @@
-/// <reference types="temporal-polyfill/types/global" />
 import {
   BusinessStateNotFoundError,
   getBusinessState,
-  listAgentDefinitions,
-  listAgentRuns,
-  listPendingApprovals,
-  type AgentDefinition,
-  type AgentRun,
-  type Approval,
+  JS_SOLUTIONS_SLUG,
   type BusinessState,
 } from '@/business-state';
 
-export type CommandCenterData = {
-  state: BusinessState;
-  approvals: Approval[];
-  agents: AgentDefinition[];
-  recentAgentRuns: AgentRun[];
-};
-
-export async function loadCommandCenter(slug = 'js-solutions'): Promise<CommandCenterData | null> {
+export async function loadCommandCenter(
+  slug: string = JS_SOLUTIONS_SLUG,
+): Promise<BusinessState | null> {
   try {
-    const state = await getBusinessState(slug);
-    const organizationId = state.organization.id;
-
-    const [approvals, agents, recentAgentRuns] = await Promise.all([
-      listPendingApprovals(organizationId),
-      listAgentDefinitions({ organizationId }),
-      listAgentRuns({ organizationId, limit: 20 }),
-    ]);
-
-    return { state, approvals, agents, recentAgentRuns };
+    return await getBusinessState(slug);
   } catch (error) {
     if (error instanceof BusinessStateNotFoundError) return null;
     throw error;
