@@ -4,9 +4,9 @@ import { CommandCenterView } from '@/components/command-center/command-center-vi
 export const dynamic = 'force-dynamic';
 
 export default async function CommandPage() {
-  const data = await loadCommandCenter();
+  const state = await loadCommandCenter();
 
-  if (!data) {
+  if (!state) {
     return (
       <main className="mx-auto max-w-3xl p-8">
         <div className="rounded-xl border border-slate-800 bg-slate-950 p-6">
@@ -18,5 +18,5 @@ export default async function CommandPage() {
     );
   }
 
-  return <CommandCenterView data={data} />;
+  return <CommandCenterView state={state} />;
 }
