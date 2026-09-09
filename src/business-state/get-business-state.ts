@@ -1,14 +1,21 @@
-import {
-  getOrganizationBySlug,
-} from './organization.ts';
+import { getOrganizationBySlug } from './organization.ts';
 import { listActiveGoals } from './goals.ts';
 import { listWorkItems } from './work-items.ts';
 import { listRecentBusinessEvents } from './business-events.ts';
+import { listPendingApprovals } from './approvals.ts';
+import { listAgentDefinitions } from './agent-definitions.ts';
+import { listAgentRuns } from './agent-runs.ts';
 import { BusinessStateNotFoundError } from './errors.ts';
 import {
   JS_SOLUTIONS_SLUG,
+  type AgentDefinition,
+  type AgentRun,
+  type Approval,
   type BusinessEvent,
   type BusinessState,
+  type BusinessStateAgentDefinition,
+  type BusinessStateAgentRun,
+  type BusinessStateApproval,
   type BusinessStateEvent,
   type BusinessStateGoal,
   type BusinessStateWorkItem,
@@ -69,20 +76,68 @@ function toBusinessStateEvent(event: BusinessEvent): BusinessStateEvent {
   };
 }
 
+function toBusinessStateApproval(approval: Approval): BusinessStateApproval {
+  return {
+    id: approval.id,
+    workItemId: approval.workItemId,
+    agentRunId: approval.agentRunId,
+    actionType: approval.actionType,
+    title: approval.title,
+    description: approval.description,
+    status: approval.status,
+    riskLevel: approval.riskLevel,
+    requestedByType: approval.requestedByType,
+    requestedById: approval.requestedById,
+    requestedAt: approval.requestedAt,
+    expiresAt: approval.expiresAt,
+  };
+}
+
+function toBusinessStateAgentDefinition(agent: AgentDefinition): BusinessStateAgentDefinition {
+  return {
+    id: agent.id,
+    name: agent.name,
+    slug: agent.slug,
+    description: agent.description,
+    status: agent.status,
+    role: agent.role,
+    permissionLevel: agent.permissionLevel,
+  };
+}
+
+function toBusinessStateAgentRun(run: AgentRun): BusinessStateAgentRun {
+  return {
+    id: run.id,
+    agentDefinitionId: run.agentDefinitionId,
+    triggerType: run.triggerType,
+    triggerReference: run.triggerReference,
+    status: run.status,
+    startedAt: run.startedAt,
+    completedAt: run.completedAt,
+    error: run.error,
+    createdAt: run.createdAt,
+  };
+}
+
 export function buildBusinessStateSnapshot(input: {
   organization: Organization;
   goals: Goal[];
   workItems: WorkItem[];
   recentEvents: BusinessEvent[];
+  pendingApprovals?: Approval[];
+  agents?: AgentDefinition[];
+  recentAgentRuns?: AgentRun[];
   generatedAt?: BusinessState['generatedAt'];
 }): BusinessState {
-  const activeWorkItems = input.workItems.filter((item) =>
-    ACTIVE_WORK_STATUSES.has(item.status),
-  );
+  const pendingApprovals = input.pendingApprovals ?? [];
+  const agents = input.agents ?? [];
+  const recentAgentRuns = input.recentAgentRuns ?? [];
+  const activeWorkItems = input.workItems.filter((item) => ACTIVE_WORK_STATUSES.has(item.status));
   const blockedWorkItems = activeWorkItems.filter((item) => item.status === 'BLOCKED');
   const highPriorityWorkItems = activeWorkItems.filter(
     (item) => item.priority === 'HIGH' || item.priority === 'CRITICAL',
   );
+  const activeAgents = agents.filter((agent) => agent.status === 'ACTIVE');
 
   return {
     organization: {
@@ -96,12 +151,18 @@ export function buildBusinessStateSnapshot(input: {
     goals: input.goals.map(toBusinessStateGoal),
     activeWork: activeWorkItems.map(toBusinessStateWorkItem),
     blockedWork: blockedWorkItems.map(toBusinessStateWorkItem),
+    pendingApprovals: pendingApprovals.map(toBusinessStateApproval),
+    agents: agents.map(toBusinessStateAgentDefinition),
+    recentAgentRuns: recentAgentRuns.map(toBusinessStateAgentRun),
     recentEvents: input.recentEvents.map(toBusinessStateEvent),
     summary: {
       activeGoals: input.goals.length,
       activeWorkItems: activeWorkItems.length,
       blockedWorkItems: blockedWorkItems.length,
       highPriorityWorkItems: highPriorityWorkItems.length,
+      pendingApprovals: pendingApprovals.length,
+      activeAgents: activeAgents.length,
+      recentAgentRuns: recentAgentRuns.length,
     },
     generatedAt: input.generatedAt ?? Temporal.Now.instant(),
   };
@@ -121,16 +182,23 @@ export async function getBusinessState(
     );
   }
 
-  const [goals, workItems, recentEvents] = await Promise.all([
-    listActiveGoals(organization.id),
-    listWorkItems({ organizationId: organization.id }),
-    listRecentBusinessEvents(organization.id, 25),
-  ]);
+  const [goals, workItems, recentEvents, pendingApprovals, agents, recentAgentRuns] =
+    await Promise.all([
+      listActiveGoals(organization.id),
+      listWorkItems({ organizationId: organization.id }),
+      listRecentBusinessEvents(organization.id, 25),
+      listPendingApprovals(organization.id),
+      listAgentDefinitions({ organizationId: organization.id }),
+      listAgentRuns({ organizationId: organization.id, limit: 20 }),
+    ]);
 
   return buildBusinessStateSnapshot({
     organization,
     goals,
     workItems,
     recentEvents,
+    pendingApprovals,
+    agents,
+    recentAgentRuns,
   });
 }
