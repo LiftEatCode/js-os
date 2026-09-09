@@ -217,17 +217,57 @@ export type BusinessStateEvent = Pick<
   | 'occurredAt'
 >;
 
+export type BusinessStateApproval = Pick<
+  Approval,
+  | 'id'
+  | 'workItemId'
+  | 'agentRunId'
+  | 'actionType'
+  | 'title'
+  | 'description'
+  | 'status'
+  | 'riskLevel'
+  | 'requestedByType'
+  | 'requestedById'
+  | 'requestedAt'
+  | 'expiresAt'
+>;
+
+export type BusinessStateAgentDefinition = Pick<
+  AgentDefinition,
+  'id' | 'name' | 'slug' | 'description' | 'status' | 'role' | 'permissionLevel'
+>;
+
+export type BusinessStateAgentRun = Pick<
+  AgentRun,
+  | 'id'
+  | 'agentDefinitionId'
+  | 'triggerType'
+  | 'triggerReference'
+  | 'status'
+  | 'startedAt'
+  | 'completedAt'
+  | 'error'
+  | 'createdAt'
+>;
+
 export type BusinessState = {
   organization: BusinessStateOrganization;
   goals: BusinessStateGoal[];
   activeWork: BusinessStateWorkItem[];
   blockedWork: BusinessStateWorkItem[];
+  pendingApprovals: BusinessStateApproval[];
+  agents: BusinessStateAgentDefinition[];
+  recentAgentRuns: BusinessStateAgentRun[];
   recentEvents: BusinessStateEvent[];
   summary: {
     activeGoals: number;
     activeWorkItems: number;
     blockedWorkItems: number;
     highPriorityWorkItems: number;
+    pendingApprovals: number;
+    activeAgents: number;
+    recentAgentRuns: number;
   };
   generatedAt: BusinessEvent['occurredAt'];
 };
