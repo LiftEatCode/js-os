@@ -3372,15 +3372,6 @@
                   "name": "businessEvent_organizationId_occurredAt_idx_959410e1",
                   "prefix": "businessEvent_organizationId_occurredAt_idx",
                   "unique": false
-                },
-                {
-                  "columns": [
-                    "sourceType",
-                    "sourceId"
-                  ],
-                  "name": "businessEvent_sourceType_sourceId_idx_9b8c3bc3",
-                  "prefix": "businessEvent_sourceType_sourceId_idx",
-                  "unique": false
                 }
               ],
               "primaryKey": {
@@ -3388,7 +3379,15 @@
                   "id"
                 ]
               },
-              "uniques": []
+              "uniques": [
+                {
+                  "columns": [
+                    "organizationId",
+                    "sourceType",
+                    "sourceId"
+                  ]
+                }
+              ]
             },
             "goal": {
               "checks": [
@@ -4672,7 +4671,7 @@
         "kind": "postgres-schema"
       }
     },
-    "storageHash": "1c08a4d841c264c7a2ce49e0757ae40d524acd1a13a2ff72b86532dfc4deaef5"
+    "storageHash": "b7e2e049d3143bc89fda1ddbd6c962d379ee46c8dd83102436c78f46e67863a7"
   },
   "execution": {
     "executionHash": "d2f06e2f8d012f574c98b36d54aa3f0551b2c7a5d95d7b63c3b2974b0c57bc6b",

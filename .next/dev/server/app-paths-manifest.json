@@ -1,7 +1,3 @@
 {
-  "/_not-found/page": "app/_not-found/page.js",
-  "/app/goals/page": "app/app/goals/page.js",
-  "/app/knowledge/page": "app/app/knowledge/page.js",
-  "/app/page": "app/app/page.js",
-  "/page": "app/page.js"
+  "/api/integrations/js-growth/events/route": "app/api/integrations/js-growth/events/route.js"
 }
