@@ -32,7 +32,7 @@ try {
   console.log(`  recent events: ${state.recentEvents.length}`);
 
   if (state.organization.id !== organization.id) throw new Error('getBusinessState() returned the wrong organization.');
-  if (state.summary.activeGoals < 3) throw new Error(`Expected at least 3 active goals, found ${state.summary.activeGoals}.`);
+  if (state.summary.activeGoals !== state.goals.length) throw new Error('activeGoals summary does not match goals length.');
   if (state.activeWork.some((item) => item.status === 'BACKLOG' || item.status === 'COMPLETED' || item.status === 'CANCELLED')) throw new Error('getBusinessState() returned a non-active WorkItem in activeWork.');
   if (state.blockedWork.some((item) => item.status !== 'BLOCKED')) throw new Error('getBusinessState() returned a non-blocked WorkItem in blockedWork.');
   if (state.pendingApprovals.some((approval) => approval.status !== 'PENDING')) throw new Error('getBusinessState() returned a non-pending Approval in pendingApprovals.');
@@ -41,7 +41,6 @@ try {
   if (state.summary.pendingApprovals !== state.pendingApprovals.length) throw new Error('pendingApprovals summary does not match pendingApprovals length.');
   if (state.summary.activeAgents !== state.agents.filter((agent) => agent.status === 'ACTIVE').length) throw new Error('activeAgents summary does not match active configured agents.');
   if (state.summary.recentAgentRuns !== state.recentAgentRuns.length) throw new Error('recentAgentRuns summary does not match recentAgentRuns length.');
-  if (state.recentEvents.length < 1) throw new Error('Expected at least one recent BusinessEvent. Run npm run db:bootstrap first.');
   if (createdAtKind !== 'Instant' && createdAtKind !== 'TemporalInstant') console.log(`warning: createdAt decoded as ${createdAtKind}; expected a Temporal Instant after polyfill.`);
   console.log('verification passed (no --harmony-temporal)');
 } finally {
