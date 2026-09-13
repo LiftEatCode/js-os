@@ -1,4 +1,5 @@
 export {
+  DuplicateToolImplementationError,
   DuplicateToolSlugError,
   InvalidToolDefinitionError,
   InvalidToolInputError,
@@ -6,6 +7,7 @@ export {
   ToolAuthorizationError,
   ToolExecutionNotFoundError,
   ToolIdempotencyConflictError,
+  ToolImplementationNotFoundError,
   ToolInvariantError,
   ToolNotFoundError,
   ToolRequestNotFoundError,
@@ -23,6 +25,10 @@ export type {
 } from './implementation.ts';
 
 export { ToolRegistry, createToolRegistry } from './registry.ts';
+export {
+  ExecutableToolRegistry,
+  createExecutableToolRegistry,
+} from './executable-registry.ts';
 
 export {
   createAgentToolActor,
