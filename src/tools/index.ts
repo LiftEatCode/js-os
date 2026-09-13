@@ -14,6 +14,14 @@ export {
 export { defineTool, getToolDefinitionSnapshot } from './definition.ts';
 export type { DefineToolInput, ToolDefinition } from './definition.ts';
 
+export { defineToolImplementation } from './implementation.ts';
+export type {
+  DefineToolImplementationInput,
+  ToolExecutionActor,
+  ToolExecutionContext,
+  ToolImplementation,
+} from './implementation.ts';
+
 export { ToolRegistry, createToolRegistry } from './registry.ts';
 
 export {
