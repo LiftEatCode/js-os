@@ -36,6 +36,17 @@ export class DuplicateToolSlugError extends Error {
   }
 }
 
+export class DuplicateToolImplementationError extends Error {
+  readonly code = 'DUPLICATE_TOOL_IMPLEMENTATION';
+  readonly slug: string;
+
+  constructor(slug: string) {
+    super(`Tool implementation already bound: ${slug}`);
+    this.name = 'DuplicateToolImplementationError';
+    this.slug = slug;
+  }
+}
+
 export class ToolNotFoundError extends Error {
   readonly code = 'TOOL_NOT_FOUND';
   readonly slug: string;
@@ -43,6 +54,17 @@ export class ToolNotFoundError extends Error {
   constructor(slug: string) {
     super(`Tool not found: ${slug}`);
     this.name = 'ToolNotFoundError';
+    this.slug = slug;
+  }
+}
+
+export class ToolImplementationNotFoundError extends Error {
+  readonly code = 'TOOL_IMPLEMENTATION_NOT_FOUND';
+  readonly slug: string;
+
+  constructor(slug: string) {
+    super(`Tool implementation not found: ${slug}`);
+    this.name = 'ToolImplementationNotFoundError';
     this.slug = slug;
   }
 }
