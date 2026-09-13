@@ -31,6 +31,18 @@ export {
 } from './executable-registry.ts';
 
 export {
+  createInternalCreateWorkItemImplementation,
+  internalCreateWorkItemDefinition,
+  internalCreateWorkItemImplementation,
+  internalCreateWorkItemInputSchema,
+  internalCreateWorkItemOutputSchema,
+} from './definitions/internal-create-work-item.ts';
+export type {
+  InternalCreateWorkItemInput,
+  InternalCreateWorkItemOutput,
+} from './definitions/internal-create-work-item.ts';
+
+export {
   createAgentToolActor,
   createSystemToolActor,
   createUserToolActor,
