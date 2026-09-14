@@ -43,6 +43,18 @@ export type {
 } from './definitions/internal-create-work-item.ts';
 
 export {
+  createInternalUpdateWorkStatusImplementation,
+  internalUpdateWorkStatusDefinition,
+  internalUpdateWorkStatusImplementation,
+  internalUpdateWorkStatusInputSchema,
+  internalUpdateWorkStatusOutputSchema,
+} from './definitions/internal-update-work-status.ts';
+export type {
+  InternalUpdateWorkStatusInput,
+  InternalUpdateWorkStatusOutput,
+} from './definitions/internal-update-work-status.ts';
+
+export {
   createAgentToolActor,
   createSystemToolActor,
   createUserToolActor,
