@@ -10,11 +10,10 @@ import { isValidToolSlug, isValidToolVersion } from './validation.ts';
 
 /**
  * Declarative capability contract. Not an executable adapter.
- * ToolImplementation (execute) is a later milestone.
  */
 export type ToolDefinition<
   TInputSchema extends z.ZodType = z.ZodType,
-  TOutputSchema extends z.ZodType | undefined = undefined,
+  TOutputSchema extends z.ZodType | undefined = z.ZodType | undefined,
 > = Readonly<{
   slug: string;
   name: string;
