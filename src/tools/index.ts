@@ -3,8 +3,10 @@ export {
   DuplicateToolSlugError,
   InvalidToolDefinitionError,
   InvalidToolInputError,
+  InvalidToolOutputError,
   InvalidToolTransitionError,
   ToolAuthorizationError,
+  ToolDefinitionVersionMismatchError,
   ToolExecutionNotFoundError,
   ToolIdempotencyConflictError,
   ToolImplementationNotFoundError,
@@ -29,6 +31,7 @@ export {
   ExecutableToolRegistry,
   createExecutableToolRegistry,
 } from './executable-registry.ts';
+export { executableToolRegistry } from './catalog.ts';
 
 export {
   createInternalCreateWorkItemImplementation,
@@ -152,3 +155,6 @@ export {
   markToolExecutionRunning,
 } from './executions.ts';
 export type { ToolExecutionListFilter } from './executions.ts';
+
+export { createToolExecutionCoordinator, executeToolRequest } from './coordinator.ts';
+export type { ToolExecutionCoordinatorDependencies } from './coordinator.ts';
