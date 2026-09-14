@@ -4,7 +4,7 @@ import {
   ToolImplementationNotFoundError,
   ToolNotFoundError,
 } from './errors.ts';
-import type { ToolImplementation } from './implementation.ts';
+import type { AnyToolImplementation } from './implementation.ts';
 import { ToolRegistry, createToolRegistry } from './registry.ts';
 
 function compareSlugs(left: string, right: string): number {
@@ -22,11 +22,11 @@ function compareSlugs(left: string, right: string): number {
  */
 export class ExecutableToolRegistry {
   readonly #definitions: ToolRegistry;
-  readonly #implementations = new Map<string, ToolImplementation>();
+  readonly #implementations = new Map<string, AnyToolImplementation>();
 
   constructor(
     definitions: readonly ToolDefinition[] = [],
-    implementations: readonly ToolImplementation[] = [],
+    implementations: readonly AnyToolImplementation[] = [],
   ) {
     this.#definitions = createToolRegistry(definitions);
 
@@ -60,11 +60,11 @@ export class ExecutableToolRegistry {
     return this.#definitions.has(slug);
   }
 
-  getImplementation(slug: string): ToolImplementation | null {
+  getImplementation(slug: string): AnyToolImplementation | null {
     return this.#implementations.get(slug) ?? null;
   }
 
-  requireImplementation(slug: string): ToolImplementation {
+  requireImplementation(slug: string): AnyToolImplementation {
     const implementation = this.getImplementation(slug);
     if (implementation === null) {
       if (!this.#definitions.has(slug)) {
@@ -86,13 +86,13 @@ export class ExecutableToolRegistry {
   /**
    * Deterministic executable listing by tool slug.
    */
-  listImplementations(): ToolImplementation[] {
+  listImplementations(): AnyToolImplementation[] {
     return [...this.#implementations.values()].sort((left, right) =>
       compareSlugs(left.definition.slug, right.definition.slug),
     );
   }
 
-  bind(implementation: ToolImplementation): void {
+  bind(implementation: AnyToolImplementation): void {
     const slug = implementation.definition.slug;
     const registeredDefinition = this.#definitions.get(slug);
     if (registeredDefinition === null) {
@@ -108,7 +108,7 @@ export class ExecutableToolRegistry {
 
 export function createExecutableToolRegistry(
   definitions: readonly ToolDefinition[] = [],
-  implementations: readonly ToolImplementation[] = [],
+  implementations: readonly AnyToolImplementation[] = [],
 ): ExecutableToolRegistry {
   return new ExecutableToolRegistry(definitions, implementations);
 }
