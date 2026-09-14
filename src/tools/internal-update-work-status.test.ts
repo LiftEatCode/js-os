@@ -133,9 +133,11 @@ describe('internal.update_work_status implementation', () => {
 
     await implementation.execute({ workItemId, status: 'BLOCKED' }, context);
 
-    assert.equal(receivedInput?.organizationId, organizationId);
-    assert.equal(receivedInput?.id, workItemId);
-    assert.equal(receivedInput?.status, 'BLOCKED');
+    const captured = receivedInput as UpdateWorkItemStatusCommandInput | null;
+    assert.ok(captured);
+    assert.equal(captured.organizationId, organizationId);
+    assert.equal(captured.id, workItemId);
+    assert.equal(captured.status, 'BLOCKED');
   });
 
   it('preserves SYSTEM provenance without inventing a source id', async () => {
