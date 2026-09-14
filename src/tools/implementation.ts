@@ -35,7 +35,7 @@ type ToolOutput<TOutputSchema extends z.ZodType | undefined> =
  */
 export type ToolImplementation<
   TInputSchema extends z.ZodType = z.ZodType,
-  TOutputSchema extends z.ZodType | undefined = undefined,
+  TOutputSchema extends z.ZodType | undefined = z.ZodType | undefined,
 > = Readonly<{
   definition: ToolDefinition<TInputSchema, TOutputSchema>;
   execute: (
