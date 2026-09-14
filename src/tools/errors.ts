@@ -7,6 +7,15 @@ export class InvalidToolInputError extends Error {
   }
 }
 
+export class InvalidToolOutputError extends Error {
+  readonly code = 'INVALID_TOOL_OUTPUT';
+
+  constructor(message: string) {
+    super(message);
+    this.name = 'InvalidToolOutputError';
+  }
+}
+
 export class InvalidToolTransitionError extends Error {
   readonly code = 'INVALID_TOOL_TRANSITION';
 
@@ -66,6 +75,23 @@ export class ToolImplementationNotFoundError extends Error {
     super(`Tool implementation not found: ${slug}`);
     this.name = 'ToolImplementationNotFoundError';
     this.slug = slug;
+  }
+}
+
+export class ToolDefinitionVersionMismatchError extends Error {
+  readonly code = 'TOOL_DEFINITION_VERSION_MISMATCH';
+  readonly slug: string;
+  readonly requestedVersion: number;
+  readonly currentVersion: number;
+
+  constructor(slug: string, requestedVersion: number, currentVersion: number) {
+    super(
+      `Tool definition version mismatch for ${slug}: request=${requestedVersion}, current=${currentVersion}.`,
+    );
+    this.name = 'ToolDefinitionVersionMismatchError';
+    this.slug = slug;
+    this.requestedVersion = requestedVersion;
+    this.currentVersion = currentVersion;
   }
 }
 
