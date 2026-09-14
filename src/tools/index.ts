@@ -18,8 +18,9 @@ export {
 export { defineTool, getToolDefinitionSnapshot } from './definition.ts';
 export type { DefineToolInput, ToolDefinition } from './definition.ts';
 
-export { defineToolImplementation } from './implementation.ts';
+export { defineToolImplementation, eraseToolImplementation } from './implementation.ts';
 export type {
+  AnyToolImplementation,
   DefineToolImplementationInput,
   ToolExecutionActor,
   ToolExecutionContext,
@@ -32,30 +33,6 @@ export {
   createExecutableToolRegistry,
 } from './executable-registry.ts';
 export { executableToolRegistry } from './catalog.ts';
-
-export {
-  createInternalCreateWorkItemImplementation,
-  internalCreateWorkItemDefinition,
-  internalCreateWorkItemImplementation,
-  internalCreateWorkItemInputSchema,
-  internalCreateWorkItemOutputSchema,
-} from './definitions/internal-create-work-item.ts';
-export type {
-  InternalCreateWorkItemInput,
-  InternalCreateWorkItemOutput,
-} from './definitions/internal-create-work-item.ts';
-
-export {
-  createInternalUpdateWorkStatusImplementation,
-  internalUpdateWorkStatusDefinition,
-  internalUpdateWorkStatusImplementation,
-  internalUpdateWorkStatusInputSchema,
-  internalUpdateWorkStatusOutputSchema,
-} from './definitions/internal-update-work-status.ts';
-export type {
-  InternalUpdateWorkStatusInput,
-  InternalUpdateWorkStatusOutput,
-} from './definitions/internal-update-work-status.ts';
 
 export {
   createAgentToolActor,
@@ -156,5 +133,32 @@ export {
 } from './executions.ts';
 export type { ToolExecutionListFilter } from './executions.ts';
 
-export { createToolExecutionCoordinator, executeToolRequest } from './coordinator.ts';
+export {
+  createInternalCreateWorkItemImplementation,
+  internalCreateWorkItemDefinition,
+  internalCreateWorkItemImplementation,
+  internalCreateWorkItemInputSchema,
+  internalCreateWorkItemOutputSchema,
+} from './definitions/internal-create-work-item.ts';
+export type {
+  InternalCreateWorkItemInput,
+  InternalCreateWorkItemOutput,
+} from './definitions/internal-create-work-item.ts';
+
+export {
+  createInternalUpdateWorkStatusImplementation,
+  internalUpdateWorkStatusDefinition,
+  internalUpdateWorkStatusImplementation,
+  internalUpdateWorkStatusInputSchema,
+  internalUpdateWorkStatusOutputSchema,
+} from './definitions/internal-update-work-status.ts';
+export type {
+  InternalUpdateWorkStatusInput,
+  InternalUpdateWorkStatusOutput,
+} from './definitions/internal-update-work-status.ts';
+
+export {
+  createToolExecutionCoordinator,
+  executeToolRequest,
+} from './coordinator.ts';
 export type { ToolExecutionCoordinatorDependencies } from './coordinator.ts';
