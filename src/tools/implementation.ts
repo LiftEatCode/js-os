@@ -44,6 +44,27 @@ export type ToolImplementation<
   ) => Promise<ToolOutput<TOutputSchema>>;
 }>;
 
+/**
+ * Type-erased implementation used only at heterogeneous registry boundaries.
+ * Input is already validated against definition.inputSchema before invocation,
+ * so the registry may safely retain implementations with different concrete
+ * input/output schemas without requiring their execute parameter types to be
+ * mutually assignable under strictFunctionTypes.
+ */
+export type AnyToolImplementation = Readonly<{
+  definition: ToolDefinition;
+  execute: (input: never, context: ToolExecutionContext) => Promise<unknown>;
+}>;
+
+export function eraseToolImplementation<
+  TInputSchema extends z.ZodType,
+  TOutputSchema extends z.ZodType | undefined,
+>(
+  implementation: ToolImplementation<TInputSchema, TOutputSchema>,
+): AnyToolImplementation {
+  return implementation as AnyToolImplementation;
+}
+
 export type DefineToolImplementationInput<
   TInputSchema extends z.ZodType,
   TOutputSchema extends z.ZodType | undefined = undefined,
