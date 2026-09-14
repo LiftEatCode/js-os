@@ -44,16 +44,19 @@ export type ToolImplementation<
   ) => Promise<ToolOutput<TOutputSchema>>;
 }>;
 
+type ErasedExecute = {
+  bivarianceHack(input: unknown, context: ToolExecutionContext): Promise<unknown>;
+}['bivarianceHack'];
+
 /**
  * Type-erased implementation used only at heterogeneous registry boundaries.
- * Input is already validated against definition.inputSchema before invocation,
- * so the registry may safely retain implementations with different concrete
- * input/output schemas without requiring their execute parameter types to be
- * mutually assignable under strictFunctionTypes.
+ * The bivariant execute signature allows implementations with different
+ * concrete schema-derived input types to coexist. The coordinator validates
+ * persisted input with the bound definition before calling execute.
  */
 export type AnyToolImplementation = Readonly<{
   definition: ToolDefinition;
-  execute: (input: never, context: ToolExecutionContext) => Promise<unknown>;
+  execute: ErasedExecute;
 }>;
 
 export function eraseToolImplementation<
