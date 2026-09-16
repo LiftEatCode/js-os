@@ -52,10 +52,12 @@ export const prismaToolRequestDetailReadStore: ToolRequestDetailReadStore = {
   getApproval(organizationId, id) {
     return db.orm.public.Approval.where({ id, organizationId }).first();
   },
-  listExecutions(organizationId, toolRequestId) {
-    return db.orm.public.ToolExecution.where({ organizationId, toolRequestId })
-      .orderBy([(execution) => execution.attemptNumber.asc(), (execution) => execution.id.asc()])
-      .all();
+  async listExecutions(organizationId, toolRequestId) {
+    const executions = await db.orm.public.ToolExecution.where({ organizationId, toolRequestId }).all();
+    return executions.toSorted(
+      (left, right) =>
+        left.attemptNumber - right.attemptNumber || left.id.localeCompare(right.id),
+    );
   },
 };
 
