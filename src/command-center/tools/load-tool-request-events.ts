@@ -27,11 +27,13 @@ export type ToolRequestEventReadStore = Readonly<{
 }>;
 
 export const prismaToolRequestEventReadStore: ToolRequestEventReadStore = {
-  listOrganizationEvents(organizationId) {
+  async listOrganizationEvents(organizationId) {
+    // Prisma 8 RC returns an AsyncIterableResult from .all(); awaiting it
+    // materializes the rows as a native array matching the read-store contract.
     // BusinessEvent currently has no dedicated tool-request/execution foreign key
     // or indexed metadata column. Keep the database predicate organization-scoped
     // and perform exact metadata correlation in memory until Phase 3.8 hardening.
-    return db.orm.public.BusinessEvent.where({ organizationId }).all();
+    return await db.orm.public.BusinessEvent.where({ organizationId }).all();
   },
 };
 
