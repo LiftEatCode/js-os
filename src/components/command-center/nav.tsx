@@ -14,6 +14,7 @@ export type NavIconName =
   | "activity"
   | "approvals"
   | "agents"
+  | "tools"
   | "knowledge";
 
 export const COMMAND_CENTER_NAV: CommandCenterNavItem[] = [
@@ -52,6 +53,12 @@ export const COMMAND_CENTER_NAV: CommandCenterNavItem[] = [
     href: "/app/agents",
     description: "Configured organizational roles and Agent Run history.",
     icon: "agents",
+  },
+  {
+    label: "Tools",
+    href: "/app/tools",
+    description: "Registered capabilities and ToolRequest activity.",
+    icon: "tools",
   },
   {
     label: "Knowledge",
@@ -127,6 +134,24 @@ export function NavIcon({ name }: { name: NavIconName }): ReactNode {
             stroke="currentColor"
             strokeWidth="1.75"
             strokeLinecap="round"
+          />
+        </svg>
+      );
+    case "tools":
+      return (
+        <svg className={iconClassName} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path
+            d="M14.7 6.3a3.2 3.2 0 0 1 4 4L16 9.4l-5.6 5.6-1.4-1.4 5.6-5.6-2.6-2.7Z"
+            stroke="currentColor"
+            strokeWidth="1.75"
+            strokeLinejoin="round"
+          />
+          <path
+            d="m9 14-4.6 4.6a1.6 1.6 0 0 0 2.3 2.3L11.2 16"
+            stroke="currentColor"
+            strokeWidth="1.75"
+            strokeLinecap="round"
+            strokeLinejoin="round"
           />
         </svg>
       );

@@ -222,7 +222,7 @@ describe('mapToolRequestDetail', () => {
     assert.equal(result.authorization.denialReason, 'INSUFFICIENT_PERMISSION');
   });
 
-  it('preserves execution attempt order and overlays produced-record Command Center hrefs', () => {
+  it('preserves execution attempt order and produced-record Command Center hrefs', () => {
     const result = mapToolRequestDetail({
       aggregate: aggregate({
         request: request({ status: 'FULFILLED' }),
@@ -236,7 +236,7 @@ describe('mapToolRequestDetail', () => {
           type: 'WORK_ITEM',
           id: 'work-produced',
           label: 'Created work',
-          href: '/command/work/work-produced',
+          href: '/app/work/work-produced',
         },
       ],
       events: [],

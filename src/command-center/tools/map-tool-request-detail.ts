@@ -51,7 +51,7 @@ export function mapToolRequestDetail(
   const { request, organization, agentDefinition, agentRun, workItem, approval, executions } =
     aggregate;
   const mappedExecutions = mapToolExecutions(executions);
-  const producedRecords = input.producedRecords.map(normalizeProducedRecordHref);
+  const producedRecords = input.producedRecords;
 
   return {
     request: {
@@ -289,13 +289,6 @@ function linksForEvent(event: BusinessEvent): readonly ToolRequestTimelineLink[]
   }
 
   return links;
-}
-
-function normalizeProducedRecordHref(record: ProducedRecordViewModel): ProducedRecordViewModel {
-  if (record.type !== 'WORK_ITEM') {
-    return record;
-  }
-  return { ...record, href: workItemHref(record.id) };
 }
 
 function stringMetadata(value: unknown | null): Record<string, string> {

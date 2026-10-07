@@ -61,7 +61,7 @@ describe('resolveToolProducedRecordsWithStore', () => {
         type: 'WORK_ITEM',
         id: WORK_ITEM_ID,
         label: 'Follow up with prospect',
-        href: `/command/work/${WORK_ITEM_ID}`,
+        href: `/app/work/${WORK_ITEM_ID}`,
       },
     ]);
   });

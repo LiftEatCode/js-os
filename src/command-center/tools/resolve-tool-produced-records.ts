@@ -1,5 +1,6 @@
 import type { WorkItem } from '../../business-state/types.ts';
 import { db } from '../../prisma/db.ts';
+import { workItemHref } from './constants.ts';
 import type { ProducedRecordViewModel } from './tool-request-detail-view-model.ts';
 
 export type ToolProducedRecordResolutionInput = Readonly<{
@@ -71,6 +72,6 @@ function toProducedWorkItem(workItem: WorkItem): ProducedRecordViewModel {
     type: 'WORK_ITEM',
     id: workItem.id,
     label: workItem.title,
-    href: `/command/work/${workItem.id}`,
+    href: workItemHref(workItem.id),
   };
 }

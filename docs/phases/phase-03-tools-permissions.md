@@ -1,6 +1,6 @@
 # Phase 3 — Tools + Permissions
 
-**Status:** In progress. Milestones 3.1–3.5 are implemented. Command Center Tools inspection of a single ToolRequest exists (3.7.2); the Tools dashboard, tool invocation UI, and nav item do not.
+**Status:** In progress. Milestones 3.1–3.5 are implemented. Command Center Tools inspection of a single ToolRequest exists (3.7.2). The Tools dashboard and nav item exist (3.7.3). Owner tool invocation UI does not.
 
 Phase 0–2 are complete. Phase 3 introduces the controlled execution boundary: registered tools, permission evaluation, request/execution lifecycle, approval integration, internal safe tools, and Command Center visibility.
 
@@ -132,10 +132,11 @@ Call `createWorkItemCommand` / `updateWorkItemStatusCommand`. Organization-scope
 
 **3.7.2 Implemented:** read-only `/app/tools/requests/[requestId]` inspects one organization-scoped ToolRequest through the existing view model (request, approval, executions, produced records, BusinessEvent timeline). No execute / approve / retry / cancel controls.
 
+**3.7.3 Implemented:** read-only `/app/tools` Command Center dashboard. Organization-scoped summary counts, registered-tool catalog (no invocation), recent ToolRequest list with shareable `status` / `toolSlug` query filters, and links to `/app/tools/requests/[requestId]`. One `Tools` nav item. No execute / retry / cancel / approve / reject controls. Produced-record WorkItem hrefs emit `/app/work/[id]`.
+
 Still planned:
 
-- `/app/tools`, `/app/tools/[toolSlug]`
-- One nav item
+- `/app/tools/[toolSlug]`
 - Owner invocation of internal tools (not limited by agent ceiling; still enabled + validated + audited)
 - Never display secrets
 
@@ -153,7 +154,7 @@ Still planned:
 
 - At least one internal non-production tool can be requested and allowed or denied according to documented permission rules
 - Approval-required path can wait, approve, and only then execute via explicit continuation
-- Request/execution persistence, technical permission evaluation, and Approval integration exist (3.3–3.5). Adapters and the Tools dashboard do not. ToolRequest inspection exists (3.7.2).
+- Request/execution persistence, technical permission evaluation, and Approval integration exist (3.3–3.5). ToolRequest inspection exists (3.7.2). The Tools dashboard exists (3.7.3). Owner invocation UI does not.
 - No external integrations shipped as a Phase 3 requirement
 
 ## Key safety boundary
