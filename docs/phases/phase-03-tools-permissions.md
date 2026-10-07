@@ -1,6 +1,6 @@
 # Phase 3 — Tools + Permissions
 
-**Status:** In progress. Milestones 3.1–3.5 are implemented. Internal tools and Command Center Tools are not.
+**Status:** In progress. Milestones 3.1–3.5 are implemented. Command Center Tools inspection of a single ToolRequest exists (3.7.2); the Tools dashboard, tool invocation UI, and nav item do not.
 
 Phase 0–2 are complete. Phase 3 introduces the controlled execution boundary: registered tools, permission evaluation, request/execution lifecycle, approval integration, internal safe tools, and Command Center visibility.
 
@@ -19,7 +19,7 @@ Make execution an explicit, permissioned tool boundary so actors never call inte
 3.4 Tool request/execution lifecycle     Implemented
 3.5 Approval integration                 Implemented
 3.6 Internal safe tools                  Next
-3.7 Tools Command Center                 Planned
+3.7 Tools Command Center                 In progress
 3.8 Phase 3 integration + validation     Planned
 ```
 
@@ -126,9 +126,15 @@ Call `createWorkItemCommand` / `updateWorkItemStatusCommand`. Organization-scope
 
 ## Milestone 3.7 — Tools Command Center
 
-**Status:** Planned
+**Status:** In progress
 
-- `/app/tools`, `/app/tools/[toolSlug]`, `/app/tools/requests/[requestId]`
+3.7.1 forensic/read-model foundation exists under `src/command-center/tools/`.
+
+**3.7.2 Implemented:** read-only `/app/tools/requests/[requestId]` inspects one organization-scoped ToolRequest through the existing view model (request, approval, executions, produced records, BusinessEvent timeline). No execute / approve / retry / cancel controls.
+
+Still planned:
+
+- `/app/tools`, `/app/tools/[toolSlug]`
 - One nav item
 - Owner invocation of internal tools (not limited by agent ceiling; still enabled + validated + audited)
 - Never display secrets
@@ -147,7 +153,7 @@ Call `createWorkItemCommand` / `updateWorkItemStatusCommand`. Organization-scope
 
 - At least one internal non-production tool can be requested and allowed or denied according to documented permission rules
 - Approval-required path can wait, approve, and only then execute via explicit continuation
-- Request/execution persistence, technical permission evaluation, and Approval integration exist (3.3–3.5). Adapters and Command Center Tools do not.
+- Request/execution persistence, technical permission evaluation, and Approval integration exist (3.3–3.5). Adapters and the Tools dashboard do not. ToolRequest inspection exists (3.7.2).
 - No external integrations shipped as a Phase 3 requirement
 
 ## Key safety boundary
