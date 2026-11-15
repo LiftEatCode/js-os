@@ -11,7 +11,7 @@ const validBase = {
 } as const;
 
 describe('JS Growth event contract', () => {
-  it('accepts both v1 event types', () => {
+  it('accepts existing v1 event types', () => {
     assert.equal(jsGrowthBusinessEventV1Schema.safeParse(validBase).success, true);
     assert.equal(
       jsGrowthBusinessEventV1Schema.safeParse({
@@ -23,6 +23,19 @@ describe('JS Growth event contract', () => {
       }).success,
       true,
     );
+  });
+
+  it('accepts a free-check source and opaque submission reference', () => {
+    const event = {
+      ...validBase,
+      eventType: 'growth.free_check_requested',
+      metadata: { lead_channel: 'client_referral', submission_id: 'request_123' },
+    };
+    assert.equal(jsGrowthBusinessEventV1Schema.safeParse(event).success, true);
+    assert.equal(jsGrowthBusinessEventV1Schema.safeParse({
+      ...event,
+      metadata: { ...event.metadata, lead_channel: 'person@example.com' },
+    }).success, false);
   });
 
   it('rejects unsupported versions and event types', () => {

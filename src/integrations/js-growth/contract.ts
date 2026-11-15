@@ -4,6 +4,7 @@ export const JS_GROWTH_EVENT_VERSION = 1 as const;
 
 export const JS_GROWTH_EVENT_TYPES = [
   'growth.quote_submitted',
+  'growth.free_check_requested',
   'growth.audit_completed',
 ] as const;
 
@@ -30,6 +31,8 @@ export const jsGrowthEventMetadataSchema = z
   .object({
     form_name: z.literal('contact').optional(),
     source: z.literal('website').optional(),
+    lead_channel: z.enum(['client_referral', 'facebook', 'google_business_profile', 'other']).optional(),
+    submission_id: z.string().regex(/^[a-zA-Z0-9_-]{1,80}$/).optional(),
     audit_type: z.literal('website').optional(),
     result: z.literal('completed').optional(),
     score_band: z
